@@ -13,7 +13,9 @@ import tungnn.tutor.java.core.lib.multithread.ConcurrentUtils;
 
 public final class ChromeDriverUtils {
 
+  // --- Driver Configuration ---
   public static final String DRIVER_PATH_ENV = "WEBDRIVER_CHROME_DRIVER_PATH";
+  // --- Binary Configuration ---
   public static final String BINARY_PATH_ENV = "WEBDRIVER_CHROME_BINARY_PATH";
 
   public static final String DEFAULT_DRIVER_PATH =
@@ -39,8 +41,19 @@ public final class ChromeDriverUtils {
               "Google Chrome for Testing")
           .toString();
 
+  // --- Profile Configuration ---
   public static final Path PROFILE_ROOT_DIR =
       Path.of(System.getProperty("user.home"), ".data", "selenium", "chrome", "chrome-profiles");
+
+  // MAJOR: Must specify driver property.
+  static {
+    var driverPath = System.getenv(DRIVER_PATH_ENV);
+    if (driverPath == null || driverPath.isBlank()) {
+      System.setProperty("webdriver.chrome.driver", DEFAULT_DRIVER_PATH);
+    } else {
+      System.setProperty("webdriver.chrome.driver", driverPath);
+    }
+  }
 
   private ChromeDriverUtils() {
     throw new UnsupportedOperationException("Cannot instantiate a utility class");
