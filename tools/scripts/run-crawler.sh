@@ -14,7 +14,7 @@ TIMESTAMP="$(date +'%Y%m%d-%H%M%S')"
 DEFAULT_LOG_FILE="storage/logs/crawler/run-crawler-${TIMESTAMP}.log"
 
 LOG_FILE="${LOG_FILE:-$DEFAULT_LOG_FILE}"
-JAR_FILE="${JAR_FILE:-tools/bin/crawler-tool-1.0.0.jar}"
+JAR_FILE="${JAR_FILE:-tools/bin/crawler-tool-app-0.0.1-SNAPSHOT.jar}"
 
 # ------------------------------------------------------------------------------
 # Pre-flight Checks
