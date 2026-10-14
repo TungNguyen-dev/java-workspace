@@ -43,6 +43,7 @@
         <module>modules/java-ocr</module>
         <module>modules/java-liquibase</module>
         <module>modules/java-cron-expression</module>
+        <module>modules/java-zip</module>
 
         <!-- Starter -->
         <module>starters/java-infrastructure-starter</module>

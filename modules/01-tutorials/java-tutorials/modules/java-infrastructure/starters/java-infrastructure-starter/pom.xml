@@ -83,5 +83,10 @@
             <artifactId>java-cron-expression</artifactId>
             <version>${revision}</version>
         </dependency>
+        <dependency>
+            <groupId>tungnn.tutor.java.infrastructure</groupId>
+            <artifactId>java-zip</artifactId>
+            <version>${revision}</version>
+        </dependency>
     </dependencies>
 </project>
