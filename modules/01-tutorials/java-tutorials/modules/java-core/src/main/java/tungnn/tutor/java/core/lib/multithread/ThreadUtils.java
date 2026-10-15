@@ -1,8 +1,8 @@
 package tungnn.tutor.java.core.lib.multithread;
 
-public final class ThreadUtil {
+public final class ThreadUtils {
 
-  private ThreadUtil() {}
+  private ThreadUtils() {}
 
   public static void sleep(long millis) {
     try {
