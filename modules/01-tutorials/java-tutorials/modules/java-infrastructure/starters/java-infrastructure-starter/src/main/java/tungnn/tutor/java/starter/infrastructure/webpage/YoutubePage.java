@@ -5,7 +5,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import tungnn.tutor.java.core.lib.multithread.ThreadUtil;
+import tungnn.tutor.java.core.lib.multithread.ThreadUtils;
 import tungnn.tutor.java.selenium.util.ElementUtil;
 import tungnn.tutor.java.starter.infrastructure.webpage.crawler.PageCrawlResult;
 import tungnn.tutor.java.starter.infrastructure.webpage.crawler.PageCrawler;
@@ -48,7 +48,7 @@ public class YoutubePage extends BasePage implements PageCrawler {
     var url = driver.getCurrentUrl();
 
     navigateTo(VIDEO_SUMMARIZER);
-    ThreadUtil.sleep(1000);
+    ThreadUtils.sleep(1000);
     waitTitleContains();
 
     sendUrl(url);

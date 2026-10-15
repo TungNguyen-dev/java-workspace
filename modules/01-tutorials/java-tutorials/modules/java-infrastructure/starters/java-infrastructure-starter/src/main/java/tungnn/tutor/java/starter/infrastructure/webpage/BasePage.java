@@ -4,7 +4,7 @@ import java.time.Duration;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import tungnn.tutor.java.core.lib.multithread.ThreadUtil;
+import tungnn.tutor.java.core.lib.multithread.ThreadUtils;
 import tungnn.tutor.java.selenium.util.ElementUtil;
 
 public abstract class BasePage {
@@ -26,7 +26,7 @@ public abstract class BasePage {
   /** Điều hướng đến một URL bất kỳ. */
   protected void navigateTo(String url) {
     driver.get(url);
-    ThreadUtil.sleep(1000);
+    ThreadUtils.sleep(1000);
   }
 
   /** Làm mới (Refresh) trang hiện tại. */
