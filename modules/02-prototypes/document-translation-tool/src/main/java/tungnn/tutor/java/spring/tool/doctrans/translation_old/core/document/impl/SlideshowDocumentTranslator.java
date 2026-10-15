@@ -21,40 +21,7 @@ public class SlideshowDocumentTranslator extends AbstractDocumentTranslator<XMLS
     super(translatorOrchestrator);
   }
 
-  @Override
-  protected XMLSlideShow openDocument(DocumentTranslationRequest request) {
-    try {
-      return PowerPointUtil.readPresentation(Files.newInputStream(request.documentPath()));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  protected List<TextReference> collectTextReferences(XMLSlideShow document) {
-    var refs = new ArrayList<TextReference>();
-
-    DocumentSemanticUnitCollector.collectTextShapes(document).stream()
-        .map(TextShapeTextReference::new)
-        .forEach(refs::add);
-
-    DocumentSemanticUnitCollector.collectTableCells(document).stream()
-        .map(TableCellTextReference::new)
-        .forEach(refs::add);
-
-    return refs;
-  }
-
-  @Override
-  protected void saveDocument(XMLSlideShow document, Path translationPath) {
-    try {
-      PowerPointUtil.writePresentation(document, Files.newOutputStream(translationPath));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private record TextShapeTextReference(XSLFTextShape shape) implements TextReference {
+TextReference {
 
     @Override
     public String getId() {
@@ -73,7 +40,7 @@ public class SlideshowDocumentTranslator extends AbstractDocumentTranslator<XMLS
     }
   }
 
-  private record TableCellTextReference(XSLFTableCell cell) implements TextReference {
+TextReference {
 
     @Override
     public String getId() {
@@ -91,4 +58,39 @@ public class SlideshowDocumentTranslator extends AbstractDocumentTranslator<XMLS
       cell.setText(text);
     }
   }
+
+  @Override
+  protected XMLSlideShow openDocument(DocumentTranslationRequest request) {
+    try {
+      return PowerPointUtil.readPresentation(Files.newInputStream(request.documentPath()));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+    @Override
+  protected List<TextReference> collectTextReferences(XMLSlideShow document) {
+    var refs = new ArrayList<TextReference>();
+
+    DocumentSemanticUnitCollector.collectTextShapes(document).stream()
+        .map(TextShapeTextReference::new)
+        .forEach(refs::add);
+
+    DocumentSemanticUnitCollector.collectTableCells(document).stream()
+        .map(TableCellTextReference::new)
+        .forEach(refs::add);
+
+    return refs;
+  } implements
+  @Override
+  protected void saveDocument(XMLSlideShow document, Path translationPath) {
+    try {
+      PowerPointUtil.writePresentation(document, Files.newOutputStream(translationPath));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private record TextShapeTextReference(XSLFTextShape shape) implements
+private record TableCellTextReference(XSLFTableCell cell)
 }

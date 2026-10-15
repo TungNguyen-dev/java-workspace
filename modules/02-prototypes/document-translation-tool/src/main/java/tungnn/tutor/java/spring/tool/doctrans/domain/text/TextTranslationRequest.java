@@ -6,12 +6,7 @@ import tungnn.tutor.java.spring.tool.doctrans.shared.LanguageCode;
 
 public interface TextTranslationRequest {
 
-  List<TextUnit> texts();
-
-  LanguageCode targetLanguage();
-
-  record TextBatchTranslationRequest(List<TextUnit> texts, LanguageCode targetLanguage)
-      implements TextTranslationRequest {
+TextTranslationRequest {
 
     public TextBatchTranslationRequest {
       Objects.requireNonNull(texts, "texts must not be null");
@@ -20,4 +15,10 @@ public interface TextTranslationRequest {
       texts = List.copyOf(texts);
     }
   }
+
+  List<TextUnit> texts();
+
+  LanguageCode targetLanguage();
+      implements
+  record TextBatchTranslationRequest(List<TextUnit> texts, LanguageCode targetLanguage)
 }

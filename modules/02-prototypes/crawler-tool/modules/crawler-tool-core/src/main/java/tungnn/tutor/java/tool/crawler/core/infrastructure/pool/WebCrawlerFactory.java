@@ -1,6 +1,5 @@
 package tungnn.tutor.java.tool.crawler.core.infrastructure.pool;
 
-
 import org.openqa.selenium.WebDriver;
 import tungnn.tutor.java.tool.crawler.core.domain.WebCrawler;
 import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlerType;

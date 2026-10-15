@@ -6,12 +6,13 @@ import tungnn.tutor.java.spring.tool.doctrans.shared.TranslationError;
 public sealed interface DocumentTranslationResult
     permits DocumentTranslationResult.Success, DocumentTranslationResult.Failure {
 
-  record Success() implements DocumentTranslationResult {}
-
-  record Failure(TranslationError error) implements DocumentTranslationResult {
+  DocumentTranslationResult {} implements DocumentTranslationResult {
 
     public Failure {
       Objects.requireNonNull(error, "error must not be null");
     }
   }
+
+  record Success() implements
+record Failure(TranslationError error)
 }

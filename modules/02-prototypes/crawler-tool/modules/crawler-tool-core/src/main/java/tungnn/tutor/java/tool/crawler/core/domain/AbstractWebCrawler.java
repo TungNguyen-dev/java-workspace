@@ -3,7 +3,7 @@ package tungnn.tutor.java.tool.crawler.core.domain;
 import java.time.Duration;
 import java.util.Objects;
 import org.openqa.selenium.WebDriver;
-import tungnn.tutor.java.document.adapter.markdown.MarkdownWriterUtils;
+import tungnn.tutor.java.infra.document.adapter.markdown.MarkdownWriterUtils;
 import tungnn.tutor.java.selenium.util.DriverUtil;
 import tungnn.tutor.java.selenium.util.ElementUtil;
 import tungnn.tutor.java.selenium.util.WindowUtil;

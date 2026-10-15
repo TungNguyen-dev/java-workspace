@@ -21,40 +21,7 @@ public class WordDocumentTranslator extends AbstractDocumentTranslator<XWPFDocum
     super(translatorOrchestrator);
   }
 
-  @Override
-  protected XWPFDocument openDocument(DocumentTranslationRequest request) {
-    try {
-      return WordUtil.readDocument(Files.newInputStream(request.documentPath()));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  protected List<TextReference> collectTextReferences(XWPFDocument document) {
-    List<TextReference> refs = new ArrayList<>();
-
-    DocumentSemanticUnitCollector.collectParagraphs(document).stream()
-        .map(XWPFParagraphTextReference::new)
-        .forEach(refs::add);
-
-    DocumentSemanticUnitCollector.collectTableCells(document).stream()
-        .map(XWPFTableCellTextReference::new)
-        .forEach(refs::add);
-
-    return refs;
-  }
-
-  @Override
-  protected void saveDocument(XWPFDocument document, Path translationPath) {
-    try {
-      WordUtil.writeDocument(document, Files.newOutputStream(translationPath));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private record XWPFParagraphTextReference(XWPFParagraph paragraph) implements TextReference {
+TextReference {
     @Override
     public String getId() {
       return "paragraph-" + System.identityHashCode(paragraph);
@@ -75,7 +42,7 @@ public class WordDocumentTranslator extends AbstractDocumentTranslator<XWPFDocum
     }
   }
 
-  private record XWPFTableCellTextReference(XWPFTableCell tableCell) implements TextReference {
+TextReference {
     @Override
     public String getId() {
       return "cell-" + System.identityHashCode(tableCell);
@@ -94,4 +61,39 @@ public class WordDocumentTranslator extends AbstractDocumentTranslator<XWPFDocum
       paragraph.createRun().setText(text);
     }
   }
+
+  @Override
+  protected XWPFDocument openDocument(DocumentTranslationRequest request) {
+    try {
+      return WordUtil.readDocument(Files.newInputStream(request.documentPath()));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+    @Override
+  protected List<TextReference> collectTextReferences(XWPFDocument document) {
+    List<TextReference> refs = new ArrayList<>();
+
+    DocumentSemanticUnitCollector.collectParagraphs(document).stream()
+        .map(XWPFParagraphTextReference::new)
+        .forEach(refs::add);
+
+    DocumentSemanticUnitCollector.collectTableCells(document).stream()
+        .map(XWPFTableCellTextReference::new)
+        .forEach(refs::add);
+
+    return refs;
+  } implements
+  @Override
+  protected void saveDocument(XWPFDocument document, Path translationPath) {
+    try {
+      WordUtil.writeDocument(document, Files.newOutputStream(translationPath));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private record XWPFParagraphTextReference(XWPFParagraph paragraph) implements
+private record XWPFTableCellTextReference(XWPFTableCell tableCell)
 }

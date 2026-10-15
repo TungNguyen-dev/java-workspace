@@ -20,15 +20,106 @@ public class ExcelDocumentTranslator extends AbstractDocumentTranslator<Workbook
     super(translatorOrchestrator);
   }
 
-  @Override
+TextReference {
+
+    @Override
+    public String getId() {
+      return cell.getSheet().getSheetName() + "!" + cell.getAddress().formatAsString();
+    }
+
+    @Override
+    public String getText() {
+      return cell.getStringCellValue();
+    }
+
+    @Override
+    public void setText(String text) {
+      cell.setCellValue(text);
+    }
+  }
+
+TextReference {
+
+    @Override
+    public String getId() {
+      return "comment-" + System.identityHashCode(comment);
+    }
+
+    @Override
+    public String getText() {
+      return comment.getString().getString();
+    }
+
+    @Override
+    public void setText(String text) {
+      comment.setString(new XSSFRichTextString(text));
+    }
+  }
+
+TextReference {
+
+    @Override
+    public String getId() {
+      return "header-" + System.identityHashCode(header);
+    }
+
+    @Override
+    public String getText() {
+      return String.join("\n", header.getLeft(), header.getCenter(), header.getRight());
+    }
+
+    @Override
+    public void setText(String text) {
+      header.setCenter(text);
+      header.setLeft("");
+      header.setRight("");
+    }
+  }
+
+  TextReference {
+
+    @Override
+    public String getId() {
+      return "footer-" + System.identityHashCode(footer);
+    }
+
+    @Override
+    public String getText() {
+      return String.join("\n", footer.getLeft(), footer.getCenter(), footer.getRight());
+    }
+
+    @Override
+    public void setText(String text) {
+      footer.setCenter(text);
+      footer.setLeft("");
+      footer.setRight("");
+    }
+  } implements TextReference {
+
+    @Override
+    public String getId() {
+      return "shape-" + System.identityHashCode(shape);
+    }
+
+    @Override
+    public String getText() {
+      return shape.getText();
+    }
+
+    @Override
+    public void setText(String text) {
+      shape.setText(text);
+    }
+  }
+
+    @Override
   protected Workbook openDocument(DocumentTranslationRequest request) {
     try {
       return ExcelUtil.readWorkbook(request.documentPath());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
+  } implements
   @Override
   protected List<TextReference> collectTextReferences(Workbook document) {
     var refs = new ArrayList<TextReference>();
@@ -56,106 +147,19 @@ public class ExcelDocumentTranslator extends AbstractDocumentTranslator<Workbook
     return refs;
   }
 
-  @Override
+    @Override
   protected void saveDocument(Workbook document, Path translationPath) {
     try {
       ExcelUtil.writeWorkbook(document, translationPath);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
+  } implements
+private record CellTextReference(Cell cell)
 
-  private record CellTextReference(Cell cell) implements TextReference {
+  private record CommentTextReference(Comment comment) implements
+private record HeaderTextReference(Header header)
 
-    @Override
-    public String getId() {
-      return cell.getSheet().getSheetName() + "!" + cell.getAddress().formatAsString();
-    }
-
-    @Override
-    public String getText() {
-      return cell.getStringCellValue();
-    }
-
-    @Override
-    public void setText(String text) {
-      cell.setCellValue(text);
-    }
-  }
-
-  private record CommentTextReference(Comment comment) implements TextReference {
-
-    @Override
-    public String getId() {
-      return "comment-" + System.identityHashCode(comment);
-    }
-
-    @Override
-    public String getText() {
-      return comment.getString().getString();
-    }
-
-    @Override
-    public void setText(String text) {
-      comment.setString(new XSSFRichTextString(text));
-    }
-  }
-
-  private record HeaderTextReference(Header header) implements TextReference {
-
-    @Override
-    public String getId() {
-      return "header-" + System.identityHashCode(header);
-    }
-
-    @Override
-    public String getText() {
-      return String.join("\n", header.getLeft(), header.getCenter(), header.getRight());
-    }
-
-    @Override
-    public void setText(String text) {
-      header.setCenter(text);
-      header.setLeft("");
-      header.setRight("");
-    }
-  }
-
-  private record FooterTextReference(Footer footer) implements TextReference {
-
-    @Override
-    public String getId() {
-      return "footer-" + System.identityHashCode(footer);
-    }
-
-    @Override
-    public String getText() {
-      return String.join("\n", footer.getLeft(), footer.getCenter(), footer.getRight());
-    }
-
-    @Override
-    public void setText(String text) {
-      footer.setCenter(text);
-      footer.setLeft("");
-      footer.setRight("");
-    }
-  }
-
-  private record ShapeTextReference(XSSFSimpleShape shape) implements TextReference {
-
-    @Override
-    public String getId() {
-      return "shape-" + System.identityHashCode(shape);
-    }
-
-    @Override
-    public String getText() {
-      return shape.getText();
-    }
-
-    @Override
-    public void setText(String text) {
-      shape.setText(text);
-    }
-  }
+  private record FooterTextReference(Footer footer) implements
+private record ShapeTextReference(XSSFSimpleShape shape)
 }
