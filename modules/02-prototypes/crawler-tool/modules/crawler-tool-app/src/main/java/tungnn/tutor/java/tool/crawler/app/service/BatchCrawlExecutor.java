@@ -1,10 +1,9 @@
 package tungnn.tutor.java.tool.crawler.app.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
+import tungnn.tutor.java.core.lib.multithread.ConcurrentUtils;
 import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
 import tungnn.tutor.java.tool.crawler.core.domain.CrawlResult;
 import tungnn.tutor.java.tool.crawler.core.domain.WebCrawler;
@@ -20,35 +19,24 @@ public class BatchCrawlExecutor {
   }
 
   /**
-   * Accepts a list of crawling requests, processes them in parallel using virtual threads and
-   * WebCrawlerPool, and collects the results into a Map.
+   * Accepts a list of crawling requests, processes them concurrently using virtual threads through
+   * ConcurrentUtils, and collects the results into an insertion-ordered map.
    */
   public Map<CrawlRequest, CrawlResult> submitBatch(List<CrawlRequest.WebPage> batchWebRequests) {
     if (batchWebRequests == null || batchWebRequests.isEmpty()) {
       return Map.of();
     }
 
-    Map<CrawlRequest, CrawlResult> resultMap = new ConcurrentHashMap<>();
+    List<CrawlResult> results =
+        ConcurrentUtils.executeConcurrently(batchWebRequests, this::executeCrawl);
 
-    // Use Virtual Threads ExecutorService for parallel execution
-    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-      var futures =
-          batchWebRequests.stream()
-              .map(
-                  request ->
-                      CompletableFuture.runAsync(
-                          () -> {
-                            var result = executeCrawl(request);
-                            resultMap.put(request, result);
-                          },
-                          executor))
-              .toList();
+    Map<CrawlRequest, CrawlResult> crawlResults = new HashMap<>(batchWebRequests.size());
 
-      // Wait for all tasks to complete
-      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    for (int i = 0; i < batchWebRequests.size(); i++) {
+      crawlResults.putIfAbsent(batchWebRequests.get(i), results.get(i));
     }
 
-    return resultMap;
+    return crawlResults;
   }
 
   /**
