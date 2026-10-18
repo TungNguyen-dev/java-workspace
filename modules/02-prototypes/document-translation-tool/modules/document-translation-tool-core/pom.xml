@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>tungnn.tutor.java.tool</groupId>
+        <artifactId>document-translation-tool</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>document-translation-tool-core</artifactId>
+
+    <name>document-translation-tool-core</name>
+    <description>document-translation-tool-core</description>
+
+    <properties>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.workspace.infrastructure.version>1.0.0-SNAPSHOT</java.workspace.infrastructure.version>
+    </properties>
+
+    <dependencies>
+        <!-- Java Infrastructure -->
+        <dependency>
+            <groupId>tungnn.tutor.java.infrastructure</groupId>
+            <artifactId>java-infrastructure-starter</artifactId>
+            <version>${java.workspace.infrastructure.version}</version>
+            <exclusions>
+                <!-- Loại bỏ Log4j2 Implementation để nhường quyền cho Spring Boot / App chính -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                </exclusion>
+                <!-- Loại bỏ SLF4J -> Log4j2 Binding để tránh trùng lặp/xung đột binding -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j2-impl</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <!-- INFO: Skip Spring Boot repackage for library module -->
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

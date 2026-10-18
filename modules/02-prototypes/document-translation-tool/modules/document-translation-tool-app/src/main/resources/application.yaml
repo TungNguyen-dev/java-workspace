@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: document-translation-tool
+logging:
+  level:
+    tungnn.tutor.java: ${LOG_LEVEL_DOCTRANS:INFO}
+doctrans:
+  storage:
+    baseDir: storage/app/doctrans
+  dir:
+    input: 01-todo
+    output: 02-result
+    done: 03-done
