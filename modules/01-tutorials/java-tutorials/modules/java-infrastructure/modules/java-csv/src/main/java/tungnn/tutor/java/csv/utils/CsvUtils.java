@@ -138,6 +138,67 @@ public final class CsvUtils {
   }
 
   // ==========================================
+  // 1. READ METHOD WITH MAPPER CALLBACK
+  // ==========================================
+
+  public static <E> Stream<E> readAsStream(
+      Path path, Function<CSVRecord, E> mapper, CsvConfig csvConfig) {
+    BufferedReader bufferedReader = null;
+    CSVParser csvParser = null;
+
+    try {
+      bufferedReader = Files.newBufferedReader(path, csvConfig.charset());
+      csvParser = csvConfig.csvFormat().parse(bufferedReader);
+
+      // Capture references for safe closure within the stream's onClose hook
+      final var finalReader = bufferedReader;
+      final var finalParser = csvParser;
+
+      return csvParser.stream().map(mapper).onClose(() -> closeResources(finalParser, finalReader));
+
+    } catch (Exception e) {
+      closeResources(csvParser, bufferedReader);
+
+      if (e instanceof IOException ioe) {
+        throw new UncheckedIOException("Failed to read CSV as stream: " + path, ioe);
+      }
+      throw new RuntimeException("Failed to read CSV as stream: " + path, e);
+    }
+  }
+
+  // ==========================================
+  // 2. WRITE METHOD WITH MAPPER CALLBACK
+  // ==========================================
+
+  public static <E> void writeStream(
+      Path path,
+      Stream<E> data,
+      List<String> headers,
+      Function<E, Object[]> mapper,
+      CsvConfig csvConfig) {
+    try (Stream<E> stream = data;
+        BufferedWriter bufferedWriter = Files.newBufferedWriter(path, csvConfig.charset());
+        CSVPrinter csvPrinter = csvConfig.csvFormat().print(bufferedWriter)) {
+
+      // Print headers
+      if (headers != null && !headers.isEmpty()) {
+        csvPrinter.printRecord(headers);
+      }
+
+      // Iterate and print rows using the mapper callback
+      Iterator<E> iterator = stream.iterator();
+      while (iterator.hasNext()) {
+        E element = iterator.next();
+        Object[] values = mapper.apply(element);
+        csvPrinter.printRecord(values);
+      }
+
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to write CSV stream to path: " + path, e);
+    }
+  }
+
+  // ==========================================
   // OPTIMIZED HELPER & CONVERSION LOGIC
   // ==========================================
 
