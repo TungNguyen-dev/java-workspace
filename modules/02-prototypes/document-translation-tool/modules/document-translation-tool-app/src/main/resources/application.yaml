@@ -1,6 +1,8 @@
 spring:
   application:
     name: document-translation-tool
+  config:
+    import: optional:classpath:spring-ai.yaml
 logging:
   level:
     tungnn.tutor.java: ${LOG_LEVEL_DOCTRANS:INFO}
