@@ -7,7 +7,9 @@ import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -193,6 +195,54 @@ public final class CsvUtils {
         csvPrinter.printRecord(values);
       }
 
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to write CSV stream to path: " + path, e);
+    }
+  }
+
+  public static <E> void appendStream(
+      Path path,
+      Stream<E> data,
+      List<String> headers,
+      Function<E, Object[]> mapper,
+      CsvConfig csvConfig) {
+    write(path, data, headers, mapper, csvConfig, true);
+  }
+
+  private static <E> void write(
+      Path path,
+      Stream<E> data,
+      List<String> headers,
+      Function<E, Object[]> mapper,
+      CsvConfig csvConfig,
+      boolean append) {
+    try {
+      boolean writeHeader =
+          headers != null
+              && !headers.isEmpty()
+              && (!append || Files.notExists(path) || Files.size(path) == 0);
+
+      OpenOption[] options =
+          append
+              ? new OpenOption[] {StandardOpenOption.CREATE, StandardOpenOption.APPEND}
+              : new OpenOption[] {
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE
+              };
+
+      try (Stream<E> stream = data;
+          BufferedWriter writer = Files.newBufferedWriter(path, csvConfig.charset(), options);
+          CSVPrinter printer = csvConfig.csvFormat().print(writer)) {
+
+        if (writeHeader) {
+          printer.printRecord(headers);
+        }
+        Iterator<E> iterator = stream.iterator();
+        while (iterator.hasNext()) {
+          printer.printRecord(mapper.apply(iterator.next()));
+        }
+      }
     } catch (IOException e) {
       throw new UncheckedIOException("Failed to write CSV stream to path: " + path, e);
     }

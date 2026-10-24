@@ -1,20 +1,18 @@
 package tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.memory;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.io.UncheckedIOException;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Stream;
 import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +27,14 @@ public class CsvFileTextTranslationMemory implements TextTranslationMemory {
   private static final String FILE_EXTENSION = ".csv";
   private static final String COLUMN_SOURCE = "source";
   private static final String COLUMN_TRANSLATION = "translation";
-  private static final CSVFormat READ_FORMAT = CsvUtils.CsvConfig.DEFAULT.csvFormat();
-  private static final CSVFormat WRITE_FORMAT = CsvUtils.CsvConfig.DEFAULT.csvFormat();
+  private static final List<String> HEADERS = List.of(COLUMN_SOURCE, COLUMN_TRANSLATION);
+
+  /** Same as DEFAULT but keeps whitespace: it is significant for a translation memory key. */
+  private static final CsvUtils.CsvConfig CSV_CONFIG =
+      CsvUtils.CsvConfig.of(
+          StandardCharsets.UTF_8,
+          CSVFormat.Builder.create(CsvUtils.CsvConfig.DEFAULT.csvFormat()).setTrim(false).build());
+
   private final Path memoryDir;
   private final Map<LanguageCode, LanguagePartition> partitions = new ConcurrentHashMap<>();
 
@@ -80,37 +84,30 @@ public class CsvFileTextTranslationMemory implements TextTranslationMemory {
     if (Files.notExists(file)) {
       return new LanguagePartition(file, entries);
     }
-    try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8);
-        CSVParser parser = READ_FORMAT.parse(reader)) {
-      for (CSVRecord csvRecord : parser) {
-        if (!csvRecord.isConsistent()) {
-          continue;
-        }
-        entries.put(csvRecord.get(COLUMN_SOURCE), csvRecord.get(COLUMN_TRANSLATION));
-      }
-    } catch (IOException | RuntimeException e) {
+    try (var records = CsvUtils.readAsStream(file, Function.identity(), CSV_CONFIG)) {
+      records
+          .filter(CSVRecord::isConsistent)
+          .forEach(r -> entries.put(r.get(COLUMN_SOURCE), r.get(COLUMN_TRANSLATION)));
+    } catch (RuntimeException e) {
+      LOGGER.warn("Failed to load translation memory from {}", file, e);
     }
     return new LanguagePartition(file, entries);
   }
 
   private void append(Path file, String sourceText, String translation) {
     try {
-      boolean writeHeader = Files.notExists(file) || Files.size(file) == 0;
-      try (Writer writer =
-              Files.newBufferedWriter(
-                  file,
-                  StandardCharsets.UTF_8,
-                  StandardOpenOption.CREATE,
-                  StandardOpenOption.APPEND);
-          CSVPrinter printer = new CSVPrinter(writer, WRITE_FORMAT)) {
-        if (writeHeader) {
-          printer.printRecord(COLUMN_SOURCE, COLUMN_TRANSLATION);
-        }
-        printer.printRecord(sourceText, translation);
-      }
-    } catch (IOException | RuntimeException e) {
+      CsvUtils.appendStream(
+          file,
+          Stream.of(new Entry(sourceText, translation)),
+          HEADERS,
+          e -> new Object[] {e.source(), e.translation()},
+          CSV_CONFIG);
+    } catch (RuntimeException e) {
+      LOGGER.warn("Failed to append translation memory entry to {}", file, e);
     }
   }
+
+  private record Entry(String source, String translation) {}
 
   private record LanguagePartition(Path file, Map<String, String> entries) {}
 }
