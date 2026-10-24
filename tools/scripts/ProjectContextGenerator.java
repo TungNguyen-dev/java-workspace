@@ -67,6 +67,7 @@ public final class ProjectContextGenerator {
   private static final int MAX_TREE_DEPTH = 100;
   private static final DateTimeFormatter DATE_FORMATTER =
       DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
   private ProjectContextGenerator() {}
 
   static void main(String[] args) throws IOException {

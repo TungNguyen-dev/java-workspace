@@ -16,6 +16,8 @@ import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.Gemin
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceChatClientFactory;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.memory.CsvFileTextTranslationMemory;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.ollama.OllamaChatClientFactory;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.ollama.OllamaTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationService;
 import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationServiceImpl;
 
@@ -27,7 +29,7 @@ public class AppConfig {
 
   /**
    * Gemini is the default provider. The ChatClient is built inline (not exposed as a bean) so it
-   * never competes with the Hugging Face ChatClient.
+   * never competes with other ChatClients.
    */
   @Bean
   @ConditionalOnProperty(
@@ -48,6 +50,13 @@ public class AppConfig {
     var chatClient =
         HuggingFaceChatClientFactory.create(translatorConfig.huggingface().toProperties());
     return new HuggingFaceTextTranslator(chatClient);
+  }
+
+  @Bean
+  @ConditionalOnProperty(prefix = "doctrans.translator", name = "provider", havingValue = "ollama")
+  public TextTranslator ollamaTextTranslator() {
+    var chatClient = OllamaChatClientFactory.create(translatorConfig.ollama().toProperties());
+    return new OllamaTextTranslator(chatClient);
   }
 
   @Bean

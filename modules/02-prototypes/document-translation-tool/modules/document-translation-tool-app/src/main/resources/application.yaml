@@ -23,10 +23,16 @@ doctrans:
     memory: text-translation-memory
   worker-threads: 2
   translator:
-    provider: ${DOCTRANS_TRANSLATOR_PROVIDER:gemini}   # gemini | huggingface
+    provider: ${DOCTRANS_TRANSLATOR_PROVIDER:gemini}   # gemini | huggingface | ollama
     huggingface:
       base-url: https://router.huggingface.co/v1
       token: ${HF_TOKEN:}
       model: ${HF_MODEL:}                                # e.g. a chat model id from /v1/models
       temperature: 0
       timeout-seconds: 120
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434/v1}
+      token: ${OLLAMA_TOKEN:ollama}
+      model: ${OLLAMA_MODEL:llama3}                      # e.g. llama3, qwen2.5, deepseek-r1:8b
+      temperature: 0
+      timeout-seconds: 600
