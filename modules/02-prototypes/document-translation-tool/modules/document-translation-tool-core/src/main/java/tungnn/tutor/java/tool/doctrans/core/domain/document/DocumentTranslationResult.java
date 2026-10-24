@@ -2,7 +2,8 @@ package tungnn.tutor.java.tool.doctrans.core.domain.document;
 
 import java.nio.file.Path;
 
-public interface DocumentTranslationResult {
+public sealed interface DocumentTranslationResult
+    permits DocumentTranslationResult.Success, DocumentTranslationResult.Failure {
 
   record DocumentTranslation(Path path) {}
 
