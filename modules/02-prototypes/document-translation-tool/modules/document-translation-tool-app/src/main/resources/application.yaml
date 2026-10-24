@@ -1,16 +1,24 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: document-translation-tool
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
   config:
     import: optional:classpath:spring-ai.yaml
+
 logging:
   level:
     tungnn.tutor.java: ${LOG_LEVEL_DOCTRANS:INFO}
+
 doctrans:
   storage:
     baseDir: storage/app/doctrans
   dir:
-    input: 01-todo
-    output: 02-result
-    done: 03-done
-    memory: 04-memory
+    job: job
+    memory: text-translation-memory
+  worker-threads: 2
