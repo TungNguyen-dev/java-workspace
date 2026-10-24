@@ -15,27 +15,31 @@ public final class ConcurrentUtils {
 
   public static <R> List<R> executeConcurrently(int count, Callable<R> task) {
     Objects.requireNonNull(task, "task must not be null");
-
     if (count < 0) {
       throw new IllegalArgumentException("count must not be negative");
     }
+    return runAll(Collections.nCopies(count, task), null);
+  }
 
-    if (count == 0) {
-      return List.of();
+  public static <R> List<R> executeConcurrently(int count, Callable<R> task, int maxConcurrency) {
+    Objects.requireNonNull(task, "task must not be null");
+    if (count < 0) {
+      throw new IllegalArgumentException("count must not be negative");
     }
-
-    // Spawn N virtual thread tasks directly without pre-allocating an intermediate list of
-    // Callables
-    try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-      var futures = new ArrayList<CompletableFuture<R>>(count);
-      for (int i = 0; i < count; i++) {
-        futures.add(CompletableFuture.supplyAsync(() -> call(task), executor));
-      }
-      return joinAllResults(futures);
-    }
+    return runAll(Collections.nCopies(count, task), newSemaphore(maxConcurrency));
   }
 
   public static <A, R> List<R> executeConcurrently(List<A> args, Function<A, R> task) {
+    return executeConcurrently(args, task, null);
+  }
+
+  public static <A, R> List<R> executeConcurrently(
+      List<A> args, Function<A, R> task, int maxConcurrency) {
+    return executeConcurrently(args, task, newSemaphore(maxConcurrency));
+  }
+
+  private static <A, R> List<R> executeConcurrently(
+      List<A> args, Function<A, R> task, Semaphore semaphore) {
     Objects.requireNonNull(args, "args must not be null");
     Objects.requireNonNull(task, "task must not be null");
 
@@ -43,29 +47,50 @@ public final class ConcurrentUtils {
       return List.of();
     }
 
-    // Defensive copy to guarantee thread-safety and prevent external list mutations during
-    // execution
+    // Defensive copy to guarantee thread-safety and prevent external list mutations
     var safeArgs = List.copyOf(args);
     var tasks = safeArgs.stream().map(arg -> (Callable<R>) () -> task.apply(arg)).toList();
 
-    return executeConcurrently(tasks);
+    return runAll(tasks, semaphore);
   }
 
-  private static <R> List<R> executeConcurrently(List<? extends Callable<R>> tasks) {
+  private static <R> List<R> runAll(List<? extends Callable<R>> tasks, Semaphore semaphore) {
     if (tasks.isEmpty()) {
       return List.of();
     }
 
-    // Manage life cycle using try-with-resources which implicitly awaits termination of all virtual
-    // threads
+    // try-with-resources implicitly awaits termination of all virtual threads
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
       var futures =
           tasks.stream()
+              .map(task -> limited(task, semaphore))
               .map(task -> CompletableFuture.supplyAsync(() -> call(task), executor))
               .toList();
 
       return joinAllResults(futures);
     }
+  }
+
+  private static Semaphore newSemaphore(int maxConcurrency) {
+    if (maxConcurrency <= 0) {
+      throw new IllegalArgumentException("maxConcurrency must be greater than 0");
+    }
+    // fair = true: các task lấy permit theo thứ tự chờ (FIFO) nên gần giống thứ tự submit
+    return new Semaphore(maxConcurrency, true);
+  }
+
+  private static <R> Callable<R> limited(Callable<R> task, Semaphore semaphore) {
+    if (semaphore == null) {
+      return task;
+    }
+    return () -> {
+      semaphore.acquire();
+      try {
+        return task.call();
+      } finally {
+        semaphore.release();
+      }
+    };
   }
 
   private static <R> R call(Callable<R> task) {
