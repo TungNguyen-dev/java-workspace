@@ -13,3 +13,4 @@ doctrans:
     input: 01-todo
     output: 02-result
     done: 03-done
+    memory: 04-memory

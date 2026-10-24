@@ -6,9 +6,9 @@ public interface DocumentTranslationResult {
 
   record DocumentTranslation(Path path) {}
 
-  record Error(String code, String message) {}
-
   record Success(DocumentTranslation translation) implements DocumentTranslationResult {}
 
   record Failure(Error error) implements DocumentTranslationResult {}
+
+  record Error(String code, String message) {}
 }

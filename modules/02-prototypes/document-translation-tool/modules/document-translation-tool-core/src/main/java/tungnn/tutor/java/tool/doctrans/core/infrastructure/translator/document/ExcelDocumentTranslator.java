@@ -11,12 +11,14 @@ import tungnn.tutor.java.infra.document.utils.DocumentSemanticUnitCollector;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.AbstractDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTextBlock;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslationRequest;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
 
 public class ExcelDocumentTranslator extends AbstractDocumentTranslator<Workbook> {
 
-  public ExcelDocumentTranslator(TextTranslator textTranslator) {
-    super(textTranslator);
+  public ExcelDocumentTranslator(
+      TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
+    super(textTranslator, textTranslationMemory);
   }
 
   @Override

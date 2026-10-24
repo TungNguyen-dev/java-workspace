@@ -29,22 +29,14 @@ public class GeminiApiTextTranslator extends AbstractTextTranslator {
     var userPrompt = OBJECT_MAPPER.writeValueAsString(request);
 
     // Log the full request record before calling the Gemini API
-    LOGGER.debug("User Prompt (JSON payload): {}", userPrompt);
+    LOGGER.trace("User Prompt (JSON payload): {}", userPrompt);
 
     // Invoke Gemini API synchronously using Spring AI ChatClient
     var result = chatClient.prompt().system(SYSTEM_PROMPT).user(userPrompt).call().content();
 
     var textUnit = request.textUnit();
-    var textTranslation =
-        new TextTranslationResult.TextTranslation(
-            textUnit.id(), textUnit.content(), result, request.targetLanguage());
 
-    // Log the full result record and response length after receiving the response
-    LOGGER.debug(
-        "Received translation response from Gemini API. Result: [{}], Response length: {} chars",
-        textTranslation,
-        result != null ? result.length() : 0);
-
-    return textTranslation;
+    return new TextTranslationResult.TextTranslation(
+        textUnit.id(), textUnit.content(), result, request.targetLanguage());
   }
 }

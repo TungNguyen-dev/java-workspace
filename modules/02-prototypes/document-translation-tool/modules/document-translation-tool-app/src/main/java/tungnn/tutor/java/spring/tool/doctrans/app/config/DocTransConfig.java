@@ -26,7 +26,12 @@ public record DocTransConfig(Storage storage, Dir dir, String targetLanguage) {
     return baseDir().resolve(dir.done());
   }
 
+  /** Gets the done directory for text translation memory files. */
+  public Path memoryDir() {
+    return baseDir().resolve(dir.memory());
+  }
+
   public record Storage(String baseDir) {}
 
-  public record Dir(String input, String output, String done) {}
+  public record Dir(String input, String output, String done, String memory) {}
 }

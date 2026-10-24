@@ -2,25 +2,56 @@ package tungnn.tutor.java.tool.doctrans.core.domain.document;
 
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tungnn.tutor.java.core.lib.io.filesystem.FileNameUtil;
 import tungnn.tutor.java.core.lib.multithread.ConcurrentUtils;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.memory.NoOpTextTranslationMemory;
 
 public abstract class AbstractDocumentTranslator<D> implements DocumentTranslator {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDocumentTranslator.class);
 
   protected final TextTranslator textTranslator;
+  protected final TextTranslationMemory translationMemory;
 
   protected AbstractDocumentTranslator(TextTranslator textTranslator) {
+    this(textTranslator, NoOpTextTranslationMemory.INSTANCE);
+  }
+
+  protected AbstractDocumentTranslator(
+      TextTranslator textTranslator, TextTranslationMemory translationMemory) {
     this.textTranslator = Objects.requireNonNull(textTranslator, "textTranslator must not be null");
+    this.translationMemory =
+        Objects.requireNonNull(translationMemory, "translationMemory must not be null");
+  }
+
+  private static boolean isApplicable(TextTranslationResult result) {
+    return result
+            instanceof
+            TextTranslationResult.Success(TextTranslationResult.TextTranslation translation)
+        && translation != null
+        && translation.translation() != null;
+  }
+
+  private static boolean isMemorizable(TextTranslationResult.TextTranslation translation) {
+    return !translation.translation().isBlank();
+  }
+
+  private static boolean isBlank(String content) {
+    return content == null || content.isBlank();
   }
 
   @Override
@@ -30,28 +61,22 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
         request.documentSource().path(),
         request.targetLanguage());
 
-    // 1. Open document D
     LOGGER.info("Opening document...");
     var document = openDocument(request);
     LOGGER.info("Document opened successfully.");
-
     try {
-      // 2. Collect list of TextBlock
       LOGGER.info("Collecting text blocks from document...");
       var textBlocks = collectTextBlock(document);
       LOGGER.info("Collected text blocks number: {}", textBlocks.size());
 
-      // 3. Translate TextBlocks
       LOGGER.info("Starting translation for {} text blocks...", textBlocks.size());
       var textBlockTranslations = translateTextBlock(request, textBlocks);
       LOGGER.info("Completed translation for {} text blocks.", textBlockTranslations.size());
 
-      // 4. Apply translation
       LOGGER.info("Applying translations to document blocks...");
       applyTranslation(textBlockTranslations);
       LOGGER.info("Translations applied successfully.");
 
-      // 5. Save document
       var translationPath = buildTranslationPath(request);
       LOGGER.info("Saving translated document to path: {}", translationPath);
       saveDocument(translationPath, document);
@@ -64,7 +89,6 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
       return new DocumentTranslationResult.Failure(
           new DocumentTranslationResult.Error("", e.getMessage()));
     } finally {
-      // 6. Close document D
       LOGGER.info("Closing document...");
       closeDocument(document);
       LOGGER.info("Document closed.");
@@ -85,40 +109,86 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
       return List.of();
     }
 
-    return ConcurrentUtils.executeConcurrently(
-        textBlocks, textBlock -> translateSingleBlock(request, textBlock));
+    var uniqueContents = new LinkedHashSet<String>();
+    for (var textBlock : textBlocks) {
+      if (!isBlank(textBlock.content())) {
+        uniqueContents.add(textBlock.content());
+      }
+    }
+    LOGGER.debug(
+        "Deduplicated {} text blocks into {} unique contents.",
+        textBlocks.size(),
+        uniqueContents.size());
+
+    var contentTranslations =
+        uniqueContents.isEmpty()
+            ? List.<ContentTranslation>of()
+            : ConcurrentUtils.executeConcurrently(
+                new ArrayList<>(uniqueContents),
+                content -> translateContent(request.targetLanguage(), content));
+
+    Map<String, TextTranslationResult.TextTranslation> translationByContent = new HashMap<>();
+    for (var contentTranslation : contentTranslations) {
+      translationByContent.put(contentTranslation.content(), contentTranslation.translation());
+    }
+
+    var textBlockTranslations = new ArrayList<TextBlockTranslation>(textBlocks.size());
+    for (var textBlock : textBlocks) {
+      var translation = translationByContent.get(textBlock.content());
+      textBlockTranslations.add(
+          translation != null
+              ? new TextBlockTranslation(textBlock, translation)
+              : keepOriginal(textBlock, request.targetLanguage()));
+    }
+    return textBlockTranslations;
   }
 
-  private TextBlockTranslation translateSingleBlock(
-      DocumentTranslationRequest request, DocumentTextBlock textBlock) {
+  private ContentTranslation translateContent(LanguageCode targetLanguage, String content) {
+    var textUnit = new TextTranslationRequest.TextUnit(UUID.randomUUID().toString(), content);
+    var memorized = translationMemory.find(targetLanguage, content);
+    if (memorized.isPresent()) {
+      LOGGER.debug("Translation memory hit for text unit [id={}]", textUnit.id());
+      return new ContentTranslation(
+          content,
+          new TextTranslationResult.TextTranslation(
+              textUnit.id(), content, memorized.get(), targetLanguage));
+    }
+    LOGGER.debug("Translation memory miss for text unit [id={}]", textUnit.id());
 
-    var textUnit =
-        new TextTranslationRequest.TextUnit(UUID.randomUUID().toString(), textBlock.content());
     var textTranslationRequest =
-        new TextTranslationRequest.Standard(textUnit, request.targetLanguage(), null, null);
-
+        new TextTranslationRequest.Standard(textUnit, targetLanguage, null, null);
     LOGGER.debug(
-        "Translating single text block [id={}] with content length: {}",
-        textUnit.id(),
-        textBlock.content() != null ? textBlock.content().length() : 0);
-
+        "Translating text unit [id={}] with content length: {}", textUnit.id(), content.length());
     var textTranslationResult = textTranslator.translate(textTranslationRequest);
 
-    if (textTranslationResult
-        instanceof
-        TextTranslationResult.Success(TextTranslationResult.TextTranslation translation)) {
-      LOGGER.debug("Successfully translated text block [id={}]", textUnit.id());
-      return new TextBlockTranslation(textBlock, translation);
-    } else {
+    if (!isApplicable(textTranslationResult)) {
       LOGGER.debug(
-          "Translation failed or returned non-success for text block [id={}], falling back to original content",
+          "Translation failed or returned non-success for text unit [id={}], falling back to original content",
           textUnit.id());
-      // Non-fail-fast: If translation fails, fallback to keep the original content
-      return new TextBlockTranslation(
-          textBlock,
-          new TextTranslationResult.TextTranslation(
-              "", textBlock.content(), textBlock.content(), request.targetLanguage()));
+      return new ContentTranslation(content, null);
     }
+
+    var translation = ((TextTranslationResult.Success) textTranslationResult).translation();
+    LOGGER.debug("Successfully translated text unit [id={}]", textUnit.id());
+
+    if (isMemorizable(translation)) {
+      translationMemory.save(targetLanguage, content, translation.translation());
+    } else {
+      LOGGER.debug("Skip saving blank translation to memory for text unit [id={}]", textUnit.id());
+    }
+
+    return new ContentTranslation(content, translation);
+  }
+
+  private TextBlockTranslation keepOriginal(
+      DocumentTextBlock textBlock, LanguageCode targetLanguage) {
+    return new TextBlockTranslation(
+        textBlock,
+        new TextTranslationResult.TextTranslation(
+            UUID.randomUUID().toString(),
+            textBlock.content(),
+            textBlock.content(),
+            targetLanguage));
   }
 
   private void applyTranslation(List<TextBlockTranslation> textBlockTranslations) {
@@ -158,4 +228,6 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
 
   record TextBlockTranslation(
       DocumentTextBlock documentTextBlock, TextTranslationResult.TextTranslation translation) {}
+
+  record ContentTranslation(String content, TextTranslationResult.TextTranslation translation) {}
 }
