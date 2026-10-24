@@ -16,10 +16,6 @@ import java.util.Set;
 
 public final class ProjectContextGenerator {
 
-  static void main(String[] args) throws IOException {
-    generate(args[0]);
-  }
-
   private static final Path STORAGE_DIR = Path.of("storage", "source-context");
   private static final Set<String> EXCLUDED_DIRS =
       Set.of(
@@ -37,7 +33,6 @@ public final class ProjectContextGenerator {
           "__pycache__",
           ".mvn",
           ".gradle");
-
   private static final Set<String> TEXT_EXTENSIONS =
       Set.of(
           "java",
@@ -68,15 +63,15 @@ public final class ProjectContextGenerator {
           "cfg",
           "dockerfile",
           "gitignore");
-
   private static final long MAX_INLINE_FILE_BYTES = 64 * 1024L;
   private static final int MAX_TREE_DEPTH = 100;
   private static final DateTimeFormatter DATE_FORMATTER =
       DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-  private record FileEntry(Path path, boolean isDirectory, String name) {}
-
   private ProjectContextGenerator() {}
+
+  static void main(String[] args) throws IOException {
+    generate(args[0]);
+  }
 
   public static void generate(String projectDirPath) throws IOException {
     if (projectDirPath == null || projectDirPath.isBlank()) {
@@ -286,4 +281,6 @@ public final class ProjectContextGenerator {
     if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
     return String.format("%.1f MB", bytes / (1024.0 * 1024.0));
   }
+
+  private record FileEntry(Path path, boolean isDirectory, String name) {}
 }

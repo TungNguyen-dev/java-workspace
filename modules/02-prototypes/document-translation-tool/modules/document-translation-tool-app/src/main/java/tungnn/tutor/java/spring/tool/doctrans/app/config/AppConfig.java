@@ -4,6 +4,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
@@ -12,6 +13,8 @@ import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.E
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.SlideShowDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.WordDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.GeminiApiTextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceChatClientFactory;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.memory.CsvFileTextTranslationMemory;
 import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationService;
 import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationServiceImpl;
@@ -20,15 +23,31 @@ import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationServiceIm
 public class AppConfig {
 
   @Autowired private DocTransConfig docTransConfig;
+  @Autowired private TranslatorConfig translatorConfig;
 
+  /**
+   * Gemini is the default provider. The ChatClient is built inline (not exposed as a bean) so it
+   * never competes with the Hugging Face ChatClient.
+   */
   @Bean
-  public ChatClient chatClient(ChatClient.Builder chatClientBuilder) {
-    return chatClientBuilder.build();
+  @ConditionalOnProperty(
+      prefix = "doctrans.translator",
+      name = "provider",
+      havingValue = "gemini",
+      matchIfMissing = true)
+  public TextTranslator geminiTextTranslator(ChatClient.Builder chatClientBuilder) {
+    return new GeminiApiTextTranslator(chatClientBuilder.build());
   }
 
   @Bean
-  public TextTranslator textTranslator(ChatClient chatClient) {
-    return new GeminiApiTextTranslator(chatClient);
+  @ConditionalOnProperty(
+      prefix = "doctrans.translator",
+      name = "provider",
+      havingValue = "huggingface")
+  public TextTranslator huggingFaceTextTranslator() {
+    var chatClient =
+        HuggingFaceChatClientFactory.create(translatorConfig.huggingface().toProperties());
+    return new HuggingFaceTextTranslator(chatClient);
   }
 
   @Bean

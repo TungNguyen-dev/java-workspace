@@ -22,3 +22,11 @@ doctrans:
     job: job
     memory: text-translation-memory
   worker-threads: 2
+  translator:
+    provider: ${DOCTRANS_TRANSLATOR_PROVIDER:gemini}   # gemini | huggingface
+    huggingface:
+      base-url: https://router.huggingface.co/v1
+      token: ${HF_TOKEN:}
+      model: ${HF_MODEL:}                                # e.g. a chat model id from /v1/models
+      temperature: 0
+      timeout-seconds: 120
