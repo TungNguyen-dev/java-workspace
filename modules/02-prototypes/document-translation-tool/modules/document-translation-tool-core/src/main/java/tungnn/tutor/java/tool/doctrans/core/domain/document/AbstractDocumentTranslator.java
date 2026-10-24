@@ -125,7 +125,8 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
             ? List.<ContentTranslation>of()
             : ConcurrentUtils.executeConcurrently(
                 new ArrayList<>(uniqueContents),
-                content -> translateContent(request.targetLanguage(), content));
+                content -> translateContent(request.targetLanguage(), content),
+                5); // TODO: Update for dynamic maxConcurrency
 
     Map<String, TextTranslationResult.TextTranslation> translationByContent = new HashMap<>();
     for (var contentTranslation : contentTranslations) {
