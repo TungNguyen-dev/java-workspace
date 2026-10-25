@@ -6,3 +6,4 @@ spring:
         chat:
           options:
             model: gemini-3.8-flash
+            temperature: 0.0
