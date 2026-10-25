@@ -44,6 +44,7 @@
         <module>modules/java-liquibase</module>
         <module>modules/java-cron-expression</module>
         <module>modules/java-zip</module>
+        <module>modules/java-huggingface</module>
 
         <!-- Starter -->
         <module>starters/java-infrastructure-starter</module>

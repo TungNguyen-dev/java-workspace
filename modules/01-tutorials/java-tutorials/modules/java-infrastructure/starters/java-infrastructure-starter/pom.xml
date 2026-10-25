@@ -88,5 +88,10 @@
             <artifactId>java-zip</artifactId>
             <version>${revision}</version>
         </dependency>
+        <dependency>
+            <groupId>tungnn.tutor.java.infrastructure</groupId>
+            <artifactId>java-huggingface</artifactId>
+            <version>${revision}</version>
+        </dependency>
     </dependencies>
 </project>

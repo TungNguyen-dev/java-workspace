@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>tungnn.tutor.java.infrastructure</groupId>
+        <artifactId>java-infrastructure</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>java-huggingface</artifactId>
+
+    <properties>
+        <djl.version>0.31.0</djl.version>
+        <revision>1.0.0-SNAPSHOT</revision>
+    </properties>
+
+    <dependencies>
+        <!-- JSON (config.json, generation_config.json, Hub API) -->
+        <dependency>
+            <groupId>tungnn.tutor.java.infrastructure</groupId>
+            <artifactId>java-jackson</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- DJL API Core -->
+        <dependency>
+            <groupId>ai.djl</groupId>
+            <artifactId>api</artifactId>
+            <version>${djl.version}</version>
+        </dependency>
+
+        <!-- HuggingFace tokenizers (Rust, via JNI) -->
+        <dependency>
+            <groupId>ai.djl.huggingface</groupId>
+            <artifactId>tokenizers</artifactId>
+            <version>${djl.version}</version>
+        </dependency>
+
+        <!-- DJL ONNX Runtime Engine -->
+        <dependency>
+            <groupId>ai.djl.onnxruntime</groupId>
+            <artifactId>onnxruntime-engine</artifactId>
+            <version>${djl.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>--enable-native-access=ALL-UNNAMED</argLine>
+                    <excludedGroups>slow</excludedGroups>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
