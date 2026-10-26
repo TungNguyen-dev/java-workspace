@@ -3,7 +3,7 @@ package tungnn.tutor.java.tool.crawler.core.domain;
 import java.time.Duration;
 import java.util.Objects;
 import org.openqa.selenium.WebDriver;
-import tungnn.tutor.java.infra.document.adapter.markdown.MarkdownWriterUtils;
+import tungnn.tutor.java.infra.document.adapter.markdown.MarkdownDocumentUtils;
 import tungnn.tutor.java.selenium.util.DriverUtil;
 import tungnn.tutor.java.selenium.util.ElementUtil;
 import tungnn.tutor.java.selenium.util.WindowUtil;
@@ -26,7 +26,7 @@ public abstract class AbstractWebCrawler implements WebCrawler {
       waitForPageToLoad();
 
       var title = getTitle();
-      var content = MarkdownWriterUtils.convertHtmlToMarkdown(getContentAsHtml());
+      var content = MarkdownDocumentUtils.convertHtmlToMarkdown(getContentAsHtml());
 
       LOGGER.log(System.Logger.Level.INFO, "Success to crawl URL: " + url);
       return new CrawlResult.Success(url, title, content);
