@@ -4,14 +4,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.ExcelDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.SlideShowDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.WordDocumentTranslator;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.DummyTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.GeminiApiTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceChatClientFactory;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceTextTranslator;
@@ -60,35 +63,47 @@ public class AppConfig {
   }
 
   @Bean
+  @ConditionalOnProperty(prefix = "doctrans.translator", name = "provider", havingValue = "dummy")
+  public TextTranslator dummyTextTranslator() {
+    return new DummyTextTranslator();
+  }
+
+  @Bean
   public TextTranslationMemory textTranslationMemory() {
     return new CsvFileTextTranslationMemory(docTransConfig.memoryDir());
   }
 
   @Bean
-  public ExcelDocumentTranslator excelDocumentTranslator(
-      TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-    return new ExcelDocumentTranslator(textTranslator, textTranslationMemory);
-  }
-
-  @Bean
-  public SlideShowDocumentTranslator slideShowDocumentTranslator(
-      TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-    return new SlideShowDocumentTranslator(textTranslator, textTranslationMemory);
-  }
-
-  @Bean
-  public WordDocumentTranslator wordDocumentTranslator(
+  @Qualifier("wordDocumentTranslator")
+  public DocumentTranslator wordDocumentTranslator(
       TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
     return new WordDocumentTranslator(textTranslator, textTranslationMemory);
   }
 
   @Bean
+  @Qualifier("excelDocumentTranslator")
+  public DocumentTranslator excelDocumentTranslator(
+      TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
+    return new ExcelDocumentTranslator(textTranslator, textTranslationMemory);
+  }
+
+  @Bean
+  @Qualifier("slideShowDocumentTranslator")
+  public DocumentTranslator slideShowDocumentTranslator(
+      TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
+    return new SlideShowDocumentTranslator(textTranslator, textTranslationMemory);
+  }
+
+  @Bean
   public DocumentTranslationService documentTranslationService(
-      WordDocumentTranslator wordDocumentTranslator,
-      ExcelDocumentTranslator excelDocumentTranslator,
-      SlideShowDocumentTranslator slideShowDocumentTranslator) {
+      @Qualifier("wordDocumentTranslator") DocumentTranslator wordDocumentTranslator,
+      @Qualifier("excelDocumentTranslator") DocumentTranslator excelDocumentTranslator,
+      @Qualifier("slideShowDocumentTranslator") DocumentTranslator slideShowDocumentTranslator) {
+
     return new DocumentTranslationServiceImpl(
-        wordDocumentTranslator, excelDocumentTranslator, slideShowDocumentTranslator);
+        (WordDocumentTranslator) wordDocumentTranslator,
+        (ExcelDocumentTranslator) excelDocumentTranslator,
+        (SlideShowDocumentTranslator) slideShowDocumentTranslator);
   }
 
   @Bean(destroyMethod = "shutdown")
