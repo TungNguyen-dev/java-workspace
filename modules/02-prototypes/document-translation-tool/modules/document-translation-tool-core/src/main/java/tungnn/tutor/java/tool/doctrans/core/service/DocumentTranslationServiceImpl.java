@@ -8,6 +8,7 @@ import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslationR
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslationResult;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.ExcelDocumentTranslator;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.MarkdownDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.SlideShowDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.WordDocumentTranslator;
 
@@ -19,14 +20,18 @@ public class DocumentTranslationServiceImpl implements DocumentTranslationServic
   private final WordDocumentTranslator wordDocumentTranslator;
   private final ExcelDocumentTranslator excelDocumentTranslator;
   private final SlideShowDocumentTranslator slideShowDocumentTranslator;
+  private final MarkdownDocumentTranslator markdownDocumentTranslator;
 
   public DocumentTranslationServiceImpl(
       WordDocumentTranslator wordDocumentTranslator,
       ExcelDocumentTranslator excelDocumentTranslator,
-      SlideShowDocumentTranslator slideShowDocumentTranslator) {
+      SlideShowDocumentTranslator slideShowDocumentTranslator,
+      MarkdownDocumentTranslator markdownDocumentTranslator) {
+
     this.wordDocumentTranslator = wordDocumentTranslator;
     this.excelDocumentTranslator = excelDocumentTranslator;
     this.slideShowDocumentTranslator = slideShowDocumentTranslator;
+    this.markdownDocumentTranslator = markdownDocumentTranslator;
   }
 
   @Override
@@ -57,6 +62,7 @@ public class DocumentTranslationServiceImpl implements DocumentTranslationServic
       case "xlsx" -> excelDocumentTranslator.translate(request);
       case "pptx" -> slideShowDocumentTranslator.translate(request);
       case "docx" -> wordDocumentTranslator.translate(request);
+      case "md", "txt" -> markdownDocumentTranslator.translate(request);
       default ->
           throw new IllegalArgumentException("Unknown or unsupported mime type: " + mimeType);
     };

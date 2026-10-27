@@ -12,6 +12,7 @@ import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.ExcelDocumentTranslator;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.MarkdownDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.SlideShowDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.WordDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.DummyTextTranslator;
@@ -95,15 +96,24 @@ public class AppConfig {
   }
 
   @Bean
+  @Qualifier("markdownDocumentTranslator")
+  public DocumentTranslator markdownDocumentTranslator(
+      TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
+    return new MarkdownDocumentTranslator(textTranslator, textTranslationMemory);
+  }
+
+  @Bean
   public DocumentTranslationService documentTranslationService(
       @Qualifier("wordDocumentTranslator") DocumentTranslator wordDocumentTranslator,
       @Qualifier("excelDocumentTranslator") DocumentTranslator excelDocumentTranslator,
-      @Qualifier("slideShowDocumentTranslator") DocumentTranslator slideShowDocumentTranslator) {
+      @Qualifier("slideShowDocumentTranslator") DocumentTranslator slideShowDocumentTranslator,
+      @Qualifier("markdownDocumentTranslator") DocumentTranslator markdownDocumentTranslator) {
 
     return new DocumentTranslationServiceImpl(
         (WordDocumentTranslator) wordDocumentTranslator,
         (ExcelDocumentTranslator) excelDocumentTranslator,
-        (SlideShowDocumentTranslator) slideShowDocumentTranslator);
+        (SlideShowDocumentTranslator) slideShowDocumentTranslator,
+        (MarkdownDocumentTranslator) markdownDocumentTranslator);
   }
 
   @Bean(destroyMethod = "shutdown")

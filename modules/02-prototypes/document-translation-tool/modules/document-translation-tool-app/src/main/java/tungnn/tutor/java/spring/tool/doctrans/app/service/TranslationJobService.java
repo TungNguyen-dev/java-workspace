@@ -27,7 +27,8 @@ import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationService;
 public class TranslationJobService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TranslationJobService.class);
-  private static final Set<String> SUPPORTED_EXTENSIONS = Set.of("docx", "xlsx", "pptx");
+  private static final Set<String> SUPPORTED_EXTENSIONS =
+      Set.of("docx", "xlsx", "pptx", "md", "txt");
 
   private final DocTransConfig config;
   private final DocumentTranslationService translationService;
