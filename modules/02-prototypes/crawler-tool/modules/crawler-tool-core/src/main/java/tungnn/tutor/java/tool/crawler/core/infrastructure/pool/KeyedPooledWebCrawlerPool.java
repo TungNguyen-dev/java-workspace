@@ -18,6 +18,7 @@ public class KeyedPooledWebCrawlerPool implements WebCrawlerPool {
   public KeyedPooledWebCrawlerPool(KeyedPooledObjectFactory<WebCrawlerType, WebCrawler> factory) {
     initKeyConfig(factory, WebCrawlerType.COURSERA, 1, 0, 0);
     initKeyConfig(factory, WebCrawlerType.YOUTUBE, 4, 2, 1);
+    initKeyConfig(factory, WebCrawlerType.BAELDUNG, 1, 0, 1);
     initKeyConfig(factory, WebCrawlerType.GENERIC, 4, 1, 0);
   }
 

@@ -13,7 +13,7 @@ public class WebCrawlerFactory {
     return switch (type) {
       case COURSERA -> new CourseraWebCrawler(driver);
       case YOUTUBE -> new YoutubeWebCrawler(driver);
-      case GENERIC -> new GenericWebCrawler(driver);
+      case BAELDUNG, GENERIC -> new GenericWebCrawler(driver);
     };
   }
 }

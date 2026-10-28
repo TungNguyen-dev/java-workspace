@@ -2,12 +2,8 @@ package tungnn.tutor.java.tool.crawler.app.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import tungnn.tutor.java.selenium.pool.PooledWebDriverPool;
-import tungnn.tutor.java.selenium.pool.WebDriverPool;
 import tungnn.tutor.java.tool.crawler.app.service.BatchCrawlExecutor;
-import tungnn.tutor.java.tool.crawler.core.infrastructure.pool.KeyedPooledWebCrawlerFactory;
-import tungnn.tutor.java.tool.crawler.core.infrastructure.pool.KeyedPooledWebCrawlerPool;
-import tungnn.tutor.java.tool.crawler.core.infrastructure.pool.WebCrawlerPool;
+import tungnn.tutor.java.tool.crawler.core.infrastructure.pool.*;
 
 @Configuration
 public class AppConfig {
