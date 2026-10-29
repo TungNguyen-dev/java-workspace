@@ -274,32 +274,27 @@ public final class CsvUtils {
       var prop = properties.get(i);
 
       if (prop.readable() && prop.accessor() != null) {
-        var accessorMethod = prop.accessor();
-        if (!accessorMethod.canAccess(null)) {
-          accessorMethod.setAccessible(true);
-        }
+        var method = prop.accessor();
         accessors[i] =
             e -> {
               try {
-                return accessorMethod.invoke(e);
-              } catch (Exception ex) {
-                throw new RuntimeException(
-                    "Error invoking accessor: " + accessorMethod.getName(), ex);
+                return method.invoke(e);
+              } catch (ReflectiveOperationException ex) {
+                throw new RuntimeException("Error invoking accessor: " + method.getName(), ex);
               }
             };
-      } else {
+      } else if (prop.field() != null) {
         var field = prop.field();
-        if (!field.canAccess(null)) {
-          field.setAccessible(true);
-        }
         accessors[i] =
             e -> {
               try {
                 return field.get(e);
-              } catch (Exception ex) {
+              } catch (IllegalAccessException ex) {
                 throw new RuntimeException("Error accessing field: " + field.getName(), ex);
               }
             };
+      } else {
+        throw new IllegalStateException("No readable accessor or field for property: " + prop);
       }
     }
     return accessors;
