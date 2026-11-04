@@ -4,6 +4,7 @@ public enum WebCrawlerType {
   COURSERA,
   YOUTUBE,
   BAELDUNG,
+  ANTHROPIC_PARTNER,
   GENERIC;
 
   /** Resolves the WebCrawlerType based on the request URL. */
@@ -21,6 +22,9 @@ public enum WebCrawlerType {
     }
     if (url.contains("baeldung.com")) {
       return WebCrawlerType.BAELDUNG;
+    }
+    if (url.contains("anthropic-partners.skilljar.com")) {
+      return WebCrawlerType.ANTHROPIC_PARTNER;
     }
 
     return WebCrawlerType.GENERIC;

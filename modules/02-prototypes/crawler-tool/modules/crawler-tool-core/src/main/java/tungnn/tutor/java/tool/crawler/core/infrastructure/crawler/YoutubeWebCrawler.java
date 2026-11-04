@@ -14,11 +14,10 @@ public class YoutubeWebCrawler extends AbstractWebCrawler {
   private static final String TRANSCRIPT_GENERATOR_URL =
       "https://tactiq.io/tools/youtube-transcript";
 
-  // Locators defined as constants for better readability and maintenance
+  // Locators updated based on the new HTML structure
   private static final By TITLE_LOCATOR = By.cssSelector("#title h1 yt-formatted-string");
-  private static final By FORM_LOCATOR = By.id("wf-form-YouTube-Transcript");
-  private static final By INPUT_LOCATOR =
-      By.cssSelector("input[type='text'], input[type='url'], input:not([type='submit'])");
+  private static final By FORM_LOCATOR = By.cssSelector("form[action*='youtube_transcript']");
+  private static final By INPUT_LOCATOR = By.name("yt");
   private static final By SUBMIT_BTN_LOCATOR =
       By.cssSelector("input[type='submit'], button[type='submit']");
   private static final By TRANSCRIPT_CONTAINER_LOCATOR = By.id("transcript");
