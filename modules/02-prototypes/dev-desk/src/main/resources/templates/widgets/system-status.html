@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="body">
+  <p class="status-headline" th:classappend="'is-' + ${report.overall().css()}">
+    <span class="sym" aria-hidden="true" th:text="${report.overall().symbol()}">●</span>
+    <strong th:text="${report.headline()}">Mọi thứ đang ổn</strong>
+  </p>
+
+  <section class="status-group" th:each="g : ${report.groups()}">
+    <h4 th:text="${g.name()}">Nhóm</h4>
+    <ul>
+      <li th:each="e : ${g.entries()}" th:classappend="'is-' + ${e.result().level().css()}">
+        <span class="sym" aria-hidden="true" th:text="${e.result().level().symbol()}">●</span>
+        <span class="status-name">
+          <span th:text="${e.label()}">Tên</span>
+          <span class="visually-hidden" th:text="${e.result().level().label()}">Ổn</span>
+        </span>
+        <span class="status-detail" th:text="${e.result().detail()}">Chi tiết</span>
+      </li>
+    </ul>
+  </section>
+
+  <p class="status-foot">Kiểm tra lúc <time th:text="${report.checkedAt()}">12:00:00</time></p>
+</div>
+</body>
+</html>

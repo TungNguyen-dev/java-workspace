@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bàn làm việc</title>
+  <link rel="stylesheet" th:href="@{/css/desk.css}">
+  <script th:src="@{/js/desk.js}" defer></script>
+</head>
+<body>
+  <a class="skip" href="#desk">Bỏ qua điều hướng</a>
+  <div class="shell">
+    <header class="masthead">
+      <h1>Bàn làm việc</h1>
+      <p>Công cụ phát triển cá nhân, xếp theo khay.</p>
+    </header>
+
+    <nav class="rail" aria-label="Các khay">
+      <ul>
+        <li th:each="t : ${trays}">
+          <a th:href="'#' + ${t.tray().id()}">
+            <span th:text="${t.tray().label()}">Khay</span>
+            <small th:text="${t.readyCount()} + '/' + ${t.widgets().size()}">0/0</small>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <main id="desk" class="desk">
+      <section class="tray" th:each="t : ${trays}" th:id="${t.tray().id()}"
+               th:attr="aria-labelledby=${t.tray().id()} + '-label'">
+        <header class="tray__head">
+          <h2 class="tray__label" th:id="${t.tray().id()} + '-label'" th:text="${t.tray().label()}">Khay</h2>
+          <p th:text="${t.tray().description()}">Mô tả khay</p>
+        </header>
+
+        <div class="tray__tools">
+          <article class="tool" th:each="w : ${t.widgets()}"
+                   th:classappend="${w.enabled()} ? '' : 'tool--planned'"
+                   th:attr="data-widget=${w.id()}">
+            <header class="tool__head">
+              <h3 th:text="${w.title()}">Công cụ</h3>
+              <button type="button" class="tool__refresh" data-refresh-now
+                      th:if="${w.enabled() and w.endpoint() != null}">Làm mới</button>
+              <span class="tool__tag" th:unless="${w.enabled()}">Sắp có</span>
+            </header>
+            <p class="tool__summary" th:text="${w.summary()}">Mô tả</p>
+            <div class="tool__body" aria-live="polite"
+                 th:if="${w.enabled() and w.endpoint() != null}"
+                 th:attr="data-src=${w.endpoint()},data-refresh=${w.refreshSeconds()}">
+              Đang tải…
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

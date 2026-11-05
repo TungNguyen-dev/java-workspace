@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.1.2</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>tungnn.tutor.java.tool</groupId>
+    <artifactId>dev-desk</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>dev-desk</name>
+    <description>Bàn làm việc kỹ thuật: các công cụ phát triển cá nhân xếp theo khay</description>
+
+    <properties>
+        <java.version>25</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.workspace.infrastructure.version>1.0.0-SNAPSHOT</java.workspace.infrastructure.version>
+    </properties>
+
+    <dependencies>
+        <!-- Web UI: Spring MVC + Thymeleaf -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- Java Infrastructure (java-core, selenium, document, aws, ...) -->
+        <dependency>
+            <groupId>tungnn.tutor.java.infrastructure</groupId>
+            <artifactId>java-infrastructure-starter</artifactId>
+            <version>${java.workspace.infrastructure.version}</version>
+            <exclusions>
+                <!-- Nhường quyền logging cho Spring Boot (Logback) -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                </exclusion>
+                <!-- Tránh trùng binding SLF4J -> Log4j2 -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j2-impl</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!--
+            Phase 2 (widget Dịch tài liệu): bỏ comment khối dưới để dùng thẳng core của
+            document-translation-tool. Core đã kéo java-infrastructure-starter và Spring AI,
+            nên có thể bỏ dependency starter ở trên nếu muốn gọn hơn.
+
+        <dependency>
+            <groupId>tungnn.tutor.java.tool</groupId>
+            <artifactId>document-translation-tool-core</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        -->
+
+        <!-- Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- Chạy test; bật hỗ trợ thử nghiệm của Byte Buddy cho JDK mới (Mockito) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

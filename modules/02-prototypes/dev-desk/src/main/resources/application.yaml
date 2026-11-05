@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: dev-desk
+
+server:
+  # Công cụ cá nhân có thể đọc khoá API và chạy trình duyệt, nên chỉ mở cho máy này.
+  address: 127.0.0.1
+  port: 8080
+
+devdesk:
+  status:
+    storage-dir: storage
+    ollama: ${OLLAMA_HOST_PORT:localhost:11434}
+    kafka: ${KAFKA_HOST_PORT:localhost:9092}
