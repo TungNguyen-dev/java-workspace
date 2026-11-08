@@ -46,10 +46,9 @@ public class DocumentTranslationServiceImpl implements DocumentTranslationServic
     var mediaType = TikaFormatDetectorUtil.detectMediaType(documentPath);
     var mimeType =
         TikaFormatDetectorUtil.findExtensionByMediaType(mediaType)
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Unsupported or unknown file format for path: " + documentPath));
+            .orElseThrow(() ->
+                new IllegalArgumentException(
+                    "Unsupported or unknown file format for path: " + documentPath));
 
     var request =
         new DocumentTranslationRequest.Standard(

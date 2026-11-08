@@ -23,7 +23,7 @@ doctrans:
     memory: text-translation-memory
   worker-threads: 2
   translator:
-    provider: ${DOCTRANS_TRANSLATOR_PROVIDER:gemini}   # gemini | huggingface | ollama
+    provider: ${DOCTRANS_TRANSLATOR_PROVIDER:gemini}   # gemini | huggingface | ollama | deepseek
     huggingface:
       base-url: https://router.huggingface.co/v1
       token: ${HF_TOKEN:}
@@ -36,3 +36,9 @@ doctrans:
       model: ${OLLAMA_MODEL:llama3}                      # e.g. llama3, qwen2.5, deepseek-r1:8b
       temperature: 0
       timeout-seconds: 600
+    deepseek:
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      token: ${DEEPSEEK_API_KEY:}
+      model: ${DEEPSEEK_MODEL:deepseek-chat}           # deepseek-chat | deepseek-reasoner
+      temperature: 0
+      timeout-seconds: 120

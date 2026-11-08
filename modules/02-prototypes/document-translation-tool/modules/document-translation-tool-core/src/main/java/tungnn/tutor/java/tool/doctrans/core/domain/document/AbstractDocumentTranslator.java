@@ -19,6 +19,7 @@ import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.GeminiApiTextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.deepseek.DeepseekTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.memory.NoOpTextTranslationMemory;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.ollama.OllamaTextTranslator;
@@ -129,6 +130,7 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
           case OllamaTextTranslator ignored -> 1;
           case GeminiApiTextTranslator ignored -> 3;
           case HuggingFaceTextTranslator ignored -> 10;
+          case DeepseekTextTranslator ignored -> 10;
           default -> 5;
         };
 

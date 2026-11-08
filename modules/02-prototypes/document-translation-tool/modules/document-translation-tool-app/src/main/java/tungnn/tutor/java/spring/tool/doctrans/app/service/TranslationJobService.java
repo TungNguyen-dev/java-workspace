@@ -88,9 +88,8 @@ public class TranslationJobService {
   public TranslationJob get(String jobId) {
     return repository
         .find(jobId)
-        .orElseThrow(
-            () ->
-                new ApiException(HttpStatus.NOT_FOUND, "JOB_NOT_FOUND", "Job not found: " + jobId));
+        .orElseThrow(() ->
+            new ApiException(HttpStatus.NOT_FOUND, "JOB_NOT_FOUND", "Job not found: " + jobId));
   }
 
   public Path resultOf(TranslationJob job) {

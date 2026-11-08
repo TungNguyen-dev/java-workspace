@@ -111,23 +111,22 @@ public class GeminiPage {
     // Use WebDriverWait with a lambda expression to wait until aria-busy becomes "false" and text
     // is present
     WebDriverWait wait = new WebDriverWait(webDriver, GENERATION_TIMEOUT);
-    return wait.until(
-        driver -> {
-          try {
-            WebElement el = driver.findElement(responseBlockLocator);
-            String ariaBusy = el.getAttribute("aria-busy");
+    return wait.until(driver -> {
+      try {
+        WebElement el = driver.findElement(responseBlockLocator);
+        String ariaBusy = el.getAttribute("aria-busy");
 
-            // Completion condition: aria-busy is "false" and content is not empty
-            if ("false".equals(ariaBusy)) {
-              el.getText();
-              if (!el.getText().trim().isEmpty()) {
-                return el;
-              }
-            }
-          } catch (Exception e) {
-            // Ignore exceptions while the element is being dynamically rendered on the DOM
+        // Completion condition: aria-busy is "false" and content is not empty
+        if ("false".equals(ariaBusy)) {
+          el.getText();
+          if (!el.getText().trim().isEmpty()) {
+            return el;
           }
-          return null;
-        });
+        }
+      } catch (Exception e) {
+        // Ignore exceptions while the element is being dynamically rendered on the DOM
+      }
+      return null;
+    });
   }
 }

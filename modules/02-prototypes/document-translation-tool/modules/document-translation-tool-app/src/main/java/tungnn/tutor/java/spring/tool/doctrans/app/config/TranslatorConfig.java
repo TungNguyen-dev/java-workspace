@@ -3,6 +3,7 @@ package tungnn.tutor.java.spring.tool.doctrans.app.config;
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.deepseek.DeepseekProperties;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceProperties;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.ollama.OllamaProperties;
 
@@ -11,7 +12,8 @@ import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.ollam
 public record TranslatorConfig(
     @DefaultValue("gemini") String provider,
     @DefaultValue HuggingFace huggingface,
-    @DefaultValue Ollama ollama) {
+    @DefaultValue Ollama ollama,
+    @DefaultValue Deepseek deepseek) {
 
   public record HuggingFace(
       @DefaultValue("https://router.huggingface.co/v1") String baseUrl,
@@ -35,6 +37,19 @@ public record TranslatorConfig(
 
     public OllamaProperties toProperties() {
       return new OllamaProperties(
+          baseUrl, token, model, temperature, Duration.ofSeconds(timeoutSeconds));
+    }
+  }
+
+  public record Deepseek(
+      @DefaultValue("https://api.deepseek.com") String baseUrl,
+      String token,
+      @DefaultValue("deepseek-chat") String model,
+      @DefaultValue("0") double temperature,
+      @DefaultValue("120") int timeoutSeconds) {
+
+    public DeepseekProperties toProperties() {
+      return new DeepseekProperties(
           baseUrl, token, model, temperature, Duration.ofSeconds(timeoutSeconds));
     }
   }

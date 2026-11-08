@@ -17,6 +17,8 @@ import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.S
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.WordDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.DummyTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.GeminiApiTextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.deepseek.DeepseekChatClientFactory;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.deepseek.DeepseekTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceChatClientFactory;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.memory.CsvFileTextTranslationMemory;
@@ -61,6 +63,16 @@ public class AppConfig {
   public TextTranslator ollamaTextTranslator() {
     var chatClient = OllamaChatClientFactory.create(translatorConfig.ollama().toProperties());
     return new OllamaTextTranslator(chatClient);
+  }
+
+  @Bean
+  @ConditionalOnProperty(
+      prefix = "doctrans.translator",
+      name = "provider",
+      havingValue = "deepseek")
+  public TextTranslator deepseekTextTranslator() {
+    var chatClient = DeepseekChatClientFactory.create(translatorConfig.deepseek().toProperties());
+    return new DeepseekTextTranslator(chatClient);
   }
 
   @Bean
