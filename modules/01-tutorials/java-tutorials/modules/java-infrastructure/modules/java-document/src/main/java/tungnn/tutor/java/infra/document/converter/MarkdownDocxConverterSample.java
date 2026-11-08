@@ -10,5 +10,9 @@ public class MarkdownDocxConverterSample {
     var docPath =
         mdPath.getParent().resolve(mdPath.getFileName().toString().replace(".md", ".docx"));
     MarkdownDocxConverterUtils.convertMarkdownToDocx(mdPath, docPath);
+
+    DocxMarkdownConverterUtils.convertDocxToMarkdown(
+        Path.of("storage/sample/Chuong 3 Hoa Giai _VN_1794125403.docx"),
+        docPath.getParent().resolve("docx-to-md.md"));
   }
 }
