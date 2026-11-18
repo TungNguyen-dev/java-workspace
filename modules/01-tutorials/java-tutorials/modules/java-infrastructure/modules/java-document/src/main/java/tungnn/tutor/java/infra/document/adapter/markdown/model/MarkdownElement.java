@@ -3,7 +3,8 @@ package tungnn.tutor.java.infra.document.adapter.markdown.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public sealed interface MarkdownElement permits MarkdownBlock, MarkdownElement.MarkdownDocument {
+public sealed interface MarkdownElement
+    permits MarkdownBlock, MarkdownBlock.ListItem, MarkdownElement.MarkdownDocument {
 
   String toMarkdown();
 

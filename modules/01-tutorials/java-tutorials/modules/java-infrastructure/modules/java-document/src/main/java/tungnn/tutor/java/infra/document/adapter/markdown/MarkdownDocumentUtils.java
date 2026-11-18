@@ -2,6 +2,8 @@ package tungnn.tutor.java.infra.document.adapter.markdown;
 
 import com.vladsch.flexmark.ast.FencedCodeBlock;
 import com.vladsch.flexmark.ast.Heading;
+import com.vladsch.flexmark.ast.ListItem;
+import com.vladsch.flexmark.ast.OrderedList;
 import com.vladsch.flexmark.ast.Paragraph;
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import com.vladsch.flexmark.parser.Parser;
@@ -65,8 +67,29 @@ public final class MarkdownDocumentUtils {
     } else if (node instanceof FencedCodeBlock codeNode) {
       return new MarkdownBlock.CodeBlock(
           codeNode.getInfo().toString().trim(), codeNode.getContentChars().toString().trim());
+    } else if (node instanceof OrderedList orderedListNode) {
+      List<MarkdownBlock.ListItem> items = new ArrayList<>();
+      for (Node itemNode : orderedListNode.getChildren()) {
+        if (itemNode instanceof ListItem listItem) {
+          List<MarkdownBlock> itemBlocks = new ArrayList<>();
+          for (Node child = listItem.getFirstChild(); child != null; child = child.getNext()) {
+            MarkdownBlock block = convertNodeToBlock(child);
+            if (block != null) {
+              itemBlocks.add(block);
+            }
+          }
+          items.add(new MarkdownBlock.ListItem(itemBlocks));
+        }
+      }
+      return new MarkdownBlock.OrderedList(orderedListNode.getStartNumber(), items);
     }
-    // Additional Node types (List, Table, Blockquote) can be extended here if needed
+
+    // Fallback strategy: Luôn setup fallback đưa về dạng Paragraph nếu không thuộc nhánh nào
+    String fallbackText = node.getChars().toString().trim();
+    if (!fallbackText.isBlank()) {
+      return new MarkdownBlock.Paragraph(fallbackText);
+    }
+
     return null;
   }
 
