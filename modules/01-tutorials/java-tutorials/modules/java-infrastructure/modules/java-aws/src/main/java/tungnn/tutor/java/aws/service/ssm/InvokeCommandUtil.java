@@ -59,9 +59,8 @@ public final class InvokeCommandUtil {
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       var futures =
           instanceIds.stream()
-              .map(
-                  instanceId ->
-                      executor.submit(() -> pollCommand(client, instanceId, commandId, timeout)))
+              .map(instanceId ->
+                  executor.submit(() -> pollCommand(client, instanceId, commandId, timeout)))
               .toList();
 
       var result = new HashMap<String, SsmCommandResult>();

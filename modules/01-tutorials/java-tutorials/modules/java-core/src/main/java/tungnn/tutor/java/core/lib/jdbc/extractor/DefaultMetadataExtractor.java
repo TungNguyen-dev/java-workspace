@@ -64,9 +64,8 @@ public class DefaultMetadataExtractor implements MetadataExtractor {
     return strategies.stream()
         .filter(s -> s.supports(dbProductName))
         .findFirst()
-        .orElseThrow(
-            () ->
-                new UnsupportedOperationException(
-                    "No MetadataExtractStrategy found for database engine: " + dbProductName));
+        .orElseThrow(() ->
+            new UnsupportedOperationException(
+                "No MetadataExtractStrategy found for database engine: " + dbProductName));
   }
 }

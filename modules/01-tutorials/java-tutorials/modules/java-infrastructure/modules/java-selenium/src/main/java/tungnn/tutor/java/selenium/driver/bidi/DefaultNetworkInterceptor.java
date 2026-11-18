@@ -30,10 +30,9 @@ public class DefaultNetworkInterceptor implements NetworkInterceptor {
 
   @Override
   public void addAuthenticationHandler(String username, String password) {
-    network.onAuthRequired(
-        authRequired -> {
-          // Logic xử lý map credentials ngầm của Selenium BiDi
-        });
+    network.onAuthRequired(authRequired -> {
+      // Logic xử lý map credentials ngầm của Selenium BiDi
+    });
   }
 
   @Override

@@ -30,9 +30,8 @@ public final class PowerPointUtils {
 
     presentation
         .getSlides()
-        .forEach(
-            slide ->
-                slide.getShapes().forEach(shape -> collectShape(shape, textPredicate, textToRuns)));
+        .forEach(slide ->
+            slide.getShapes().forEach(shape -> collectShape(shape, textPredicate, textToRuns)));
 
     return textToRuns;
   }
@@ -40,13 +39,12 @@ public final class PowerPointUtils {
   public static void applyTranslations(
       Map<String, List<XSLFTextRun>> textToRuns, Map<String, String> translations) {
 
-    textToRuns.forEach(
-        (source, runs) -> {
-          var translated = translations.get(source);
-          if (translated != null) {
-            runs.forEach(run -> run.setText(translated));
-          }
-        });
+    textToRuns.forEach((source, runs) -> {
+      var translated = translations.get(source);
+      if (translated != null) {
+        runs.forEach(run -> run.setText(translated));
+      }
+    });
   }
 
   public static String extractAllText(XMLSlideShow presentation) {
@@ -76,9 +74,8 @@ public final class PowerPointUtils {
 
     table
         .getRows()
-        .forEach(
-            row ->
-                row.getCells().forEach(cell -> collectTableCell(cell, textPredicate, textToRuns)));
+        .forEach(row ->
+            row.getCells().forEach(cell -> collectTableCell(cell, textPredicate, textToRuns)));
   }
 
   private static void collectTableCell(

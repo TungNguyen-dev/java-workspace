@@ -62,7 +62,7 @@ class TextEditor {
 
 // The Caretaker
 class History {
-  private Stack<TextEditor.Memento> history = new Stack<>();
+  private final Stack<TextEditor.Memento> history = new Stack<>();
 
   public void push(TextEditor.Memento memento) {
     history.push(memento);

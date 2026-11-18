@@ -43,7 +43,7 @@ public class Cook {
 // Concrete Commands
 // Command to make a Burger
 public class BurgerCommand implements Command {
-  private Cook cook;
+  private final Cook cook;
 
   public BurgerCommand(Cook cook) {
     this.cook = cook;
@@ -62,7 +62,7 @@ public class BurgerCommand implements Command {
 
 // Command to make a Shake
 public class ShakeCommand implements Command {
-  private Cook cook;
+  private final Cook cook;
 
   public ShakeCommand(Cook cook) {
     this.cook = cook;
@@ -82,7 +82,7 @@ public class ShakeCommand implements Command {
 // The Invoker
 public class Waitress {
   private Command slot;
-  private Stack<Command> history = new Stack<>(); // To support undo functionality
+  private final Stack<Command> history = new Stack<>(); // To support undo functionality
 
   public void setOrder(Command command) {
     this.slot = command;

@@ -21,20 +21,19 @@ public class DataDiffEngine {
     List<String> tablesToDiff = filterTables(refSchema, targetSchema, option);
 
     return tablesToDiff.stream()
-        .flatMap(
-            tableName -> {
-              DatabaseSchema.TableModel refTable = refSchema.tables().get(tableName);
-              DatabaseSchema.TableModel targetTable = targetSchema.tables().get(tableName);
+        .flatMap(tableName -> {
+          DatabaseSchema.TableModel refTable = refSchema.tables().get(tableName);
+          DatabaseSchema.TableModel targetTable = targetSchema.tables().get(tableName);
 
-              List<String> identityKeys = getIdentityKeys(refTable);
-              if (identityKeys.isEmpty()) {
-                // Bảng không có Primary Key -> Bỏ qua hoặc báo lỗi tùy policy
-                return Stream.empty();
-              }
+          List<String> identityKeys = getIdentityKeys(refTable);
+          if (identityKeys.isEmpty()) {
+            // Bảng không có Primary Key -> Bỏ qua hoặc báo lỗi tùy policy
+            return Stream.empty();
+          }
 
-              return diffTableDataStream(
-                  refConfig, targetConfig, tableName, identityKeys, refTable, targetTable);
-            });
+          return diffTableDataStream(
+              refConfig, targetConfig, tableName, identityKeys, refTable, targetTable);
+        });
   }
 
   private static Stream<SchemaDataDiffs.TableRowDataDiff> diffTableDataStream(

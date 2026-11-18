@@ -28,7 +28,7 @@ public interface DuckTargetInterface {
 
 // Adapter Class
 public static class TurkeyAdapter implements DuckTargetInterface {
-  private WildTurkeyAdaptee turkey;
+  private final WildTurkeyAdaptee turkey;
 
   public TurkeyAdapter(WildTurkeyAdaptee turkey) {
     this.turkey = turkey;

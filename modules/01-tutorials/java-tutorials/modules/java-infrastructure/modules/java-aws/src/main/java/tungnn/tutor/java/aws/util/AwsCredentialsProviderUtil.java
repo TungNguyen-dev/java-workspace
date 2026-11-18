@@ -51,11 +51,10 @@ public final class AwsCredentialsProviderUtil {
   private static String requiredProperty(Profile profile, String propertyName) {
     return profile
         .property(propertyName)
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    "Missing required property '%s' in profile '%s'"
-                        .formatted(propertyName, profile.name())));
+        .orElseThrow(() ->
+            new IllegalArgumentException(
+                "Missing required property '%s' in profile '%s'"
+                    .formatted(propertyName, profile.name())));
   }
 
   private static boolean isDefaultProfile(Profile profile) {

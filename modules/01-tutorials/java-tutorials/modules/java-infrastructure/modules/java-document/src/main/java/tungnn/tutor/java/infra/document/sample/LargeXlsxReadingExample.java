@@ -18,7 +18,7 @@ public class LargeXlsxReadingExample {
 
     // Auto-Flushing with Window Size = 100
     try (SXSSFWorkbook wb = new SXSSFWorkbook(100);
-        OutputStream out = Files.newOutputStream(path); ) {
+        OutputStream out = Files.newOutputStream(path)) {
       Sheet sh = wb.createSheet();
 
       for (int rowNum = 0; rowNum < 1000; rowNum++) {
@@ -39,7 +39,7 @@ public class LargeXlsxReadingExample {
 
     // Manual-Flushing -> rowAccessWindowSize = -1
     try (SXSSFWorkbook wb = new SXSSFWorkbook(-1);
-        OutputStream out = Files.newOutputStream(path); ) {
+        OutputStream out = Files.newOutputStream(path)) {
       SXSSFSheet sh = wb.createSheet();
 
       for (int rowNum = 0; rowNum < 1000; rowNum++) {

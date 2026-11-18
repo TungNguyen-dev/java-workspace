@@ -66,38 +66,35 @@ public class DatabaseDiffServiceImpl implements DatabaseDiffService {
 
       List<SchemaDataDiffs.TableDataDiff> tableDataDiffs =
           groupedByTable.entrySet().stream()
-              .map(
-                  entry -> {
-                    String tableName = entry.getKey();
-                    List<SchemaDataDiffs.TableRowDataDiff> rowDiffs = entry.getValue();
+              .map(entry -> {
+                String tableName = entry.getKey();
+                List<SchemaDataDiffs.TableRowDataDiff> rowDiffs = entry.getValue();
 
-                    long added =
-                        rowDiffs.stream()
-                            .filter(r -> r.rowDiff().status() == DiffStatus.ADDED)
-                            .count();
-                    long modified =
-                        rowDiffs.stream()
-                            .filter(r -> r.rowDiff().status() == DiffStatus.MODIFIED)
-                            .count();
-                    long removed =
-                        rowDiffs.stream()
-                            .filter(r -> r.rowDiff().status() == DiffStatus.REMOVED)
-                            .count();
+                long added =
+                    rowDiffs.stream().filter(r -> r.rowDiff().status() == DiffStatus.ADDED).count();
+                long modified =
+                    rowDiffs.stream()
+                        .filter(r -> r.rowDiff().status() == DiffStatus.MODIFIED)
+                        .count();
+                long removed =
+                    rowDiffs.stream()
+                        .filter(r -> r.rowDiff().status() == DiffStatus.REMOVED)
+                        .count();
 
-                    // Lấy identity keys từ rowDiff đầu tiên (nếu có)
-                    List<String> identityKeys =
-                        rowDiffs.isEmpty()
-                            ? List.of()
-                            : List.copyOf(rowDiffs.get(0).rowDiff().identityKey().keySet());
+                // Lấy identity keys từ rowDiff đầu tiên (nếu có)
+                List<String> identityKeys =
+                    rowDiffs.isEmpty()
+                        ? List.of()
+                        : List.copyOf(rowDiffs.get(0).rowDiff().identityKey().keySet());
 
-                    List<SchemaDataDiffs.RowDiff> listRowDiffs =
-                        rowDiffs.stream()
-                            .map(SchemaDataDiffs.TableRowDataDiff::rowDiff)
-                            .collect(Collectors.toList());
+                List<SchemaDataDiffs.RowDiff> listRowDiffs =
+                    rowDiffs.stream()
+                        .map(SchemaDataDiffs.TableRowDataDiff::rowDiff)
+                        .collect(Collectors.toList());
 
-                    return new SchemaDataDiffs.TableDataDiff(
-                        tableName, identityKeys, added, modified, removed, listRowDiffs);
-                  })
+                return new SchemaDataDiffs.TableDataDiff(
+                    tableName, identityKeys, added, modified, removed, listRowDiffs);
+              })
               .collect(Collectors.toList());
 
       return new SchemaDataDiffs(tableDataDiffs);

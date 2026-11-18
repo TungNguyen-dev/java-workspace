@@ -17,10 +17,10 @@ void main() {
 
 // Facade
 static class HomeTheaterFacade {
-  private Projector projector;
-  private Amplifier amp;
-  private Screen screen;
-  private PopcornPopper popper;
+  private final Projector projector;
+  private final Amplifier amp;
+  private final Screen screen;
+  private final PopcornPopper popper;
 
   public HomeTheaterFacade(
       Projector projector, Amplifier amp, Screen screen, PopcornPopper popper) {

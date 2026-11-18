@@ -37,14 +37,14 @@ public class PostgresMetadataExtractStrategy extends AbstractMetadataExtractStra
     StringBuilder sqlTables =
         new StringBuilder(
             """
-                    SELECT t.table_name, pgd.description
-                    FROM information_schema.tables t
-                    LEFT JOIN pg_catalog.pg_statio_all_tables st
-                           ON st.schemaname = t.table_schema AND st.relname = t.table_name
-                    LEFT JOIN pg_catalog.pg_description pgd
-                           ON pgd.objoid = st.relid AND pgd.objsubid = 0
-                    WHERE t.table_schema = ? AND t.table_type = 'BASE TABLE'
-                    """);
+            SELECT t.table_name, pgd.description
+            FROM information_schema.tables t
+            LEFT JOIN pg_catalog.pg_statio_all_tables st
+                   ON st.schemaname = t.table_schema AND st.relname = t.table_name
+            LEFT JOIN pg_catalog.pg_description pgd
+                   ON pgd.objoid = st.relid AND pgd.objsubid = 0
+            WHERE t.table_schema = ? AND t.table_type = 'BASE TABLE'
+            """);
 
     if (hasWhitelist) {
       sqlTables
@@ -80,21 +80,21 @@ public class PostgresMetadataExtractStrategy extends AbstractMetadataExtractStra
     StringBuilder sqlColumns =
         new StringBuilder(
             """
-                    SELECT c.table_name, c.column_name, c.data_type, c.udt_name,
-                           c.character_maximum_length, c.numeric_precision, c.numeric_scale,
-                           c.is_nullable, c.column_default, c.is_identity, c.ordinal_position,
-                           pgd.description
-                    FROM information_schema.columns c
-                    JOIN information_schema.tables t
-                      ON c.table_catalog = t.table_catalog
-                     AND c.table_schema = t.table_schema
-                     AND c.table_name = t.table_name
-                    LEFT JOIN pg_catalog.pg_statio_all_tables st
-                           ON st.schemaname = c.table_schema AND st.relname = c.table_name
-                    LEFT JOIN pg_catalog.pg_description pgd
-                           ON pgd.objoid = st.relid AND pgd.objsubid = c.ordinal_position
-                    WHERE c.table_schema = ? AND t.table_type = 'BASE TABLE'
-                    """);
+            SELECT c.table_name, c.column_name, c.data_type, c.udt_name,
+                   c.character_maximum_length, c.numeric_precision, c.numeric_scale,
+                   c.is_nullable, c.column_default, c.is_identity, c.ordinal_position,
+                   pgd.description
+            FROM information_schema.columns c
+            JOIN information_schema.tables t
+              ON c.table_catalog = t.table_catalog
+             AND c.table_schema = t.table_schema
+             AND c.table_name = t.table_name
+            LEFT JOIN pg_catalog.pg_statio_all_tables st
+                   ON st.schemaname = c.table_schema AND st.relname = c.table_name
+            LEFT JOIN pg_catalog.pg_description pgd
+                   ON pgd.objoid = st.relid AND pgd.objsubid = c.ordinal_position
+            WHERE c.table_schema = ? AND t.table_type = 'BASE TABLE'
+            """);
 
     if (hasWhitelist) {
       sqlColumns
@@ -151,22 +151,21 @@ public class PostgresMetadataExtractStrategy extends AbstractMetadataExtractStra
     fetchIndexes(connection, schema, tables);
 
     Map<String, DatabaseSchema.TableModel> result = new LinkedHashMap<>();
-    tables.forEach(
-        (tableName, holder) ->
-            result.put(
+    tables.forEach((tableName, holder) ->
+        result.put(
+            tableName,
+            new DatabaseSchema.TableModel(
                 tableName,
-                new DatabaseSchema.TableModel(
-                    tableName,
-                    "",
-                    "",
-                    "",
-                    holder.comment,
-                    holder.columns,
-                    holder.primaryKey,
-                    holder.foreignKeys,
-                    holder.uniqueKeys,
-                    holder.checkConstraints,
-                    holder.indices)));
+                "",
+                "",
+                "",
+                holder.comment,
+                holder.columns,
+                holder.primaryKey,
+                holder.foreignKeys,
+                holder.uniqueKeys,
+                holder.checkConstraints,
+                holder.indices)));
 
     return result;
   }
@@ -175,31 +174,31 @@ public class PostgresMetadataExtractStrategy extends AbstractMetadataExtractStra
       throws SQLException {
     String sql =
         """
-            SELECT con.conname AS constraint_name,
-                   con.contype AS constraint_type,
-                   rel.relname AS table_name,
-                   fnsp.nspname AS foreign_table_schema,
-                   frel.relname AS foreign_table_name,
-                   pg_get_constraintdef(con.oid) AS constraint_def,
-                   con.confdeltype AS delete_rule,
-                   con.confupdtype AS update_rule,
-                   (
-                     SELECT array_agg(att.attname ORDER BY u.ord)
-                     FROM unnest(con.conkey) WITH ORDINALITY AS u(attnum, ord)
-                     JOIN pg_attribute att ON att.attrelid = con.conrelid AND att.attnum = u.attnum
-                   ) AS column_names,
-                   (
-                     SELECT array_agg(att.attname ORDER BY u.ord)
-                     FROM unnest(con.confkey) WITH ORDINALITY AS u(attnum, ord)
-                     JOIN pg_attribute att ON att.attrelid = con.confrelid AND att.attnum = u.attnum
-                   ) AS foreign_column_names
-            FROM pg_constraint con
-            JOIN pg_class rel ON rel.oid = con.conrelid
-            JOIN pg_namespace nsp ON nsp.oid = con.connamespace
-            LEFT JOIN pg_class frel ON frel.oid = con.confrelid
-            LEFT JOIN pg_namespace fnsp ON fnsp.oid = frel.relnamespace
-            WHERE nsp.nspname = ?
-            """;
+        SELECT con.conname AS constraint_name,
+               con.contype AS constraint_type,
+               rel.relname AS table_name,
+               fnsp.nspname AS foreign_table_schema,
+               frel.relname AS foreign_table_name,
+               pg_get_constraintdef(con.oid) AS constraint_def,
+               con.confdeltype AS delete_rule,
+               con.confupdtype AS update_rule,
+               (
+                 SELECT array_agg(att.attname ORDER BY u.ord)
+                 FROM unnest(con.conkey) WITH ORDINALITY AS u(attnum, ord)
+                 JOIN pg_attribute att ON att.attrelid = con.conrelid AND att.attnum = u.attnum
+               ) AS column_names,
+               (
+                 SELECT array_agg(att.attname ORDER BY u.ord)
+                 FROM unnest(con.confkey) WITH ORDINALITY AS u(attnum, ord)
+                 JOIN pg_attribute att ON att.attrelid = con.confrelid AND att.attnum = u.attnum
+               ) AS foreign_column_names
+        FROM pg_constraint con
+        JOIN pg_class rel ON rel.oid = con.conrelid
+        JOIN pg_namespace nsp ON nsp.oid = con.connamespace
+        LEFT JOIN pg_class frel ON frel.oid = con.confrelid
+        LEFT JOIN pg_namespace fnsp ON fnsp.oid = frel.relnamespace
+        WHERE nsp.nspname = ?
+        """;
 
     try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, schema);
@@ -261,18 +260,18 @@ public class PostgresMetadataExtractStrategy extends AbstractMetadataExtractStra
       throws SQLException {
     String sql =
         """
-            SELECT i.relname AS index_name,
-                   t.relname AS table_name,
-                   idx.indisunique AS is_unique,
-                   am.amname AS index_type,
-                   pg_get_indexdef(idx.indexrelid) AS index_def
-            FROM pg_index idx
-            JOIN pg_class i ON i.oid = idx.indexrelid
-            JOIN pg_class t ON t.oid = idx.indrelid
-            JOIN pg_namespace n ON n.oid = t.relnamespace
-            JOIN pg_am am ON am.oid = i.relam
-            WHERE n.nspname = ? AND NOT idx.indisprimary
-            """;
+        SELECT i.relname AS index_name,
+               t.relname AS table_name,
+               idx.indisunique AS is_unique,
+               am.amname AS index_type,
+               pg_get_indexdef(idx.indexrelid) AS index_def
+        FROM pg_index idx
+        JOIN pg_class i ON i.oid = idx.indexrelid
+        JOIN pg_class t ON t.oid = idx.indrelid
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        JOIN pg_am am ON am.oid = i.relam
+        WHERE n.nspname = ? AND NOT idx.indisprimary
+        """;
 
     try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, schema);
@@ -307,14 +306,14 @@ public class PostgresMetadataExtractStrategy extends AbstractMetadataExtractStra
 
     String sql =
         """
-            SELECT v.table_name, v.view_definition, pgd.description
-            FROM information_schema.views v
-            LEFT JOIN pg_catalog.pg_statio_all_tables st
-                   ON st.schemaname = v.table_schema AND st.relname = v.table_name
-            LEFT JOIN pg_catalog.pg_description pgd
-                   ON pgd.objoid = st.relid AND pgd.objsubid = 0
-            WHERE v.table_schema = ?
-            """;
+        SELECT v.table_name, v.view_definition, pgd.description
+        FROM information_schema.views v
+        LEFT JOIN pg_catalog.pg_statio_all_tables st
+               ON st.schemaname = v.table_schema AND st.relname = v.table_name
+        LEFT JOIN pg_catalog.pg_description pgd
+               ON pgd.objoid = st.relid AND pgd.objsubid = 0
+        WHERE v.table_schema = ?
+        """;
 
     Map<String, DatabaseSchema.ViewModel> views = new LinkedHashMap<>();
     try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -357,16 +356,16 @@ public class PostgresMetadataExtractStrategy extends AbstractMetadataExtractStra
 
     String sql =
         """
-            SELECT p.proname AS routine_name,
-                   pg_get_functiondef(p.oid) AS definition,
-                   pg_get_function_result(p.oid) AS return_type,
-                   pgd.description,
-                   p.provolatile AS volatility
-            FROM pg_proc p
-            JOIN pg_namespace n ON n.oid = p.pronamespace
-            LEFT JOIN pg_description pgd ON pgd.objoid = p.oid
-            WHERE n.nspname = ? AND p.prokind = ?
-            """;
+        SELECT p.proname AS routine_name,
+               pg_get_functiondef(p.oid) AS definition,
+               pg_get_function_result(p.oid) AS return_type,
+               pgd.description,
+               p.provolatile AS volatility
+        FROM pg_proc p
+        JOIN pg_namespace n ON n.oid = p.pronamespace
+        LEFT JOIN pg_description pgd ON pgd.objoid = p.oid
+        WHERE n.nspname = ? AND p.prokind = ?
+        """;
 
     String prokind = "PROCEDURE".equalsIgnoreCase(routineType) ? "p" : "f";
     Map<String, DatabaseSchema.RoutineModel> routines = new LinkedHashMap<>();
@@ -408,17 +407,17 @@ public class PostgresMetadataExtractStrategy extends AbstractMetadataExtractStra
 
     String sql =
         """
-            SELECT trg.tgname AS trigger_name,
-                   tbl.relname AS table_name,
-                   pg_get_triggerdef(trg.oid) AS definition,
-                   trg.tgtype,
-                   pgd.description
-            FROM pg_trigger trg
-            JOIN pg_class tbl ON tbl.oid = trg.tgrelid
-            JOIN pg_namespace nsp ON nsp.oid = tbl.relnamespace
-            LEFT JOIN pg_description pgd ON pgd.objoid = trg.oid
-            WHERE nsp.nspname = ? AND NOT trg.tgisinternal
-            """;
+        SELECT trg.tgname AS trigger_name,
+               tbl.relname AS table_name,
+               pg_get_triggerdef(trg.oid) AS definition,
+               trg.tgtype,
+               pgd.description
+        FROM pg_trigger trg
+        JOIN pg_class tbl ON tbl.oid = trg.tgrelid
+        JOIN pg_namespace nsp ON nsp.oid = tbl.relnamespace
+        LEFT JOIN pg_description pgd ON pgd.objoid = trg.oid
+        WHERE nsp.nspname = ? AND NOT trg.tgisinternal
+        """;
 
     Map<String, DatabaseSchema.TriggerModel> triggers = new LinkedHashMap<>();
     try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -450,10 +449,10 @@ public class PostgresMetadataExtractStrategy extends AbstractMetadataExtractStra
 
     String sql =
         """
-            SELECT sequence_name, data_type, start_value, minimum_value, maximum_value, increment, cycle_option
-            FROM information_schema.sequences
-            WHERE sequence_schema = ?
-            """;
+        SELECT sequence_name, data_type, start_value, minimum_value, maximum_value, increment, cycle_option
+        FROM information_schema.sequences
+        WHERE sequence_schema = ?
+        """;
 
     Map<String, DatabaseSchema.SequenceModel> sequences = new LinkedHashMap<>();
     try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -487,14 +486,14 @@ public class PostgresMetadataExtractStrategy extends AbstractMetadataExtractStra
 
     String sql =
         """
-            SELECT t.typname AS type_name,
-                   array_agg(e.enumlabel ORDER BY e.enumsortorder) AS enum_values
-            FROM pg_type t
-            JOIN pg_enum e ON t.oid = e.enumtypid
-            JOIN pg_namespace n ON n.oid = t.typnamespace
-            WHERE n.nspname = ?
-            GROUP BY t.typname
-            """;
+        SELECT t.typname AS type_name,
+               array_agg(e.enumlabel ORDER BY e.enumsortorder) AS enum_values
+        FROM pg_type t
+        JOIN pg_enum e ON t.oid = e.enumtypid
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = ?
+        GROUP BY t.typname
+        """;
 
     Map<String, DatabaseSchema.CustomTypeModel> types = new LinkedHashMap<>();
     try (PreparedStatement pstmt = connection.prepareStatement(sql)) {

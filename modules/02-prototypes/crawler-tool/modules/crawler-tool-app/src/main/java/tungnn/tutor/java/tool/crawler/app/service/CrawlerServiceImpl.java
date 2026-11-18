@@ -42,15 +42,14 @@ public class CrawlerServiceImpl implements CrawlerService {
 
     var resultCourses =
         courseRequestsMap.entrySet().stream()
-            .map(
-                entry -> {
-                  var courseReq = entry.getKey();
-                  var pageRequests = entry.getValue();
+            .map(entry -> {
+              var courseReq = entry.getKey();
+              var pageRequests = entry.getValue();
 
-                  var crawlResults = pageRequests.stream().map(crawlResultMap::get).toList();
+              var crawlResults = pageRequests.stream().map(crawlResultMap::get).toList();
 
-                  return new CrawlCourseResult.Course(courseReq.relativePath(), crawlResults);
-                })
+              return new CrawlCourseResult.Course(courseReq.relativePath(), crawlResults);
+            })
             .collect(Collectors.toSet());
 
     return new CrawlCourseResult(resultCourses);

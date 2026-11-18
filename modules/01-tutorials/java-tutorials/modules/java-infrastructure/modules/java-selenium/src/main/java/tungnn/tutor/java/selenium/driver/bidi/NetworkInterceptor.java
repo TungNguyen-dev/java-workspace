@@ -30,23 +30,22 @@ public interface NetworkInterceptor extends AutoCloseable {
    * có sẵn của Response ra Console mà không làm crash ứng dụng.
    */
   default void addSimpleResponsePrintHandler() {
-    addResponseHandler(
-        response -> {
-          try {
-            String url = response.getResponseData().getUrl();
-            long status = response.getResponseData().getStatus();
-            String mimeType = response.getResponseData().getMimeType();
+    addResponseHandler(response -> {
+      try {
+        String url = response.getResponseData().getUrl();
+        long status = response.getResponseData().getStatus();
+        String mimeType = response.getResponseData().getMimeType();
 
-            // BiDi chỉ cung cấp Headers và thông tin khái quát của Content (như Size)
-            long headersCount = response.getResponseData().getHeaders().size();
+        // BiDi chỉ cung cấp Headers và thông tin khái quát của Content (như Size)
+        long headersCount = response.getResponseData().getHeaders().size();
 
-            System.out.printf(
-                "[Response Log] URL: %s%n" + "               Status: %d | Type: %s | Headers: %d%n",
-                url, status, mimeType, headersCount);
-          } catch (Exception e) {
-            System.err.println("[Response Log] Lỗi khi đọc dữ liệu response: " + e.getMessage());
-          }
-        });
+        System.out.printf(
+            "[Response Log] URL: %s%n" + "               Status: %d | Type: %s | Headers: %d%n",
+            url, status, mimeType, headersCount);
+      } catch (Exception e) {
+        System.err.println("[Response Log] Lỗi khi đọc dữ liệu response: " + e.getMessage());
+      }
+    });
   }
 
   /** Khởi tạo một điểm đánh chặn mạng (Network Intercept) dựa theo vòng đời (Phase). */

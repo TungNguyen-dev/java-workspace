@@ -37,13 +37,14 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
     // 1.1 Query Table Comments
     StringBuilder sqlTables =
         new StringBuilder(
-            """
-                    SELECT t.table_name, tc.comments
-                    FROM all_tables t
-                    LEFT JOIN all_tab_comments tc
-                           ON tc.owner = t.owner AND tc.table_name = t.table_name
-                    WHERE t.owner = ?
-                   \s""");
+                """
+                         SELECT t.table_name, tc.comments
+                         FROM all_tables t
+                         LEFT JOIN all_tab_comments tc
+                                ON tc.owner = t.owner AND tc.table_name = t.table_name
+                         WHERE t.owner = ?
+                         \
+                        """);
 
     if (hasWhitelist) {
       sqlTables
@@ -79,15 +80,15 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
     StringBuilder sqlColumns =
         new StringBuilder(
             """
-                    SELECT c.table_name, c.column_name, c.data_type,
-                           c.data_length, c.data_precision, c.data_scale,
-                           c.nullable, c.data_default, c.identity_column, c.column_id,
-                           cc.comments
-                    FROM all_tab_cols c
-                    LEFT JOIN all_col_comments cc
-                           ON cc.owner = c.owner AND cc.table_name = c.table_name AND cc.column_name = c.column_name
-                    WHERE c.owner = ? AND c.user_generated = 'YES'
-                    """);
+            SELECT c.table_name, c.column_name, c.data_type,
+                   c.data_length, c.data_precision, c.data_scale,
+                   c.nullable, c.data_default, c.identity_column, c.column_id,
+                   cc.comments
+            FROM all_tab_cols c
+            LEFT JOIN all_col_comments cc
+                   ON cc.owner = c.owner AND cc.table_name = c.table_name AND cc.column_name = c.column_name
+            WHERE c.owner = ? AND c.user_generated = 'YES'
+            """);
 
     if (hasWhitelist) {
       sqlColumns
@@ -158,26 +159,23 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
 
       // Convert Foreign Keys
       Map<String, DatabaseSchema.ForeignKeyModel> foreignKeys = new LinkedHashMap<>();
-      holder.foreignKeyHolders.forEach(
-          (k, v) ->
-              foreignKeys.put(
-                  k,
-                  new DatabaseSchema.ForeignKeyModel(
-                      v.name,
-                      v.columns,
-                      v.foreignOwner,
-                      v.foreignTable,
-                      v.foreignColumns,
-                      v.deleteRule,
-                      v.updateRule,
-                      "")));
+      holder.foreignKeyHolders.forEach((k, v) ->
+          foreignKeys.put(
+              k,
+              new DatabaseSchema.ForeignKeyModel(
+                  v.name,
+                  v.columns,
+                  v.foreignOwner,
+                  v.foreignTable,
+                  v.foreignColumns,
+                  v.deleteRule,
+                  v.updateRule,
+                  "")));
 
       // Convert Indexes
       Map<String, DatabaseSchema.IndexModel> indices = new LinkedHashMap<>();
-      holder.indexHolders.forEach(
-          (k, v) ->
-              indices.put(
-                  k, new DatabaseSchema.IndexModel(v.name, v.type, v.isUnique, v.columns, "")));
+      holder.indexHolders.forEach((k, v) ->
+          indices.put(k, new DatabaseSchema.IndexModel(v.name, v.type, v.isUnique, v.columns, "")));
 
       result.put(
           tableName,
@@ -202,18 +200,18 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
       throws SQLException {
     String sql =
         """
-                SELECT c.search_condition,
-                       c.constraint_name, c.constraint_type, c.table_name,
-                       c.r_owner AS foreign_owner, r_c.table_name AS foreign_table_name,
-                       c.delete_rule,
-                       cc.column_name, r_cc.column_name AS foreign_column_name
-                FROM all_constraints c
-                LEFT JOIN all_constraints r_c ON c.r_owner = r_c.owner AND c.r_constraint_name = r_c.constraint_name
-                LEFT JOIN all_cons_columns cc ON c.owner = cc.owner AND c.constraint_name = cc.constraint_name
-                LEFT JOIN all_cons_columns r_cc ON r_c.owner = r_cc.owner AND r_c.constraint_name = r_cc.constraint_name AND cc.position = r_cc.position
-                WHERE c.owner = ? AND c.constraint_type IN ('P', 'U', 'R', 'C')
-                ORDER BY c.constraint_name, cc.position
-                """;
+        SELECT c.search_condition,
+               c.constraint_name, c.constraint_type, c.table_name,
+               c.r_owner AS foreign_owner, r_c.table_name AS foreign_table_name,
+               c.delete_rule,
+               cc.column_name, r_cc.column_name AS foreign_column_name
+        FROM all_constraints c
+        LEFT JOIN all_constraints r_c ON c.r_owner = r_c.owner AND c.r_constraint_name = r_c.constraint_name
+        LEFT JOIN all_cons_columns cc ON c.owner = cc.owner AND c.constraint_name = cc.constraint_name
+        LEFT JOIN all_cons_columns r_cc ON r_c.owner = r_cc.owner AND r_c.constraint_name = r_cc.constraint_name AND cc.position = r_cc.position
+        WHERE c.owner = ? AND c.constraint_type IN ('P', 'U', 'R', 'C')
+        ORDER BY c.constraint_name, cc.position
+        """;
 
     try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, schema);
@@ -278,13 +276,13 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
       throws SQLException {
     String sql =
         """
-            SELECT i.index_name, i.table_name, i.uniqueness, i.index_type,
-                   ic.column_name, ic.descend
-            FROM all_indexes i
-            JOIN all_ind_columns ic ON i.owner = ic.index_owner AND i.index_name = ic.index_name
-            WHERE i.owner = ? AND i.generated = 'N'
-            ORDER BY i.index_name, ic.column_position
-            """;
+        SELECT i.index_name, i.table_name, i.uniqueness, i.index_type,
+               ic.column_name, ic.descend
+        FROM all_indexes i
+        JOIN all_ind_columns ic ON i.owner = ic.index_owner AND i.index_name = ic.index_name
+        WHERE i.owner = ? AND i.generated = 'N'
+        ORDER BY i.index_name, ic.column_position
+        """;
 
     try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, schema);
@@ -324,12 +322,12 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
     String targetSchema = (schema != null) ? schema.toUpperCase(Locale.ROOT) : "";
     String sql =
         """
-            SELECT v.view_name, v.text AS view_definition, vc.comments
-            FROM all_views v
-            LEFT JOIN all_tab_comments vc
-                   ON vc.owner = v.owner AND vc.table_name = v.view_name
-            WHERE v.owner = ?
-            """;
+        SELECT v.view_name, v.text AS view_definition, vc.comments
+        FROM all_views v
+        LEFT JOIN all_tab_comments vc
+               ON vc.owner = v.owner AND vc.table_name = v.view_name
+        WHERE v.owner = ?
+        """;
 
     Map<String, DatabaseSchema.ViewModel> views = new LinkedHashMap<>();
     try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -373,11 +371,11 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
     String targetSchema = (schema != null) ? schema.toUpperCase(Locale.ROOT) : "";
     String sql =
         """
-            SELECT object_name
-            FROM all_objects
-            WHERE owner = ? AND object_type = ?
-            ORDER BY object_name
-            """;
+        SELECT object_name
+        FROM all_objects
+        WHERE owner = ? AND object_type = ?
+        ORDER BY object_name
+        """;
 
     Map<String, DatabaseSchema.RoutineModel> routines = new LinkedHashMap<>();
     try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -408,10 +406,10 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
     String targetSchema = (schema != null) ? schema.toUpperCase(Locale.ROOT) : "";
     String sql =
         """
-            SELECT trigger_name, table_name, triggering_event, trigger_type, trigger_body
-            FROM all_triggers
-            WHERE owner = ?
-            """;
+        SELECT trigger_name, table_name, triggering_event, trigger_type, trigger_body
+        FROM all_triggers
+        WHERE owner = ?
+        """;
 
     Map<String, DatabaseSchema.TriggerModel> triggers = new LinkedHashMap<>();
     try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -442,10 +440,10 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
     String targetSchema = (schema != null) ? schema.toUpperCase(Locale.ROOT) : "";
     String sql =
         """
-            SELECT sequence_name, min_value, max_value, increment_by, cycle_flag, last_number
-            FROM all_sequences
-            WHERE sequence_owner = ?
-            """;
+        SELECT sequence_name, min_value, max_value, increment_by, cycle_flag, last_number
+        FROM all_sequences
+        WHERE sequence_owner = ?
+        """;
 
     Map<String, DatabaseSchema.SequenceModel> sequences = new LinkedHashMap<>();
     try (PreparedStatement pstmt = connection.prepareStatement(sql)) {

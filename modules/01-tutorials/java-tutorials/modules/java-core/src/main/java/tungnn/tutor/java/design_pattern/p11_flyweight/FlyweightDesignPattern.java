@@ -36,9 +36,9 @@ public record TreeType(String name, String color, String otherTreeData) {
 
 // Context: Chứa trạng thái ngoại lai (Extrinsic State)
 class Tree {
-  private int x;
-  private int y;
-  private TreeType type; // Tham chiếu đến Flyweight
+  private final int x;
+  private final int y;
+  private final TreeType type; // Tham chiếu đến Flyweight
 
   public Tree(int x, int y, TreeType type) {
     this.x = x;
@@ -53,7 +53,7 @@ class Tree {
 
 // Flyweight Factory
 class TreeFactory {
-  private static Map<String, TreeType> treeTypes = new HashMap<>();
+  private static final Map<String, TreeType> treeTypes = new HashMap<>();
 
   public static TreeType getTreeType(String name, String color, String otherTreeData) {
     String key = name + "_" + color;

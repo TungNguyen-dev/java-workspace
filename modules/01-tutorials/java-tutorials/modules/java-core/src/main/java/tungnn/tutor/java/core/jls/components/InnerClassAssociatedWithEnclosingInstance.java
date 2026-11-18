@@ -66,13 +66,13 @@ class Outer2 {
        * instance members of the enclosing class (e.g., `i`).
        */
       // int k = i; // ❌ Compile-time error
-      int m = l; // ✅ Allowed — can access effectively final local variables
+      final int m = l; // ✅ Allowed — can access effectively final local variables
     }
   }
 
   void foo() {
     class Local { // ✅ A local (non-static) inner class
-      int j = i; // Can access instance members of the enclosing class
+      final int j = i; // Can access instance members of the enclosing class
     }
   }
 }

@@ -39,7 +39,7 @@ interface DisplayElement {
 
 // The concrete subject
 class WeatherData implements Subject {
-  private List<Observer> observers;
+  private final List<Observer> observers;
   private float temperature;
   private float humidity;
   private float pressure;
@@ -79,7 +79,7 @@ class WeatherData implements Subject {
 class CurrentConditionsDisplay implements Observer, DisplayElement {
   private float temperature;
   private float humidity;
-  private Subject weatherData;
+  private final Subject weatherData;
 
   public CurrentConditionsDisplay(Subject weatherData) {
     this.weatherData = weatherData;

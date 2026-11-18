@@ -27,14 +27,12 @@ public final class PropertyReflectionUtil {
             .collect(Collectors.toMap(Method::getName, Function.identity(), (a, b) -> a));
 
     return fields.stream()
-        .map(
-            field -> {
-              var accessor = resolveAccessor(field, methods);
-              var mutator = resolveMutator(field, methods);
+        .map(field -> {
+          var accessor = resolveAccessor(field, methods);
+          var mutator = resolveMutator(field, methods);
 
-              return new PropertyMetadata(
-                  field, accessor, mutator, accessor != null, mutator != null);
-            })
+          return new PropertyMetadata(field, accessor, mutator, accessor != null, mutator != null);
+        })
         .toList();
   }
 

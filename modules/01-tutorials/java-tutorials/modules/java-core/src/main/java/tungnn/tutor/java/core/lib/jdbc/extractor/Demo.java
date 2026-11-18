@@ -98,77 +98,71 @@ public class Demo {
       System.out.println("### 1. TABLES & COLUMNS");
       schema
           .tables()
-          .forEach(
-              (tableName, table) -> {
-                System.out.printf(
-                    "%n[Table]: %s (Engine: %s, Comment: %s)%n",
-                    tableName,
-                    table.engine() != null ? table.engine() : "",
-                    formatComment(table.comment()));
+          .forEach((tableName, table) -> {
+            System.out.printf(
+                "%n[Table]: %s (Engine: %s, Comment: %s)%n",
+                tableName,
+                table.engine() != null ? table.engine() : "",
+                formatComment(table.comment()));
 
-                // Gom tất cả item thuộc table vào danh sách để xác định chính xác phần tử cuối cùng
-                List<String> items = new ArrayList<>();
+            // Gom tất cả item thuộc table vào danh sách để xác định chính xác phần tử cuối cùng
+            List<String> items = new ArrayList<>();
 
-                // 1.1 Columns (In trước)
-                if (table.columns() != null) {
-                  table
-                      .columns()
-                      .forEach(
-                          (colName, col) -> {
-                            items.add(
-                                String.format(
-                                    "Column: %-20s | Raw Type: %-15s | Nullable: %-5b | Default: %-10s | Comment: %s",
-                                    col.name(),
-                                    col.rawType(),
-                                    col.isNullable(),
-                                    col.defaultValue(),
-                                    formatComment(col.comment())));
-                          });
-                }
+            // 1.1 Columns (In trước)
+            if (table.columns() != null) {
+              table
+                  .columns()
+                  .forEach((colName, col) -> {
+                    items.add(
+                        String.format(
+                            "Column: %-20s | Raw Type: %-15s | Nullable: %-5b | Default: %-10s | Comment: %s",
+                            col.name(),
+                            col.rawType(),
+                            col.isNullable(),
+                            col.defaultValue(),
+                            formatComment(col.comment())));
+                  });
+            }
 
-                // 1.2 Primary Key
-                if (table.primaryKey() != null) {
-                  items.add(
-                      String.format(
-                          "PK: %s %s", table.primaryKey().name(), table.primaryKey().columns()));
-                }
+            // 1.2 Primary Key
+            if (table.primaryKey() != null) {
+              items.add(
+                  String.format(
+                      "PK: %s %s", table.primaryKey().name(), table.primaryKey().columns()));
+            }
 
-                // 1.3 Foreign Keys
-                if (table.foreignKeys() != null && !table.foreignKeys().isEmpty()) {
-                  table
-                      .foreignKeys()
-                      .forEach(
-                          (fkName, fk) -> {
-                            items.add(
-                                String.format(
-                                    "FK: %s %s -> %s%s [onDelete: %s]",
-                                    fkName,
-                                    fk.columns(),
-                                    fk.referencedTable(),
-                                    fk.referencedColumns(),
-                                    fk.onDelete()));
-                          });
-                }
+            // 1.3 Foreign Keys
+            if (table.foreignKeys() != null && !table.foreignKeys().isEmpty()) {
+              table
+                  .foreignKeys()
+                  .forEach((fkName, fk) -> {
+                    items.add(
+                        String.format(
+                            "FK: %s %s -> %s%s [onDelete: %s]",
+                            fkName,
+                            fk.columns(),
+                            fk.referencedTable(),
+                            fk.referencedColumns(),
+                            fk.onDelete()));
+                  });
+            }
 
-                // 1.4 Check Constraints
-                if (table.checkConstraints() != null && !table.checkConstraints().isEmpty()) {
-                  table
-                      .checkConstraints()
-                      .forEach(
-                          (chkName, chk) -> {
-                            items.add(
-                                String.format(
-                                    "CHECK: %s (%s)", chkName, chk.predicateExpression()));
-                          });
-                }
+            // 1.4 Check Constraints
+            if (table.checkConstraints() != null && !table.checkConstraints().isEmpty()) {
+              table
+                  .checkConstraints()
+                  .forEach((chkName, chk) -> {
+                    items.add(String.format("CHECK: %s (%s)", chkName, chk.predicateExpression()));
+                  });
+            }
 
-                // In các items ra console với tiền tố nhánh (├─ hoặc └─)
-                for (int i = 0; i < items.size(); i++) {
-                  boolean isLast = (i == items.size() - 1);
-                  String prefix = isLast ? "  └─ " : "  ├─ ";
-                  System.out.println(prefix + items.get(i));
-                }
-              });
+            // In các items ra console với tiền tố nhánh (├─ hoặc └─)
+            for (int i = 0; i < items.size(); i++) {
+              boolean isLast = (i == items.size() - 1);
+              String prefix = isLast ? "  └─ " : "  ├─ ";
+              System.out.println(prefix + items.get(i));
+            }
+          });
       System.out.println();
     }
 
@@ -177,11 +171,10 @@ public class Demo {
       System.out.println("### 2. VIEWS");
       schema
           .views()
-          .forEach(
-              (viewName, view) -> {
-                System.out.printf(
-                    "- [View]: %s (Comment: %s)%n", viewName, formatComment(view.comment()));
-              });
+          .forEach((viewName, view) -> {
+            System.out.printf(
+                "- [View]: %s (Comment: %s)%n", viewName, formatComment(view.comment()));
+          });
       System.out.println();
     }
 
@@ -190,11 +183,10 @@ public class Demo {
       System.out.println("### 3. FUNCTIONS");
       schema
           .functions()
-          .forEach(
-              (funcName, func) -> {
-                System.out.printf(
-                    "- [Function]: %s | ReturnType: %s%n", funcName, func.rawReturnType());
-              });
+          .forEach((funcName, func) -> {
+            System.out.printf(
+                "- [Function]: %s | ReturnType: %s%n", funcName, func.rawReturnType());
+          });
       System.out.println();
     }
 
@@ -203,12 +195,11 @@ public class Demo {
       System.out.println("### 4. TRIGGERS");
       schema
           .triggers()
-          .forEach(
-              (trigName, trig) -> {
-                System.out.printf(
-                    "- [Trigger]: %s | Target: %s | Timing: %s | Event: %s%n",
-                    trigName, trig.targetTable(), trig.timing(), trig.event());
-              });
+          .forEach((trigName, trig) -> {
+            System.out.printf(
+                "- [Trigger]: %s | Target: %s | Timing: %s | Event: %s%n",
+                trigName, trig.targetTable(), trig.timing(), trig.event());
+          });
       System.out.println();
     }
 
@@ -217,12 +208,11 @@ public class Demo {
       System.out.println("### 5. SEQUENCES");
       schema
           .sequences()
-          .forEach(
-              (seqName, seq) -> {
-                System.out.printf(
-                    "- [Sequence]: %s | Start: %s | Increment: %s%n",
-                    seqName, seq.startValue(), seq.increment());
-              });
+          .forEach((seqName, seq) -> {
+            System.out.printf(
+                "- [Sequence]: %s | Start: %s | Increment: %s%n",
+                seqName, seq.startValue(), seq.increment());
+          });
       System.out.println();
     }
 
@@ -231,12 +221,11 @@ public class Demo {
       System.out.println("### 6. CUSTOM TYPES");
       schema
           .customTypes()
-          .forEach(
-              (typeName, type) -> {
-                System.out.printf(
-                    "- [Type]: %s | Category: %s | Values: %s%n",
-                    typeName, type.category(), type.enumValues());
-              });
+          .forEach((typeName, type) -> {
+            System.out.printf(
+                "- [Type]: %s | Category: %s | Values: %s%n",
+                typeName, type.category(), type.enumValues());
+          });
       System.out.println();
     }
   }

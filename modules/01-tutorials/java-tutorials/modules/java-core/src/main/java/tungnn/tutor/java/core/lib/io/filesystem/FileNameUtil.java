@@ -32,14 +32,13 @@ public final class FileNameUtil {
     StringBuilder sb = new StringBuilder(noDiacritics.length());
     noDiacritics
         .codePoints()
-        .forEach(
-            cp -> {
-              if (Character.isLetterOrDigit(cp) || cp == '_' || cp == '-' || cp == '.') {
-                sb.appendCodePoint(cp);
-              } else if (Character.isWhitespace(cp)) {
-                sb.append('_');
-              }
-            });
+        .forEach(cp -> {
+          if (Character.isLetterOrDigit(cp) || cp == '_' || cp == '-' || cp == '.') {
+            sb.appendCodePoint(cp);
+          } else if (Character.isWhitespace(cp)) {
+            sb.append('_');
+          }
+        });
 
     // 3. Collapse repeated dots; trim edges (leading '_', trailing '_' and '.')
     String sanitized = trimEdges(collapseDots(sb.toString()));

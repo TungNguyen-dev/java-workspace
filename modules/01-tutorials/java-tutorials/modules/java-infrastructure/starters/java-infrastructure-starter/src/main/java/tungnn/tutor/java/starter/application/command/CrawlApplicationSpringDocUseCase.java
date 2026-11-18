@@ -26,13 +26,12 @@ public class CrawlApplicationSpringDocUseCase {
       var storageDir = Path.of("storage", "spring-docs");
       FileUtil.createDirectories(storageDir);
       var counter = new AtomicInteger(0);
-      results.forEach(
-          result -> {
-            var count = counter.incrementAndGet();
-            var filename = FileNameUtil.sanitize("%03d - %s.md".formatted(count, result.title()));
-            var note = new ObsidianNote(result.title(), result.content(), List.of(result.url()));
-            FileUtil.writeString(storageDir.resolve(filename), note.toMarkdown());
-          });
+      results.forEach(result -> {
+        var count = counter.incrementAndGet();
+        var filename = FileNameUtil.sanitize("%03d - %s.md".formatted(count, result.title()));
+        var note = new ObsidianNote(result.title(), result.content(), List.of(result.url()));
+        FileUtil.writeString(storageDir.resolve(filename), note.toMarkdown());
+      });
     } finally {
       driver.quit();
     }

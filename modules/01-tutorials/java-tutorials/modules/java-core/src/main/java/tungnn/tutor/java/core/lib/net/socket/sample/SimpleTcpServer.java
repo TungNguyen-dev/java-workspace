@@ -28,24 +28,23 @@ public class SimpleTcpServer {
       // Thread lắng nghe lệnh 'exit' từ console để đóng server
       ServerSocket finalServerSocket = serverSocket;
       Thread consoleListener =
-          new Thread(
-              () -> {
-                try (BufferedReader consoleReader =
-                    new BufferedReader(new InputStreamReader(System.in))) {
-                  System.out.println("Type 'exit' in server console to stop the server.");
-                  while (true) {
-                    String input = consoleReader.readLine();
-                    if ("exit".equalsIgnoreCase(input)) {
-                      System.out.println("Stopping server...");
-                      // Đóng ServerSocket an toàn để ngắt vòng lặp accept()
-                      SocketUtils.closeQuietly(finalServerSocket);
-                      break;
-                    }
-                  }
-                } catch (IOException e) {
-                  System.err.println("Console reader error: " + e.getMessage());
+          new Thread(() -> {
+            try (BufferedReader consoleReader =
+                new BufferedReader(new InputStreamReader(System.in))) {
+              System.out.println("Type 'exit' in server console to stop the server.");
+              while (true) {
+                String input = consoleReader.readLine();
+                if ("exit".equalsIgnoreCase(input)) {
+                  System.out.println("Stopping server...");
+                  // Đóng ServerSocket an toàn để ngắt vòng lặp accept()
+                  SocketUtils.closeQuietly(finalServerSocket);
+                  break;
                 }
-              });
+              }
+            } catch (IOException e) {
+              System.err.println("Console reader error: " + e.getMessage());
+            }
+          });
       consoleListener.setDaemon(true);
       consoleListener.start();
 

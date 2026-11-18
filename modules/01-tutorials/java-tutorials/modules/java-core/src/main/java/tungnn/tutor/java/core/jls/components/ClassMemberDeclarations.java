@@ -36,5 +36,4 @@ public class ClassMemberDeclarations {
   }
 
   // A stray semicolon is syntactically valid but has no effect.
-  ;
 }

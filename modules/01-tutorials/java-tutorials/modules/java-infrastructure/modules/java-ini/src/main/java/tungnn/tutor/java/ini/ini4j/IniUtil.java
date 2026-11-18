@@ -38,11 +38,10 @@ public final class IniUtil {
   public static void write(Path path, Map<String, Map<String, String>> data) {
     Ini ini = new Ini();
 
-    data.forEach(
-        (section, kv) -> {
-          Ini.Section sec = ini.add(section);
-          sec.putAll(kv);
-        });
+    data.forEach((section, kv) -> {
+      Ini.Section sec = ini.add(section);
+      sec.putAll(kv);
+    });
 
     safeSave(ini, path);
   }

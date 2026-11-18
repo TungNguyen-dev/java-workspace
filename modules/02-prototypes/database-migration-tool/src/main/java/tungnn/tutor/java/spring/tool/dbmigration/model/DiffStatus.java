@@ -7,5 +7,5 @@ public enum DiffStatus {
 
   REMOVED,
 
-  UNCHANGED;
+  UNCHANGED
 }

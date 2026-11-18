@@ -31,11 +31,7 @@ public class DinerMenuIterator implements Iterator<MenuItem> {
 
   public boolean hasNext() {
     // Check if we hit the end of array or a null entry (per Mel's logic)
-    if (position >= items.length || items[position] == null) {
-      return false;
-    } else {
-      return true;
-    }
+      return position < items.length && items[position] != null;
   }
 }
 

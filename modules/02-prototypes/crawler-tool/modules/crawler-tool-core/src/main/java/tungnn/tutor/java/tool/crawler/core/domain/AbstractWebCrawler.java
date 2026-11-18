@@ -50,9 +50,8 @@ public abstract class AbstractWebCrawler implements WebCrawler {
 
   private void waitForPageToLoad() {
     ElementUtil.newWait(driver, timeout())
-        .until(
-            driver ->
-                Objects.equals(
-                    WindowUtil.executeScript(driver, "return document.readyState"), "complete"));
+        .until(driver ->
+            Objects.equals(
+                WindowUtil.executeScript(driver, "return document.readyState"), "complete"));
   }
 }

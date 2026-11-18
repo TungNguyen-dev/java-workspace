@@ -90,10 +90,8 @@ public final class ExcelFormulaErrorUtils {
 
     // 2) STRUCTURAL error: an error token is embedded in the formula expression itself.
     return firstErrorToken(formula)
-        .map(
-            token ->
-                new FormulaErrorDetail(
-                    sheetName, cellAddress, token, ErrorSource.STRUCTURAL, formula));
+        .map(token ->
+            new FormulaErrorDetail(sheetName, cellAddress, token, ErrorSource.STRUCTURAL, formula));
   }
 
   /** {@code true} if the cell is a formula that is (or evaluates to) an error. */

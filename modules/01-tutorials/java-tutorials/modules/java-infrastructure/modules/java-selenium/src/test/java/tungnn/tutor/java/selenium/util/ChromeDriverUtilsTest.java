@@ -27,14 +27,13 @@ class ChromeDriverUtilsTest {
     try (var paths = Files.walk(directory)) {
       paths
           .sorted(Comparator.reverseOrder())
-          .forEach(
-              path -> {
-                try {
-                  Files.deleteIfExists(path);
-                } catch (Exception e) {
-                  throw new RuntimeException("Failed to delete: " + path, e);
-                }
-              });
+          .forEach(path -> {
+            try {
+              Files.deleteIfExists(path);
+            } catch (Exception e) {
+              throw new RuntimeException("Failed to delete: " + path, e);
+            }
+          });
     } catch (Exception e) {
       throw new RuntimeException("Failed to delete directory: " + directory, e);
     }

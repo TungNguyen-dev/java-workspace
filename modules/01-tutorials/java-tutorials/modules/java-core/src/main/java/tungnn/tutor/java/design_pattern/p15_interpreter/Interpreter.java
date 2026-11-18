@@ -27,7 +27,7 @@ public interface Expression {
 // Terminal Expressions
 // Represents a literal number (Terminal)
 class NumberExpression implements Expression {
-  private int number;
+  private final int number;
 
   public NumberExpression(int number) {
     this.number = number;
@@ -41,7 +41,7 @@ class NumberExpression implements Expression {
 
 // Represents a variable like "x" or "y" (Terminal)
 class VariableExpression implements Expression {
-  private String name;
+  private final String name;
 
   public VariableExpression(String name) {
     this.name = name;
@@ -59,8 +59,8 @@ class VariableExpression implements Expression {
 // Non-terminal Expressions
 // Represents Addition rule: R ::= R1 + R2
 class AddExpression implements Expression {
-  private Expression left;
-  private Expression right;
+  private final Expression left;
+  private final Expression right;
 
   public AddExpression(Expression left, Expression right) {
     this.left = left;
@@ -75,8 +75,8 @@ class AddExpression implements Expression {
 
 // Represents Subtraction rule: R ::= R1 - R2
 class SubtractExpression implements Expression {
-  private Expression left;
-  private Expression right;
+  private final Expression left;
+  private final Expression right;
 
   public SubtractExpression(Expression left, Expression right) {
     this.left = left;

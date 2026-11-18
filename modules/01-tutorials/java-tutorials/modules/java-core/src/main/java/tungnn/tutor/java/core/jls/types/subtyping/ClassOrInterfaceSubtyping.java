@@ -106,10 +106,10 @@ public class ClassOrInterfaceSubtyping {
     IntersectionImpl target = new IntersectionImpl();
 
     // Ép kiểu tạo Intersection Type: (I & J)
-    Object obj = (I & J) target;
+    Object obj = target;
 
-    I i = (I & J) target; // (I & J) <: I
-    J j = (I & J) target; // (I & J) <: J
+    I i = target; // (I & J) <: I
+    J j = target; // (I & J) <: J
   }
 
   // 6. Type variable (JLS §4.4)

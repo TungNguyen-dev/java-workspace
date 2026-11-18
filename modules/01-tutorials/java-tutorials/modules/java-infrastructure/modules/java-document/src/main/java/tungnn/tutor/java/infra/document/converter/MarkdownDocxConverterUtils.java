@@ -62,64 +62,6 @@ public final class MarkdownDocxConverterUtils {
   // Options
   // ==========================================================================
 
-  /** Numbering scheme prepended to a heading. Counters restart under each parent heading. */
-  public enum Numbering {
-    NONE,
-    UPPER_ROMAN, // I. II. III.
-    DECIMAL, // 1. 2. 3.
-    LOWER_LETTER // a) b) c)
-  }
-
-  /** Format of a single heading level. Sizes in points, colour as RRGGBB hex. */
-  public record HeadingStyle(
-      int sizePt,
-      String colorHex,
-      int spaceBeforePt,
-      int spaceAfterPt,
-      boolean italic,
-      boolean upperCase,
-      boolean centered,
-      Numbering numbering) {}
-
-  public record Options(
-      String bodyFont,
-      String codeFont,
-      int bodySizePt,
-      double lineSpacing,
-      List<HeadingStyle> headings) {
-
-    public Options {
-      if (headings == null || headings.size() != 6) {
-        throw new IllegalArgumentException("Exactly 6 heading styles are required");
-      }
-    }
-
-    public static Options defaults() {
-      return new Options(
-          "Times New Roman",
-          "Courier New",
-          13,
-          1.5, // Default line spacing
-          List.of(
-              // H1: no numbering, UPPERCASE, centered
-              new HeadingStyle(13, "1F3864", 18, 6, false, true, true, Numbering.NONE),
-              // H2: UPPERCASE, I. II. III.
-              new HeadingStyle(13, "2F5496", 14, 6, false, true, false, Numbering.UPPER_ROMAN),
-              // H3: UPPERCASE, 1. 2. 3., centered
-              new HeadingStyle(13, "2F5496", 12, 4, false, true, true, Numbering.DECIMAL),
-              // H4: a) b) c)
-              new HeadingStyle(13, "1F3864", 10, 4, false, false, false, Numbering.LOWER_LETTER),
-              // H5: centered, no numbering
-              new HeadingStyle(13, "1F3864", 8, 3, false, false, true, Numbering.NONE),
-              // H6: unchanged
-              new HeadingStyle(13, "595959", 8, 3, true, false, false, Numbering.NONE)));
-    }
-  }
-
-  // ==========================================================================
-  // Public API
-  // ==========================================================================
-
   public static void convertMarkdownToDocx(Path mdPath, Path docxPath) throws IOException {
     convertMarkdownToDocx(mdPath, docxPath, Options.defaults());
   }
@@ -146,7 +88,7 @@ public final class MarkdownDocxConverterUtils {
   }
 
   // ==========================================================================
-  // Heading styles
+  // Public API
   // ==========================================================================
 
   private static void ensureHeadingStyles(XWPFDocument document, Options options) {
@@ -203,6 +145,64 @@ public final class MarkdownDocxConverterUtils {
     }
   }
 
+  /** Numbering scheme prepended to a heading. Counters restart under each parent heading. */
+  public enum Numbering {
+    NONE,
+    UPPER_ROMAN, // I. II. III.
+    DECIMAL, // 1. 2. 3.
+    LOWER_LETTER // a) b) c)
+  }
+
+  /** Format of a single heading level. Sizes in points, colour as RRGGBB hex. */
+  public record HeadingStyle(
+      int sizePt,
+      String colorHex,
+      int spaceBeforePt,
+      int spaceAfterPt,
+      boolean italic,
+      boolean upperCase,
+      boolean centered,
+      Numbering numbering) {}
+
+  // ==========================================================================
+  // Heading styles
+  // ==========================================================================
+
+  public record Options(
+      String bodyFont,
+      String codeFont,
+      int bodySizePt,
+      double lineSpacing,
+      List<HeadingStyle> headings) {
+
+    public Options {
+      if (headings == null || headings.size() != 6) {
+        throw new IllegalArgumentException("Exactly 6 heading styles are required");
+      }
+    }
+
+    public static Options defaults() {
+      return new Options(
+          "Times New Roman",
+          "Courier New",
+          13,
+          1.5, // Default line spacing
+          List.of(
+              // H1: no numbering, UPPERCASE, centered
+              new HeadingStyle(13, "1F3864", 18, 6, false, true, true, Numbering.NONE),
+              // H2: UPPERCASE, I. II. III.
+              new HeadingStyle(13, "2F5496", 14, 6, false, true, false, Numbering.UPPER_ROMAN),
+              // H3: UPPERCASE, 1. 2. 3., centered
+              new HeadingStyle(13, "2F5496", 12, 4, false, true, true, Numbering.DECIMAL),
+              // H4: a) b) c)
+              new HeadingStyle(13, "1F3864", 10, 4, false, false, false, Numbering.LOWER_LETTER),
+              // H5: centered, no numbering
+              new HeadingStyle(13, "1F3864", 8, 3, false, false, true, Numbering.NONE),
+              // H6: unchanged
+              new HeadingStyle(13, "595959", 8, 3, true, false, false, Numbering.NONE)));
+    }
+  }
+
   // ==========================================================================
   // Rendering
   // ==========================================================================
@@ -220,31 +220,11 @@ public final class MarkdownDocxConverterUtils {
   private static final class Renderer {
     private final XWPFDocument doc;
     private final Options opt;
+    private final int[] headingCounters = new int[7];
 
     Renderer(XWPFDocument doc, Options opt) {
       this.doc = doc;
       this.opt = opt;
-    }
-
-    private final int[] headingCounters = new int[7];
-
-    private String nextHeadingLabel(int level) {
-      for (int i = level + 1; i < headingCounters.length; i++) {
-        headingCounters[i] = 0;
-      }
-
-      Numbering numbering = opt.headings().get(level - 1).numbering();
-      if (numbering == Numbering.NONE) {
-        return "";
-      }
-
-      int n = ++headingCounters[level];
-      return switch (numbering) {
-        case UPPER_ROMAN -> toRoman(n) + ".";
-        case DECIMAL -> n + ".";
-        case LOWER_LETTER -> toLetters(n) + ")";
-        case NONE -> "";
-      };
     }
 
     private static String toRoman(int number) {
@@ -270,11 +250,36 @@ public final class MarkdownDocxConverterUtils {
       return sb.toString();
     }
 
+    private static CTPPr ppr(XWPFParagraph p) {
+      return p.getCTP().isSetPPr() ? p.getCTP().getPPr() : p.getCTP().addNewPPr();
+    }
+
+    private String nextHeadingLabel(int level) {
+      for (int i = level + 1; i < headingCounters.length; i++) {
+        headingCounters[i] = 0;
+      }
+
+      Numbering numbering = opt.headings().get(level - 1).numbering();
+      if (numbering == Numbering.NONE) {
+        return "";
+      }
+
+      int n = ++headingCounters[level];
+      return switch (numbering) {
+        case UPPER_ROMAN -> toRoman(n) + ".";
+        case DECIMAL -> n + ".";
+        case LOWER_LETTER -> toLetters(n) + ")";
+        case NONE -> "";
+      };
+    }
+
     void renderChildren(Node parent, int indent, boolean quote) {
       for (Node n = parent.getFirstChild(); n != null; n = n.getNext()) {
         renderBlock(n, indent, quote);
       }
     }
+
+    // ---- paragraphs -------------------------------------------------------
 
     void renderBlock(Node node, int indent, boolean quote) {
       switch (node) {
@@ -306,8 +311,6 @@ public final class MarkdownDocxConverterUtils {
       }
     }
 
-    // ---- paragraphs -------------------------------------------------------
-
     private XWPFParagraph newBody(int indent, boolean quote) {
       XWPFParagraph p = doc.createParagraph();
       p.setAlignment(ParagraphAlignment.BOTH); // Justify alignment
@@ -325,10 +328,6 @@ public final class MarkdownDocxConverterUtils {
         left.setColor("A6A6A6");
       }
       return p;
-    }
-
-    private static CTPPr ppr(XWPFParagraph p) {
-      return p.getCTP().isSetPPr() ? p.getCTP().getPPr() : p.getCTP().addNewPPr();
     }
 
     // ---- lists ------------------------------------------------------------

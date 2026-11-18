@@ -60,14 +60,14 @@ public class SpringDocPage extends BasePage implements PageCrawler {
    */
   private static final String EXTRACT_CONTENT_SCRIPT =
       """
-          const root = arguments[0];
-          const noises = root.querySelectorAll(arguments[1]);
-          const saved = [];
-          noises.forEach(n => { saved.push([n, n.style.display]); n.style.display = 'none'; });
-          const text = root.innerText;
-          saved.forEach(entry => { entry[0].style.display = entry[1]; });
-          return text;
-          """;
+      const root = arguments[0];
+      const noises = root.querySelectorAll(arguments[1]);
+      const saved = [];
+      noises.forEach(n => { saved.push([n, n.style.display]); n.style.display = 'none'; });
+      const text = root.innerText;
+      saved.forEach(entry => { entry[0].style.display = entry[1]; });
+      return text;
+      """;
 
   public SpringDocPage(WebDriver driver) {
     super(driver);
@@ -102,12 +102,11 @@ public class SpringDocPage extends BasePage implements PageCrawler {
    */
   public List<PageCrawlResult> crawlAll() {
     List<PageCrawlResult> results = new ArrayList<>();
-    traverse(
-        (url, hasArticle) -> {
-          if (hasArticle) {
-            results.add(capture(url));
-          }
-        });
+    traverse((url, hasArticle) -> {
+      if (hasArticle) {
+        results.add(capture(url));
+      }
+    });
     return List.copyOf(results);
   }
 
@@ -179,11 +178,10 @@ public class SpringDocPage extends BasePage implements PageCrawler {
    */
   private Optional<String> findPaginationUrl(By locator) {
     return ElementUtil.findElementIfPresent(driver, locator)
-        .map(
-            link -> {
-              String href = link.getDomProperty("href");
-              return (href == null || href.isBlank()) ? link.getDomAttribute("href") : href;
-            })
+        .map(link -> {
+          String href = link.getDomProperty("href");
+          return (href == null || href.isBlank()) ? link.getDomAttribute("href") : href;
+        })
         .filter(href -> !href.isBlank())
         .map(this::toAbsolute);
   }
@@ -205,11 +203,10 @@ public class SpringDocPage extends BasePage implements PageCrawler {
     return ElementUtil.findElementIfPresent(driver, TITLE_SELECTOR)
         .map(ElementUtil::getText)
         .filter(title -> !title.isBlank())
-        .orElseGet(
-            () -> {
-              String docTitle = driver.getTitle();
-              return docTitle == null ? "" : docTitle.trim();
-            });
+        .orElseGet(() -> {
+          String docTitle = driver.getTitle();
+          return docTitle == null ? "" : docTitle.trim();
+        });
   }
 
   /**

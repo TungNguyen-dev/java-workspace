@@ -16,7 +16,7 @@ public class BufferedStreams {
   public static void bufferedByteStream() throws IOException {
     Path inPath = Path.of("storage", "input.txt");
     try (InputStream in = Files.newInputStream(inPath);
-        BufferedInputStream buffIn = new BufferedInputStream(in); ) {
+        BufferedInputStream buffIn = new BufferedInputStream(in)) {
       int b;
       while ((b = buffIn.read()) != -1) {
         System.out.print(b + " ");
@@ -25,7 +25,7 @@ public class BufferedStreams {
 
     Path outPath = Path.of("storage", "output.txt");
     try (OutputStream out = Files.newOutputStream(outPath);
-        BufferedOutputStream buffOut = new BufferedOutputStream(out); ) {
+        BufferedOutputStream buffOut = new BufferedOutputStream(out)) {
       byte[] data = {72, 101, 108, 108, 111, 44, 32, 87, 111, 114, 108, 100, 33};
       for (byte b : data) {
         buffOut.write(b);

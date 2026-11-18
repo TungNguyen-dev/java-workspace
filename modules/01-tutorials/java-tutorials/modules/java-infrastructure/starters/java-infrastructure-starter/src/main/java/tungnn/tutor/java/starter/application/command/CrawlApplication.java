@@ -54,14 +54,13 @@ public class CrawlApplication {
         Stream<Path> stream = Files.walk(INPUT_DIR)) {
       stream
           .filter(Files::isRegularFile)
-          .filter(
-              p -> {
-                try {
-                  return Files.isHidden(p);
-                } catch (IOException e) {
-                  throw new RuntimeException(e);
-                }
-              })
+          .filter(p -> {
+            try {
+              return Files.isHidden(p);
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          })
           .forEach(course -> processCourse(crawlService, course));
     } finally {
       drivers.forEach(WebDriver::quit);

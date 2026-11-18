@@ -46,13 +46,12 @@ public final class WordUtils {
   public static void applyTranslations(
       Map<String, List<XWPFRun>> textToRuns, Map<String, String> translations) {
 
-    textToRuns.forEach(
-        (source, runs) -> {
-          var translated = translations.get(source);
-          if (translated != null) {
-            runs.forEach(run -> run.setText(translated, 0));
-          }
-        });
+    textToRuns.forEach((source, runs) -> {
+      var translated = translations.get(source);
+      if (translated != null) {
+        runs.forEach(run -> run.setText(translated, 0));
+      }
+    });
   }
 
   public static String extractAllText(XWPFDocument document) {
@@ -94,10 +93,8 @@ public final class WordUtils {
 
     table
         .getRows()
-        .forEach(
-            row ->
-                row.getTableCells()
-                    .forEach(cell -> collectTableCell(cell, textPredicate, textToRuns)));
+        .forEach(row ->
+            row.getTableCells().forEach(cell -> collectTableCell(cell, textPredicate, textToRuns)));
   }
 
   private static void collectTableCell(

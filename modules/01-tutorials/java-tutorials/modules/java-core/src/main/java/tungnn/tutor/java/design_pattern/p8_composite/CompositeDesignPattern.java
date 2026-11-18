@@ -90,8 +90,8 @@ public static class Menu extends MenuComponent {
 }
 
 public static class MenuItem extends MenuComponent {
-  private String name;
-  private double price;
+  private final String name;
+  private final double price;
 
   public MenuItem(String name, double price) {
     this.name = name;

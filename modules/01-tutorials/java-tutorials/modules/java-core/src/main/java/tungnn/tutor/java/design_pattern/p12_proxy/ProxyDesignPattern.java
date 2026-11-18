@@ -44,8 +44,8 @@ class RealDocument implements Document {
 // Proxy
 public class DocumentProxy implements Document {
 
-  private RealDocument realDocument;
-  private String fileName;
+  private final RealDocument realDocument;
+  private final String fileName;
 
   public DocumentProxy(String fileName, String initialContent) {
     this.fileName = fileName;

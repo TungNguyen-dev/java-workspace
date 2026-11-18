@@ -17,10 +17,9 @@ public class PowerPointUtilTest {
 
       var textRuns = PowerPointUtils.collectTextRuns(document, text -> true);
 
-      textRuns.forEach(
-          (text, runs) -> {
-            runs.forEach(System.out::println);
-          });
+      textRuns.forEach((text, runs) -> {
+        runs.forEach(System.out::println);
+      });
     }
   }
 }

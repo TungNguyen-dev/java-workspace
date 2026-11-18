@@ -112,7 +112,7 @@ public final class DateTimeApiSamples {
 
     // Generic arithmetic via ChronoUnit.
     print("plus(3, ChronoUnit.DECADES)", date.plus(3, ChronoUnit.DECADES));
-    print("dateTime.plus(90, MINUTES)", dateTime.plus(90, ChronoUnit.MINUTES));
+    print("dateTime.plus(90, MINUTES)", dateTime.plusMinutes(90));
 
     // Period = date-based amount (years, months, days).
     Period period = Period.of(1, 2, 3);
@@ -164,7 +164,7 @@ public final class DateTimeApiSamples {
     // withXxx - replace a single field.
     print("withDayOfMonth(1)", date.withDayOfMonth(1));
     print("withMonth(12)", date.withMonth(12));
-    print("with(ChronoField.DAY_OF_YEAR, 200)", date.with(ChronoField.DAY_OF_YEAR, 200));
+    print("with(ChronoField.DAY_OF_YEAR, 200)", date.withDayOfYear(200));
 
     // Built-in TemporalAdjusters.
     print("firstDayOfMonth", date.with(TemporalAdjusters.firstDayOfMonth()));
@@ -187,17 +187,16 @@ public final class DateTimeApiSamples {
 
     // Custom adjuster: next working day.
     TemporalAdjuster nextWorkingDay =
-        TemporalAdjusters.ofDateAdjuster(
-            d -> {
-              DayOfWeek dow = d.getDayOfWeek();
-              int shift =
-                  switch (dow) {
-                    case FRIDAY -> 3;
-                    case SATURDAY -> 2;
-                    default -> 1;
-                  };
-              return d.plusDays(shift);
-            });
+        TemporalAdjusters.ofDateAdjuster(d -> {
+          DayOfWeek dow = d.getDayOfWeek();
+          int shift =
+              switch (dow) {
+                case FRIDAY -> 3;
+                case SATURDAY -> 2;
+                default -> 1;
+              };
+          return d.plusDays(shift);
+        });
     print("custom nextWorkingDay (from Mon)", date.with(nextWorkingDay));
     print("custom nextWorkingDay (from Fri)", LocalDate.of(2026, 9, 18).with(nextWorkingDay));
 

@@ -51,11 +51,10 @@ public class CrawlerRunner implements CommandLineRunner {
       // 2. Prepare request data
       var courses =
           inputFiles.stream()
-              .map(
-                  filePath -> {
-                    var relativePath = appConfig.inputDir().relativize(filePath);
-                    return new CrawlCourseRequest.Course(filePath, relativePath);
-                  })
+              .map(filePath -> {
+                var relativePath = appConfig.inputDir().relativize(filePath);
+                return new CrawlCourseRequest.Course(filePath, relativePath);
+              })
               .collect(Collectors.toSet());
 
       var request = new CrawlCourseRequest(courses);
@@ -94,14 +93,13 @@ public class CrawlerRunner implements CommandLineRunner {
     try (var stream = Files.walk(inputDir)) {
       return stream
           .filter(Files::isRegularFile)
-          .filter(
-              p -> {
-                try {
-                  return !Files.isHidden(p);
-                } catch (IOException e) {
-                  throw new RuntimeException(e);
-                }
-              })
+          .filter(p -> {
+            try {
+              return !Files.isHidden(p);
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          })
           .toList();
     } catch (IOException e) {
       LOGGER.error("Error scanning input directory: {}", e.getMessage(), e);
