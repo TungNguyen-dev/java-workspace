@@ -120,3 +120,4 @@ storage
 # Other local data
 .data/
 
+**/dist
