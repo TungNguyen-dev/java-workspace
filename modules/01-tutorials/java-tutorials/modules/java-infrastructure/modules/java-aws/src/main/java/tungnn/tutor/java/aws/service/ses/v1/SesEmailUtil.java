@@ -1,4 +1,3 @@
-// SesEmailUtil.java
 package tungnn.tutor.java.aws.service.ses.v1;
 
 import software.amazon.awssdk.services.ses.SesClient;

@@ -1,4 +1,3 @@
-// SesVerificationUtil.java
 package tungnn.tutor.java.aws.service.ses.v1;
 
 import java.util.List;

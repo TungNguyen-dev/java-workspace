@@ -13,7 +13,7 @@
 
     <artifactId>java-aws</artifactId>
 
-    <name>Java AWS Infrastructure</name>
+    <name>java-aws</name>
     <description>AWS SDK v2 service wrappers and integration module</description>
 
     <properties>

@@ -1,4 +1,3 @@
-// SesV2MultiRegionEndpointUtil.java
 package tungnn.tutor.java.aws.service.ses.v2;
 
 import software.amazon.awssdk.services.sesv2.SesV2Client;

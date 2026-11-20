@@ -1,4 +1,4 @@
-package tungnn.tutor.java.aws;
+package tungnn.tutor.java.aws.client;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,12 +19,30 @@ public abstract class AwsAbstractClientFactory implements AwsClientFactory {
     Objects.requireNonNull(builder, "builder must not be null");
     Objects.requireNonNull(profile, "profile must not be null");
     var key = new ClientCacheKey(clientType, profile.name());
-    return (C) cache.computeIfAbsent(key, ignored -> createClient(builder, profile));
+    return (C) cache.computeIfAbsent(key, _ -> createClient(builder, profile));
   }
 
   @Override
   public void clearCache() {
-    cache.clear();
+    RuntimeException failure = null;
+    for (var key : cache.keySet()) {
+      var client = cache.remove(key);
+      if (client == null) {
+        continue;
+      }
+      try {
+        client.close();
+      } catch (RuntimeException e) {
+        if (failure == null) {
+          failure = e;
+        } else {
+          failure.addSuppressed(e);
+        }
+      }
+    }
+    if (failure != null) {
+      throw failure;
+    }
   }
 
   protected abstract <C extends AwsClient> C createClient(

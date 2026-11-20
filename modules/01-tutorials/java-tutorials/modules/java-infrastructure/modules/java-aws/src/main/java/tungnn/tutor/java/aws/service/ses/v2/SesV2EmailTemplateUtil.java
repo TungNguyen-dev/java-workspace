@@ -1,4 +1,3 @@
-// SesV2EmailTemplateUtil.java
 package tungnn.tutor.java.aws.service.ses.v2;
 
 import java.util.List;

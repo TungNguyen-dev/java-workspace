@@ -10,16 +10,12 @@ import software.amazon.awssdk.services.ssm.model.*;
 
 public final class InvokeCommandUtil {
   private static final String DOCUMENT_SHELL = "AWS-RunShellScript";
-  // Backoff config
   private static final long INITIAL_WAIT_MS = 250;
   private static final long MAX_WAIT_MS = 5000;
   private static final double BACKOFF_MULTIPLIER = 1.5;
 
   private InvokeCommandUtil() {}
 
-  // =========================
-  // Public API
-  // =========================
   public static Map<String, SsmCommandResult> invokeCommand(
       SsmClient client, List<String> instanceIds, String command, Duration timeout) {
     validate(instanceIds, command, timeout);
@@ -27,9 +23,6 @@ public final class InvokeCommandUtil {
     return pollCommandMultiThread(client, instanceIds, commandId, timeout);
   }
 
-  // =========================
-  // Core logic
-  // =========================
   private static String sendCommand(
       SsmClient client, List<String> instanceIds, String command, Duration timeout) {
     var request =
@@ -85,11 +78,9 @@ public final class InvokeCommandUtil {
           case TIMED_OUT:
             throw new SsmCommandException("SSM command failed [" + status + "]", lastResult);
           default:
-            // PENDING, IN_PROGRESS, DELAYED, future states
             break;
         }
-      } catch (InvocationDoesNotExistException e) {
-        // eventual consistency → retry
+      } catch (InvocationDoesNotExistException _) {
       } catch (SsmException e) {
         if (!isRetryable(e)) {
           throw e;
@@ -102,9 +93,6 @@ public final class InvokeCommandUtil {
         "SSM command timeout after " + timeout.toMillis() + " ms", lastResult);
   }
 
-  // =========================
-  // Helpers
-  // =========================
   private static boolean isRetryable(SsmException e) {
     return e.isThrottlingException() || e.statusCode() >= 500;
   }
@@ -140,9 +128,6 @@ public final class InvokeCommandUtil {
     }
   }
 
-  // =========================
-  // Result + Exceptions
-  // =========================
   public record SsmCommandResult(
       String stdout, String stderr, Integer responseCode, CommandInvocationStatus status) {}
 
