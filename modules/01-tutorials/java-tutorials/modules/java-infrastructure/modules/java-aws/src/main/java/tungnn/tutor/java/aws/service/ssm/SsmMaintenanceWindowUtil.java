@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.*;
 
 public final class SsmMaintenanceWindowUtil {
-
   private SsmMaintenanceWindowUtil() {}
 
   public static CancelMaintenanceWindowExecutionResponse cancelMaintenanceWindowExecution(

@@ -5,7 +5,6 @@ import software.amazon.awssdk.services.iam.IamClient;
 import software.amazon.awssdk.services.iam.model.*;
 
 public final class IamPolicyUtil {
-
   private IamPolicyUtil() {}
 
   public static List<Policy> listAllPolicies(IamClient client) {
@@ -18,7 +17,6 @@ public final class IamPolicyUtil {
 
   public static Policy createPolicy(
       IamClient client, String policyName, String policyDocumentJson) {
-
     return client
         .createPolicy(
             CreatePolicyRequest.builder()

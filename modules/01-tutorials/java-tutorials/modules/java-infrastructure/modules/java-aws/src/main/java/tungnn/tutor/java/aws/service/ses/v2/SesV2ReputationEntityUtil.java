@@ -5,7 +5,6 @@ import software.amazon.awssdk.services.sesv2.SesV2Client;
 import software.amazon.awssdk.services.sesv2.model.*;
 
 public final class SesV2ReputationEntityUtil {
-
   private SesV2ReputationEntityUtil() {}
 
   public static GetReputationEntityResponse getReputationEntity(

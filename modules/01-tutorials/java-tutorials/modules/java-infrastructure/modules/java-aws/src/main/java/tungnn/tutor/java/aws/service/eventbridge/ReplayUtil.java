@@ -5,7 +5,6 @@ import software.amazon.awssdk.services.eventbridge.EventBridgeClient;
 import software.amazon.awssdk.services.eventbridge.model.*;
 
 public final class ReplayUtil {
-
   private ReplayUtil() {}
 
   public static StartReplayResponse startReplay(

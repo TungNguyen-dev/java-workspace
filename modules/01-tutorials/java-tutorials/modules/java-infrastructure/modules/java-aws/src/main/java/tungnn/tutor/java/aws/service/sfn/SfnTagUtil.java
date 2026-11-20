@@ -5,7 +5,6 @@ import software.amazon.awssdk.services.sfn.SfnClient;
 import software.amazon.awssdk.services.sfn.model.*;
 
 public final class SfnTagUtil {
-
   private SfnTagUtil() {}
 
   public static TagResourceResponse tagResource(SfnClient client, TagResourceRequest request) {

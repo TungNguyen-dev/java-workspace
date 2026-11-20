@@ -9,9 +9,7 @@ import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.*;
 
 public final class InvokeCommandUtil {
-
   private static final String DOCUMENT_SHELL = "AWS-RunShellScript";
-
   // Backoff config
   private static final long INITIAL_WAIT_MS = 250;
   private static final long MAX_WAIT_MS = 5000;
@@ -22,24 +20,18 @@ public final class InvokeCommandUtil {
   // =========================
   // Public API
   // =========================
-
   public static Map<String, SsmCommandResult> invokeCommand(
       SsmClient client, List<String> instanceIds, String command, Duration timeout) {
-
     validate(instanceIds, command, timeout);
-
     var commandId = sendCommand(client, instanceIds, command, timeout);
-
     return pollCommandMultiThread(client, instanceIds, commandId, timeout);
   }
 
   // =========================
   // Core logic
   // =========================
-
   private static String sendCommand(
       SsmClient client, List<String> instanceIds, String command, Duration timeout) {
-
     var request =
         SendCommandRequest.builder()
             .instanceIds(instanceIds)
@@ -47,24 +39,19 @@ public final class InvokeCommandUtil {
             .parameters(Map.of("commands", List.of(command)))
             .timeoutSeconds(Math.max(1, Long.valueOf(timeout.toSeconds()).intValue()))
             .build();
-
     var response = client.sendCommand(request);
-
     return response.command().commandId();
   }
 
   private static Map<String, SsmCommandResult> pollCommandMultiThread(
       SsmClient client, List<String> instanceIds, String commandId, Duration timeout) {
-
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       var futures =
           instanceIds.stream()
               .map(instanceId ->
                   executor.submit(() -> pollCommand(client, instanceId, commandId, timeout)))
               .toList();
-
       var result = new HashMap<String, SsmCommandResult>();
-
       for (int i = 0; i < instanceIds.size(); i++) {
         var instanceId = instanceIds.get(i);
         try {
@@ -74,29 +61,22 @@ public final class InvokeCommandUtil {
           throw new RuntimeException("Failed to get result for instance: " + instanceId, e);
         }
       }
-
       return result;
     }
   }
 
   private static SsmCommandResult pollCommand(
       SsmClient client, String instanceId, String commandId, Duration timeout) {
-
     var deadline = System.currentTimeMillis() + timeout.toMillis();
     var waitTime = INITIAL_WAIT_MS;
-
     var request =
         GetCommandInvocationRequest.builder().commandId(commandId).instanceId(instanceId).build();
-
     SsmCommandResult lastResult = null;
-
     while (System.currentTimeMillis() < deadline) {
       try {
         var res = client.getCommandInvocation(request);
-
         lastResult = toResult(res);
         var status = res.status();
-
         switch (status) {
           case SUCCESS:
             return lastResult;
@@ -108,7 +88,6 @@ public final class InvokeCommandUtil {
             // PENDING, IN_PROGRESS, DELAYED, future states
             break;
         }
-
       } catch (InvocationDoesNotExistException e) {
         // eventual consistency → retry
       } catch (SsmException e) {
@@ -116,12 +95,9 @@ public final class InvokeCommandUtil {
           throw e;
         }
       }
-
       sleep(waitTime);
-
       waitTime = Math.min((long) (waitTime * BACKOFF_MULTIPLIER), MAX_WAIT_MS);
     }
-
     throw new SsmCommandTimeoutException(
         "SSM command timeout after " + timeout.toMillis() + " ms", lastResult);
   }
@@ -129,7 +105,6 @@ public final class InvokeCommandUtil {
   // =========================
   // Helpers
   // =========================
-
   private static boolean isRetryable(SsmException e) {
     return e.isThrottlingException() || e.statusCode() >= 500;
   }
@@ -149,21 +124,17 @@ public final class InvokeCommandUtil {
   }
 
   private static void validate(List<String> instanceIds, String command, Duration timeout) {
-
     if (instanceIds == null || instanceIds.isEmpty()) {
       throw new IllegalArgumentException("instanceIds must not be null/empty");
     }
-
     for (var id : instanceIds) {
       if (id == null || id.isBlank()) {
         throw new IllegalArgumentException("instanceId must not be null/blank");
       }
     }
-
     if (command == null || command.isBlank()) {
       throw new IllegalArgumentException("command must not be null/blank");
     }
-
     if (timeout == null || timeout.isZero() || timeout.isNegative()) {
       throw new IllegalArgumentException("timeout must be positive");
     }
@@ -172,7 +143,6 @@ public final class InvokeCommandUtil {
   // =========================
   // Result + Exceptions
   // =========================
-
   public record SsmCommandResult(
       String stdout, String stderr, Integer responseCode, CommandInvocationStatus status) {}
 

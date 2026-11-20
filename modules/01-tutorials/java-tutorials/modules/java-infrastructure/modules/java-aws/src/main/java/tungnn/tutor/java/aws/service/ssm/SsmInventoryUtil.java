@@ -7,7 +7,6 @@ import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.*;
 
 public final class SsmInventoryUtil {
-
   private SsmInventoryUtil() {}
 
   public static DeleteInventoryResponse deleteInventory(

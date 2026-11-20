@@ -7,7 +7,6 @@ import software.amazon.awssdk.services.sesv2.SesV2Client;
 import software.amazon.awssdk.services.sesv2.model.*;
 
 public final class SesV2ConfigurationSetUtil {
-
   private SesV2ConfigurationSetUtil() {}
 
   public static CreateConfigurationSetResponse createConfigurationSet(

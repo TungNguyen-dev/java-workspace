@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.*;
 
 public final class SsmResourcePolicyUtil {
-
   private SsmResourcePolicyUtil() {}
 
   public static DeleteResourcePolicyResponse deleteResourcePolicy(

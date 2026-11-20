@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
 
 public final class SesTemplateUtil {
-
   private SesTemplateUtil() {}
 
   public static CreateTemplateResponse createTemplate(

@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.ecs.EcsClient;
 import software.amazon.awssdk.services.ecs.model.*;
 
 public final class EcsClusterUtil {
-
   private EcsClusterUtil() {}
 
   public static CreateClusterResponse createCluster(

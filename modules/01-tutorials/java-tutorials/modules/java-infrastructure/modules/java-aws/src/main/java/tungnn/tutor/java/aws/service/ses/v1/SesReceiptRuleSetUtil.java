@@ -8,7 +8,6 @@ import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
 
 public final class SesReceiptRuleSetUtil {
-
   private SesReceiptRuleSetUtil() {}
 
   public static CloneReceiptRuleSetResponse cloneReceiptRuleSet(

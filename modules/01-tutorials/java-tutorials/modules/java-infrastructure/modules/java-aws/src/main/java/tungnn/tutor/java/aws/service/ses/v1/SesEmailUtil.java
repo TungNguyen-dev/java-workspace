@@ -5,7 +5,6 @@ import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
 
 public final class SesEmailUtil {
-
   private SesEmailUtil() {}
 
   public static SendBounceResponse sendBounce(SesClient client, SendBounceRequest request) {

@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.scheduler.SchedulerClient;
 import software.amazon.awssdk.services.scheduler.model.*;
 
 public final class ScheduleUtil {
-
   private ScheduleUtil() {}
 
   public static CreateScheduleResponse createSchedule(

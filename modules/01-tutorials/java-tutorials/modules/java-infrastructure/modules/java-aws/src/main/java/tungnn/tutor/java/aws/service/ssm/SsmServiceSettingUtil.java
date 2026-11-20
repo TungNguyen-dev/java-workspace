@@ -4,7 +4,6 @@ import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.*;
 
 public final class SsmServiceSettingUtil {
-
   private SsmServiceSettingUtil() {}
 
   public static GetServiceSettingResponse getServiceSetting(

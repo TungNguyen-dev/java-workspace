@@ -21,22 +21,17 @@ public class AwsAssumeRoleWithMfaUseCase {
         profile
             .property("role_arn")
             .orElseThrow(() -> new IllegalStateException("Missing role_arn"));
-
     var mfaSerial =
         profile
             .property("mfa_serial")
             .orElseThrow(() -> new IllegalStateException("Missing mfa_serial"));
-
     var credentials = StsUtil.assumeRoleWithCredentials(stsClient, roleArn, mfaSerial, mfaCode);
-
     saveCredentials(profile.name(), credentials);
   }
 
   /* ===================== INTERNAL ===================== */
-
   private void saveCredentials(String profile, AwsSessionCredentials credentials) {
     var path = resolveCredentialsPath();
-
     IniUtil.append(
         path,
         profile,
@@ -48,11 +43,9 @@ public class AwsAssumeRoleWithMfaUseCase {
 
   private Path resolveCredentialsPath() {
     var env = System.getenv("AWS_SHARED_CREDENTIALS_FILE");
-
     if (env != null && !env.isBlank()) {
       return Path.of(env);
     }
-
     return Path.of(System.getProperty("user.home"), ".aws", "credentials");
   }
 }

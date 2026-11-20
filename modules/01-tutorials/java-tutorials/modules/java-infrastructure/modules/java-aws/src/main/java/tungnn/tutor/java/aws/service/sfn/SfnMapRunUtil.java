@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.sfn.SfnClient;
 import software.amazon.awssdk.services.sfn.model.*;
 
 public final class SfnMapRunUtil {
-
   private SfnMapRunUtil() {}
 
   public static DescribeMapRunResponse describeMapRun(

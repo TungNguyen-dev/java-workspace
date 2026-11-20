@@ -7,7 +7,6 @@ import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
 
 public final class SesCustomVerificationEmailTemplateUtil {
-
   private SesCustomVerificationEmailTemplateUtil() {}
 
   public static CreateCustomVerificationEmailTemplateResponse createCustomVerificationEmailTemplate(

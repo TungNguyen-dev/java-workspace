@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.ecr.EcrClient;
 import software.amazon.awssdk.services.ecr.model.*;
 
 public final class EcrRepositoryTemplateUtil {
-
   private EcrRepositoryTemplateUtil() {}
 
   public static List<RepositoryCreationTemplate> describeRepositoryCreationTemplates(

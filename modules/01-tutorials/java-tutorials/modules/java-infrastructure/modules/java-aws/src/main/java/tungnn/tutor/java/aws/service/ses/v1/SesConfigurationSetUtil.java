@@ -8,7 +8,6 @@ import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
 
 public final class SesConfigurationSetUtil {
-
   private SesConfigurationSetUtil() {}
 
   public static CreateConfigurationSetResponse createConfigurationSet(

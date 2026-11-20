@@ -12,7 +12,6 @@ import software.amazon.awssdk.regions.Region;
 import tungnn.tutor.java.aws.util.AwsCredentialsProviderUtil;
 
 public class AwsDefaultClientFactory extends AwsAbstractClientFactory {
-
   private static final Duration API_CALL_TIMEOUT = Duration.ofSeconds(30);
   private static final Duration API_CALL_ATTEMPT_TIMEOUT = Duration.ofSeconds(10);
   private static final boolean METRICS_ENABLED =
@@ -24,7 +23,6 @@ public class AwsDefaultClientFactory extends AwsAbstractClientFactory {
         profile.properties().containsKey("region")
             ? Region.of(profile.property("region").orElseThrow())
             : Region.AP_SOUTHEAST_1;
-
     return builder
         .region(region)
         .credentialsProvider(AwsCredentialsProviderUtil.credentialsProvider(profile))
@@ -41,11 +39,9 @@ public class AwsDefaultClientFactory extends AwsAbstractClientFactory {
             .retryStrategy(RetryMode.ADAPTIVE_V2)
             .putAdvancedOption(
                 SdkAdvancedClientOption.USER_AGENT_PREFIX, "env-%s".formatted(profile.name()));
-
     if (METRICS_ENABLED) {
       builder.addMetricPublisher(LoggingMetricPublisher.create());
     }
-
     return builder.build();
   }
 }

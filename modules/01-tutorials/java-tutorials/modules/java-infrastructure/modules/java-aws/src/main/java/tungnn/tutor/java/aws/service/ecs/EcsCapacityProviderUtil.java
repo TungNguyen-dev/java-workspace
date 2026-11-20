@@ -5,7 +5,6 @@ import software.amazon.awssdk.services.ecs.EcsClient;
 import software.amazon.awssdk.services.ecs.model.*;
 
 public final class EcsCapacityProviderUtil {
-
   private EcsCapacityProviderUtil() {}
 
   public static CreateCapacityProviderResponse createCapacityProvider(

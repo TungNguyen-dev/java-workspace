@@ -4,7 +4,6 @@ import software.amazon.awssdk.services.ecr.EcrClient;
 import software.amazon.awssdk.services.ecr.model.*;
 
 public final class EcrLayerUtil {
-
   private EcrLayerUtil() {}
 
   public static BatchCheckLayerAvailabilityResponse batchCheckLayerAvailability(

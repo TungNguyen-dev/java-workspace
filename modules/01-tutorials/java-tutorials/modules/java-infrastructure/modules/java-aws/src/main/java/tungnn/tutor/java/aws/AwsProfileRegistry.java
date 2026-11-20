@@ -7,12 +7,9 @@ import software.amazon.awssdk.profiles.Profile;
 import software.amazon.awssdk.profiles.ProfileFile;
 
 public final class AwsProfileRegistry {
-
   private static final String ENV_AWS_PROFILE = "AWS_PROFILE";
   private static final String DEFAULT_PROFILE_NAME = "default";
-
   private volatile Map<String, Profile> profiles;
-
   private volatile ProfileFile profileFile;
 
   public AwsProfileRegistry() {

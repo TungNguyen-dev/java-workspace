@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.ecs.EcsClient;
 import software.amazon.awssdk.services.ecs.model.*;
 
 public final class EcsTaskUtil {
-
   private EcsTaskUtil() {}
 
   public static List<Task> runTask(EcsClient client, RunTaskRequest request) {

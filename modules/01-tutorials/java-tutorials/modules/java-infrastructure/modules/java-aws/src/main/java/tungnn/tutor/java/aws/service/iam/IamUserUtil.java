@@ -5,7 +5,6 @@ import software.amazon.awssdk.services.iam.IamClient;
 import software.amazon.awssdk.services.iam.model.*;
 
 public final class IamUserUtil {
-
   private IamUserUtil() {}
 
   public static List<User> listAllUsers(IamClient client) {

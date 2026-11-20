@@ -5,7 +5,6 @@ import software.amazon.awssdk.services.scheduler.SchedulerClient;
 import software.amazon.awssdk.services.scheduler.model.*;
 
 public final class TagUtil {
-
   private TagUtil() {}
 
   public static List<Tag> listTagsForResource(

@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.ecr.EcrClient;
 import software.amazon.awssdk.services.ecr.model.*;
 
 public final class EcrImageUtil {
-
   private EcrImageUtil() {}
 
   public static List<ImageIdentifier> listImages(EcrClient ecrClient, ListImagesRequest request) {

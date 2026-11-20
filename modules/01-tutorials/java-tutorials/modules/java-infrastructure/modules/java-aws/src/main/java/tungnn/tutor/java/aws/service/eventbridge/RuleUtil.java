@@ -5,7 +5,6 @@ import software.amazon.awssdk.services.eventbridge.EventBridgeClient;
 import software.amazon.awssdk.services.eventbridge.model.*;
 
 public final class RuleUtil {
-
   private RuleUtil() {}
 
   public static PutRuleResponse putRule(EventBridgeClient client, PutRuleRequest request) {

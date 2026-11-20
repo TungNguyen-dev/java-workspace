@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.sfn.SfnClient;
 import software.amazon.awssdk.services.sfn.model.*;
 
 public final class SfnExecutionUtil {
-
   private SfnExecutionUtil() {}
 
   public static StartExecutionResponse startExecution(

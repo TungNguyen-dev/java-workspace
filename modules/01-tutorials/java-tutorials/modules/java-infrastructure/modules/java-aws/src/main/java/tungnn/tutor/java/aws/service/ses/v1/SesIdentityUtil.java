@@ -7,7 +7,6 @@ import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
 
 public final class SesIdentityUtil {
-
   private SesIdentityUtil() {}
 
   public static DeleteIdentityResponse deleteIdentity(

@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.*;
 
 public final class SsmAssociationUtil {
-
   private SsmAssociationUtil() {}
 
   public static CreateAssociationResponse createAssociation(

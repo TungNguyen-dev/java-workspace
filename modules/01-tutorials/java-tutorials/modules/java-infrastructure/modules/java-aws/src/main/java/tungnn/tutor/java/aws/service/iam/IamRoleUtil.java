@@ -7,7 +7,6 @@ import software.amazon.awssdk.services.iam.model.DeleteRoleRequest;
 import software.amazon.awssdk.services.iam.model.Role;
 
 public final class IamRoleUtil {
-
   private IamRoleUtil() {}
 
   public static List<Role> listAllRoles(IamClient client) {

@@ -5,7 +5,6 @@ import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
 
 public final class SesReceiptRuleUtil {
-
   private SesReceiptRuleUtil() {}
 
   public static CreateReceiptRuleResponse createReceiptRule(

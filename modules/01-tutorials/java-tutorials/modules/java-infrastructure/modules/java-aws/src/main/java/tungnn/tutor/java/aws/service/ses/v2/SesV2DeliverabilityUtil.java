@@ -7,7 +7,6 @@ import software.amazon.awssdk.services.sesv2.SesV2Client;
 import software.amazon.awssdk.services.sesv2.model.*;
 
 public final class SesV2DeliverabilityUtil {
-
   private SesV2DeliverabilityUtil() {}
 
   public static CreateDeliverabilityTestReportResponse createDeliverabilityTestReport(

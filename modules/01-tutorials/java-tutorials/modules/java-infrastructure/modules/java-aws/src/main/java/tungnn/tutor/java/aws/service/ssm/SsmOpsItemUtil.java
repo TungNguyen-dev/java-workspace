@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.*;
 
 public final class SsmOpsItemUtil {
-
   private SsmOpsItemUtil() {}
 
   public static AssociateOpsItemRelatedItemResponse associateOpsItemRelatedItem(

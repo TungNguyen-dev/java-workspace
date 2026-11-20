@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.*;
 
 public final class SsmSessionUtil {
-
   private SsmSessionUtil() {}
 
   public static List<Session> describeSessions(SsmClient client, DescribeSessionsRequest request) {

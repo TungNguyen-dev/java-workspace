@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.sfn.SfnClient;
 import software.amazon.awssdk.services.sfn.model.*;
 
 public final class SfnActivityUtil {
-
   private SfnActivityUtil() {}
 
   public static CreateActivityResponse createActivity(

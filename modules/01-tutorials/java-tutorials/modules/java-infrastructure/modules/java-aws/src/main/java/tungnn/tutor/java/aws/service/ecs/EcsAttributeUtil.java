@@ -6,7 +6,6 @@ import software.amazon.awssdk.services.ecs.EcsClient;
 import software.amazon.awssdk.services.ecs.model.*;
 
 public final class EcsAttributeUtil {
-
   private EcsAttributeUtil() {}
 
   public static List<Attribute> putAttributes(EcsClient client, PutAttributesRequest request) {

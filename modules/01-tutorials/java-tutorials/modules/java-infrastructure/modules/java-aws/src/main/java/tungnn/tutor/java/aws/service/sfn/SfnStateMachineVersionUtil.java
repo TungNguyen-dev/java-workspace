@@ -5,7 +5,6 @@ import software.amazon.awssdk.services.sfn.SfnClient;
 import software.amazon.awssdk.services.sfn.model.*;
 
 public final class SfnStateMachineVersionUtil {
-
   private SfnStateMachineVersionUtil() {}
 
   public static PublishStateMachineVersionResponse publishStateMachineVersion(

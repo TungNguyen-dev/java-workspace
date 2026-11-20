@@ -4,7 +4,6 @@ import software.amazon.awssdk.services.ecs.EcsClient;
 import software.amazon.awssdk.services.ecs.model.*;
 
 public final class EcsDaemonUtil {
-
   private EcsDaemonUtil() {}
 
   public static CreateDaemonResponse createDaemon(EcsClient client, CreateDaemonRequest request) {

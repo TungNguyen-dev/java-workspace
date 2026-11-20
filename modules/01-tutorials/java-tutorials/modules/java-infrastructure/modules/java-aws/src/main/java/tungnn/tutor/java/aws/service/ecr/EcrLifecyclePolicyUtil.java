@@ -4,7 +4,6 @@ import software.amazon.awssdk.services.ecr.EcrClient;
 import software.amazon.awssdk.services.ecr.model.*;
 
 public final class EcrLifecyclePolicyUtil {
-
   private EcrLifecyclePolicyUtil() {}
 
   public static GetLifecyclePolicyResponse getLifecyclePolicy(
