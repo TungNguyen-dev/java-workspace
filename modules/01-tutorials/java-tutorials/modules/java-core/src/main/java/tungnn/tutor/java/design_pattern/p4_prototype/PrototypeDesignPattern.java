@@ -46,7 +46,7 @@ public static class ConcretePrototypeCircle implements Prototype<ConcretePrototy
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof ConcretePrototypeCircle other)) return false;
-      return x == other.x
+    return x == other.x
         && y == other.y
         && radius == other.radius
         && Objects.equals(color, other.color);
@@ -85,7 +85,7 @@ public static class ConcretePrototypeRectangle implements Prototype<ConcreteProt
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof ConcretePrototypeRectangle other)) return false;
-      return x == other.x
+    return x == other.x
         && y == other.y
         && width == other.width
         && height == other.height

@@ -2,12 +2,13 @@ package tungnn.tutor.java.spring.tool.doctrans.app.config;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.springframework.ai.chat.client.ChatClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import tungnn.tutor.java.ai.util.LlmClientUtils;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
@@ -16,69 +17,33 @@ import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.M
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.SlideShowDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.WordDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.DummyTextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.GeminiApiTextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.deepseek.DeepseekChatClientFactory;
-import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.deepseek.DeepseekTextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceChatClientFactory;
-import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceTextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.LlmTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.memory.CsvFileTextTranslationMemory;
-import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.ollama.OllamaChatClientFactory;
-import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.ollama.OllamaTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationService;
 import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationServiceImpl;
 
 @Configuration
 public class AppConfig {
-
+  private static final Logger LOGGER = LoggerFactory.getLogger(AppConfig.class);
   @Autowired private DocTransConfig docTransConfig;
   @Autowired private TranslatorConfig translatorConfig;
 
   /**
-   * Gemini is the default provider. The ChatClient is built inline (not exposed as a bean) so it
-   * never competes with other ChatClients.
+   * {@code dummy} for offline runs, otherwise an LLM translator for the configured provider. The
+   * LLM client is built manually (no Spring AI auto-configuration), so no ChatModel beans exist.
    */
   @Bean
-  @ConditionalOnProperty(
-      prefix = "doctrans.translator",
-      name = "provider",
-      havingValue = "gemini",
-      matchIfMissing = true)
-  public TextTranslator geminiTextTranslator(ChatClient.Builder chatClientBuilder) {
-    return new GeminiApiTextTranslator(chatClientBuilder.build());
-  }
-
-  @Bean
-  @ConditionalOnProperty(
-      prefix = "doctrans.translator",
-      name = "provider",
-      havingValue = "huggingface")
-  public TextTranslator huggingFaceTextTranslator() {
-    var chatClient =
-        HuggingFaceChatClientFactory.create(translatorConfig.huggingface().toProperties());
-    return new HuggingFaceTextTranslator(chatClient);
-  }
-
-  @Bean
-  @ConditionalOnProperty(prefix = "doctrans.translator", name = "provider", havingValue = "ollama")
-  public TextTranslator ollamaTextTranslator() {
-    var chatClient = OllamaChatClientFactory.create(translatorConfig.ollama().toProperties());
-    return new OllamaTextTranslator(chatClient);
-  }
-
-  @Bean
-  @ConditionalOnProperty(
-      prefix = "doctrans.translator",
-      name = "provider",
-      havingValue = "deepseek")
-  public TextTranslator deepseekTextTranslator() {
-    var chatClient = DeepseekChatClientFactory.create(translatorConfig.deepseek().toProperties());
-    return new DeepseekTextTranslator(chatClient);
-  }
-
-  @Bean
-  @ConditionalOnProperty(prefix = "doctrans.translator", name = "provider", havingValue = "dummy")
-  public TextTranslator dummyTextTranslator() {
-    return new DummyTextTranslator();
+  public TextTranslator textTranslator() {
+    if (translatorConfig.isDummy()) {
+      return new DummyTextTranslator();
+    }
+    var properties = translatorConfig.llmClientProperties();
+    LOGGER.info("Using LLM text translator: {}", properties);
+    var llmClient = LlmClientUtils.create(properties);
+    var maxConcurrency = translatorConfig.llmSettings().maxConcurrency();
+    return maxConcurrency == null
+        ? new LlmTextTranslator(llmClient)
+        : new LlmTextTranslator(llmClient, maxConcurrency);
   }
 
   @Bean
@@ -120,7 +85,6 @@ public class AppConfig {
       @Qualifier("excelDocumentTranslator") DocumentTranslator excelDocumentTranslator,
       @Qualifier("slideShowDocumentTranslator") DocumentTranslator slideShowDocumentTranslator,
       @Qualifier("markdownDocumentTranslator") DocumentTranslator markdownDocumentTranslator) {
-
     return new DocumentTranslationServiceImpl(
         (WordDocumentTranslator) wordDocumentTranslator,
         (ExcelDocumentTranslator) excelDocumentTranslator,

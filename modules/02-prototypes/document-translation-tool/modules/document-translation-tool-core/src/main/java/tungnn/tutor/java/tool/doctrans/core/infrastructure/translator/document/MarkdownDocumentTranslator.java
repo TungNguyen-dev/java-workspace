@@ -17,7 +17,6 @@ import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
 
 public class MarkdownDocumentTranslator
     extends AbstractDocumentTranslator<MarkdownElement.MarkdownDocument> {
-
   private final Map<MarkdownBlock, DocumentTextBlock> blockMapping = new IdentityHashMap<>();
 
   public MarkdownDocumentTranslator(
@@ -71,7 +70,6 @@ public class MarkdownDocumentTranslator
         translatedBlocks.add(block);
       }
     }
-
     var translatedDoc = new MarkdownElement.MarkdownDocument(translatedBlocks);
     try {
       MarkdownDocumentUtils.writeDocument(translatedDoc, translationPath);
@@ -83,7 +81,6 @@ public class MarkdownDocumentTranslator
   }
 
   // --- Implementations of DocumentTextBlock ---
-
   private static class HeadingTextBlock implements DocumentTextBlock {
     private final MarkdownBlock.Heading heading;
     private String content;

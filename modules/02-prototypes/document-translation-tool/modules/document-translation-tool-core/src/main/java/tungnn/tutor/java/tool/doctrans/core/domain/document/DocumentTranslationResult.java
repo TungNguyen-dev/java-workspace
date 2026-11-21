@@ -4,7 +4,6 @@ import java.nio.file.Path;
 
 public sealed interface DocumentTranslationResult
     permits DocumentTranslationResult.Success, DocumentTranslationResult.Failure {
-
   record DocumentTranslation(Path path) {}
 
   record Success(DocumentTranslation translation) implements DocumentTranslationResult {}

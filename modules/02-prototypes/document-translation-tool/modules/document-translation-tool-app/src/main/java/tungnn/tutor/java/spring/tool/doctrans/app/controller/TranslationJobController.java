@@ -16,7 +16,6 @@ import tungnn.tutor.java.spring.tool.doctrans.app.service.TranslationJobService;
 @RestController
 @RequestMapping("/api/v1/translation-jobs")
 public class TranslationJobController {
-
   private final TranslationJobService jobService;
 
   public TranslationJobController(TranslationJobService jobService) {

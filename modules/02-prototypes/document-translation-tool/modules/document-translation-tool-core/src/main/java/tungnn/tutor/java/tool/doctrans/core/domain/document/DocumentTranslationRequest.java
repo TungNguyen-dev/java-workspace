@@ -4,7 +4,6 @@ import java.nio.file.Path;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
 
 public interface DocumentTranslationRequest {
-
   DocumentSource documentSource();
 
   LanguageCode targetLanguage();

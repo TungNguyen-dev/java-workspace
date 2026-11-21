@@ -81,8 +81,8 @@ public class ShakeCommand implements Command {
 
 // The Invoker
 public class Waitress {
-  private Command slot;
   private final Stack<Command> history = new Stack<>(); // To support undo functionality
+  private Command slot;
 
   public void setOrder(Command command) {
     this.slot = command;

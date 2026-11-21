@@ -7,20 +7,30 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 @ConfigurationProperties(prefix = "doctrans")
 public record DocTransConfig(Storage storage, Dir dir, @DefaultValue("2") int workerThreads) {
 
+  public DocTransConfig {
+    storage = storage != null ? storage : new Storage("./data");
+    dir = dir != null ? dir : new Dir("jobs", "memory");
+    workerThreads = workerThreads > 0 ? workerThreads : 2;
+  }
+
   public Path baseDir() {
-    return Path.of(storage.baseDir());
+    String base =
+        (storage.baseDir() == null || storage.baseDir().isBlank()) ? "./data" : storage.baseDir();
+    return Path.of(base);
   }
 
   /** Root directory containing one subdirectory per translation job. */
   public Path jobDir() {
-    return baseDir().resolve(dir.job());
+    String job = (dir.job() == null || dir.job().isBlank()) ? "jobs" : dir.job();
+    return baseDir().resolve(job);
   }
 
   public Path memoryDir() {
-    return baseDir().resolve(dir.memory());
+    String memory = (dir.memory() == null || dir.memory().isBlank()) ? "memory" : dir.memory();
+    return baseDir().resolve(memory);
   }
 
-  public record Storage(String baseDir) {}
+  public record Storage(@DefaultValue("./data") String baseDir) {}
 
-  public record Dir(String job, String memory) {}
+  public record Dir(@DefaultValue("jobs") String job, @DefaultValue("memory") String memory) {}
 }

@@ -5,7 +5,6 @@ public enum LanguageCode {
   JA("Japanese", "JP", "Japan"),
   EN("English", "US", "United States"),
   ZH("Chinese", "CN", "China");
-
   private final String languageName;
   private final String countryCode;
   private final String countryName;

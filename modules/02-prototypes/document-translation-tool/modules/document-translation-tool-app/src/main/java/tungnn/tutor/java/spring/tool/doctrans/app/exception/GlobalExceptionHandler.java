@@ -9,7 +9,6 @@ import tungnn.tutor.java.spring.tool.doctrans.app.model.ErrorResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
   @ExceptionHandler(ApiException.class)
   public ResponseEntity<ErrorResponse> handleApi(ApiException e) {
     return ResponseEntity.status(Integer.parseInt(e.code()))

@@ -16,7 +16,6 @@ import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
 
 public class SlideShowDocumentTranslator extends AbstractDocumentTranslator<XMLSlideShow> {
-
   public SlideShowDocumentTranslator(
       TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
     super(textTranslator, textTranslationMemory);
@@ -34,15 +33,12 @@ public class SlideShowDocumentTranslator extends AbstractDocumentTranslator<XMLS
   @Override
   protected List<DocumentTextBlock> collectTextBlock(XMLSlideShow document) {
     var textBlocks = new ArrayList<DocumentTextBlock>();
-
     DocumentSemanticUnitCollector.collectTextShapes(document).stream()
         .map(TextShapeDocumentTextBlock::new)
         .forEach(textBlocks::add);
-
     DocumentSemanticUnitCollector.collectTableCells(document).stream()
         .map(TableCellDocumentTextBlock::new)
         .forEach(textBlocks::add);
-
     return textBlocks;
   }
 
@@ -56,7 +52,6 @@ public class SlideShowDocumentTranslator extends AbstractDocumentTranslator<XMLS
   }
 
   // --- Implementations of DocumentTextBlock ---
-
   private record TextShapeDocumentTextBlock(XSLFTextShape shape) implements DocumentTextBlock {
     @Override
     public String content() {

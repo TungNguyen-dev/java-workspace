@@ -25,11 +25,9 @@ import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationService;
 
 @Service
 public class TranslationJobService {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(TranslationJobService.class);
   private static final Set<String> SUPPORTED_EXTENSIONS =
       Set.of("docx", "xlsx", "pptx", "md", "txt");
-
   private final DocTransConfig config;
   private final DocumentTranslationService translationService;
   private final InMemoryJobRepository repository;
@@ -67,7 +65,6 @@ public class TranslationJobService {
           "UNSUPPORTED_FORMAT",
           "Supported formats: " + SUPPORTED_EXTENSIONS + ", got: ." + extension);
     }
-
     var jobId = UUID.randomUUID().toString();
     var source = config.jobDir().resolve(jobId).resolve("source." + extension);
     try {
@@ -77,7 +74,6 @@ public class TranslationJobService {
       throw new ApiException(
           HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_ERROR", "Failed to store uploaded file");
     }
-
     var job = TranslationJob.pending(jobId, originalName, language.name(), source);
     repository.save(job);
     executor.execute(() -> run(jobId));
@@ -111,11 +107,9 @@ public class TranslationJobService {
     int dot = name.lastIndexOf('.');
     var base = dot > 0 ? name.substring(0, dot) : name;
     var ext = dot > 0 ? name.substring(dot) : "";
-
     var countryName =
-        LanguageCode.valueOf(job.targetLanguage()).countryCode().replaceAll("\\s+", "-");
+        LanguageCode.valueOf(job.targetLanguage()).countryCode().replaceAll(" +", "-");
     var timestamp = job.finishedAt().getEpochSecond();
-
     return base + "_" + countryName + "_" + timestamp + ext;
   }
 

@@ -11,14 +11,12 @@ import org.openqa.selenium.WebDriver;
 import tungnn.tutor.java.selenium.util.ChromeDriverUtils;
 
 public class PooledWebDriverFactory extends BasePooledObjectFactory<WebDriver> {
-
   private final BlockingQueue<String> availableProfiles;
   private final Map<WebDriver, String> driverProfileMap;
 
   public PooledWebDriverFactory(int maxTotal) {
     this.availableProfiles = new LinkedBlockingQueue<>();
     this.driverProfileMap = new ConcurrentHashMap<>();
-
     for (int i = 0; i < maxTotal; i++) {
       this.availableProfiles.add("profile_" + i);
     }
@@ -48,7 +46,6 @@ public class PooledWebDriverFactory extends BasePooledObjectFactory<WebDriver> {
     if (driver == null) {
       return;
     }
-
     String profileKey = driverProfileMap.remove(driver);
     try {
       driver.quit();

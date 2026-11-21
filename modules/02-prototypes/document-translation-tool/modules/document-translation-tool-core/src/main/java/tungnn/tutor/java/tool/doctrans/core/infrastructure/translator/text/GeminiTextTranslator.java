@@ -11,11 +11,9 @@ import tungnn.tutor.java.tool.doctrans.core.infrastructure.page.GeminiPage;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.pool.WebDriverPool;
 
 public class GeminiTextTranslator extends AbstractTextTranslator {
-
   private static final ObjectMapper OBJECT_MAPPER = JsonUtil.createJsonMapper();
   private static final String PROMPT_TEMPLATE =
       ResourceUtil.getResourceAsString("prompt-trans-v1.md");
-
   private final WebDriverPool webDriverPool;
 
   public GeminiTextTranslator(WebDriverPool webDriverPool) {
@@ -27,12 +25,9 @@ public class GeminiTextTranslator extends AbstractTextTranslator {
     var driver = webDriverPool.borrowDriver();
     try {
       var geminiPage = new GeminiPage(driver);
-
       var translationRequestJson = OBJECT_MAPPER.writeValueAsString(request);
       var prompt = PROMPT_TEMPLATE.replace("{{translationRequest}}", translationRequestJson);
-
       var result = geminiPage.chat(prompt, List.of());
-
       var textUnit = request.textUnit();
       return new TextTranslationResult.TextTranslation(
           textUnit.id(), textUnit.content(), result, request.targetLanguage());

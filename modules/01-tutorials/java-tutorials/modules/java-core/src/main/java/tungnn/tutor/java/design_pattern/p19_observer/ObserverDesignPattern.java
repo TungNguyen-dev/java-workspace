@@ -77,9 +77,9 @@ class WeatherData implements Subject {
 
 // The concrete observer
 class CurrentConditionsDisplay implements Observer, DisplayElement {
+  private final Subject weatherData;
   private float temperature;
   private float humidity;
-  private final Subject weatherData;
 
   public CurrentConditionsDisplay(Subject weatherData) {
     this.weatherData = weatherData;

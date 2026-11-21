@@ -18,16 +18,10 @@ import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.GeminiApiTextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.deepseek.DeepseekTextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.memory.NoOpTextTranslationMemory;
-import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.ollama.OllamaTextTranslator;
 
 public abstract class AbstractDocumentTranslator<D> implements DocumentTranslator {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDocumentTranslator.class);
-
   protected final TextTranslator textTranslator;
   protected final TextTranslationMemory translationMemory;
 
@@ -64,7 +58,6 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
         "Starting translation request for document path: {}, target language: {}",
         request.documentSource().path(),
         request.targetLanguage());
-
     LOGGER.info("Opening document...");
     var document = openDocument(request);
     LOGGER.info("Document opened successfully.");
@@ -72,20 +65,16 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
       LOGGER.info("Collecting text blocks from document...");
       var textBlocks = collectTextBlock(document);
       LOGGER.info("Collected text blocks number: {}", textBlocks.size());
-
       LOGGER.info("Starting translation for {} text blocks...", textBlocks.size());
       var textBlockTranslations = translateTextBlock(request, textBlocks);
       LOGGER.info("Completed translation for {} text blocks.", textBlockTranslations.size());
-
       LOGGER.info("Applying translations to document blocks...");
       applyTranslation(textBlockTranslations);
       LOGGER.info("Translations applied successfully.");
-
       var translationPath = buildTranslationPath(request);
       LOGGER.info("Saving translated document to path: {}", translationPath);
       saveDocument(translationPath, document);
       LOGGER.info("Document saved successfully.");
-
       return new DocumentTranslationResult.Success(
           new DocumentTranslationResult.DocumentTranslation(translationPath));
     } catch (Exception e) {
@@ -107,12 +96,10 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
 
   private List<TextBlockTranslation> translateTextBlock(
       DocumentTranslationRequest request, List<DocumentTextBlock> textBlocks) {
-
     if (textBlocks.isEmpty()) {
       LOGGER.debug("Text blocks list is empty, skipping translation.");
       return List.of();
     }
-
     var uniqueContents = new LinkedHashSet<String>();
     for (var textBlock : textBlocks) {
       if (!isBlank(textBlock.content())) {
@@ -123,17 +110,7 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
         "Deduplicated {} text blocks into {} unique contents.",
         textBlocks.size(),
         uniqueContents.size());
-
-    // TODO: Update for dynamic maxConcurrency
-    var maxConcurrency =
-        switch (textTranslator) {
-          case OllamaTextTranslator ignored -> 1;
-          case GeminiApiTextTranslator ignored -> 3;
-          case HuggingFaceTextTranslator ignored -> 10;
-          case DeepseekTextTranslator ignored -> 10;
-          default -> 5;
-        };
-
+    var maxConcurrency = Math.max(1, textTranslator.maxConcurrency());
     var contentTranslations =
         uniqueContents.isEmpty()
             ? List.<ContentTranslation>of()
@@ -141,12 +118,10 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
                 new ArrayList<>(uniqueContents),
                 content -> translateContent(request.targetLanguage(), content),
                 maxConcurrency);
-
     Map<String, TextTranslationResult.TextTranslation> translationByContent = new HashMap<>();
     for (var contentTranslation : contentTranslations) {
       translationByContent.put(contentTranslation.content(), contentTranslation.translation());
     }
-
     var textBlockTranslations = new ArrayList<TextBlockTranslation>(textBlocks.size());
     for (var textBlock : textBlocks) {
       var translation = translationByContent.get(textBlock.content());
@@ -169,29 +144,24 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
               textUnit.id(), content, memorized.get(), targetLanguage));
     }
     LOGGER.debug("Translation memory miss for text unit [id={}]", textUnit.id());
-
     var textTranslationRequest =
         new TextTranslationRequest.Standard(textUnit, targetLanguage, null, null);
     LOGGER.debug(
         "Translating text unit [id={}] with content length: {}", textUnit.id(), content.length());
     var textTranslationResult = textTranslator.translate(textTranslationRequest);
-
     if (!isApplicable(textTranslationResult)) {
       LOGGER.debug(
           "Translation failed or returned non-success for text unit [id={}], falling back to original content",
           textUnit.id());
       return new ContentTranslation(content, null);
     }
-
     var translation = ((TextTranslationResult.Success) textTranslationResult).translation();
     LOGGER.debug("Successfully translated text unit [id={}]", textUnit.id());
-
     if (isMemorizable(translation)) {
       translationMemory.save(targetLanguage, content, translation.translation());
     } else {
       LOGGER.debug("Skip saving blank translation to memory for text unit [id={}]", textUnit.id());
     }
-
     return new ContentTranslation(content, translation);
   }
 
@@ -229,12 +199,10 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
   protected Path buildTranslationPath(DocumentTranslationRequest request) {
     var documentPath = request.documentSource().path();
     var targetCountryCode = request.targetLanguage().countryCode().toUpperCase();
-
     var fileNameNew =
         FileNameUtil.appendFilenameSuffix(
             documentPath.getFileName().toString(),
             "_" + targetCountryCode + "_" + Instant.now().getEpochSecond());
-
     var parentDir = documentPath.getParent();
     var path = parentDir != null ? parentDir.resolve(fileNameNew) : Path.of(fileNameNew);
     LOGGER.debug("Built translation file path: {}", path);

@@ -3,7 +3,6 @@ package tungnn.tutor.java.spring.tool.doctrans.app.exception;
 import org.springframework.http.HttpStatus;
 
 public class ApiException extends RuntimeException {
-
   private final HttpStatus status;
   private final String code;
 

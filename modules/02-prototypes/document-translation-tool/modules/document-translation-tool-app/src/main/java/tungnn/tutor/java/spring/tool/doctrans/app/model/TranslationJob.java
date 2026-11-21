@@ -15,7 +15,6 @@ public record TranslationJob(
     Instant createdAt,
     Instant startedAt,
     Instant finishedAt) {
-
   public static TranslationJob pending(
       String id, String originalFilename, String targetLanguage, Path sourcePath) {
     return new TranslationJob(

@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -26,7 +27,6 @@ public class GeminiPage {
 
   public String chat(String prompt, List<Path> filePaths) {
     navigateToHomePage();
-
     uploadFiles(filePaths);
     enterPrompt(prompt);
     clickSendButton();
@@ -45,20 +45,11 @@ public class GeminiPage {
   }
 
   private void uploadFiles(List<Path> filePaths) {
-    if (filePaths.isEmpty()) {
+    if (filePaths == null || filePaths.isEmpty()) {
       return;
     }
-
     // TODO: Unsupported feature currently. Will be fully implemented in the future.
     throw new UnsupportedOperationException("uploadFiles is not yet implemented");
-
-    //    if (filePaths != null && !filePaths.isEmpty()) {
-    //      By fileInputLocator = By.xpath("//input[@type='file']");
-    //      WebElement fileInput = ElementUtil.findElement(webDriver, fileInputLocator,
-    // DEFAULT_TIMEOUT);
-    //      ElementUtil.uploadFiles(fileInput, filePaths);
-    //      ThreadUtils.sleep(5000);
-    //    }
   }
 
   private void enterPrompt(String prompt) {
@@ -69,31 +60,29 @@ public class GeminiPage {
     WebElement inputArea =
         ElementUtil.findClickableElement(webDriver, inputLocator, DEFAULT_TIMEOUT);
 
-    var htmlPrompt = "<p>%s</p>".formatted(prompt);
-
-    // Focus on the input area
+    String htmlPrompt = "<p>%s</p>".formatted(prompt);
     inputArea.click();
 
     // JavaScript snippet handling Trusted Types to bypass the security restriction
     String script =
-        "arguments[0].focus();\n"
-            + "let html = arguments[1];\n"
-            + "if (window.trustedTypes && window.trustedTypes.createPolicy) {\n"
-            + "    try {\n"
-            + "        // Create a custom Trusted Types policy to allow raw HTML injection\n"
-            + "        const policy = window.trustedTypes.createPolicy('seleniumIdentityPolicy_' + Math.random(), {\n"
-            + "            createHTML: (string) => string\n"
-            + "        });\n"
-            + "        html = policy.createHTML(html);\n"
-            + "    } catch (e) {\n"
-            + "        console.warn('TrustedTypes policy creation failed:', e);\n"
-            + "    }\n"
-            + "}\n"
-            + "arguments[0].innerHTML = html;\n"
-            + "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));";
+        """
+        arguments[0].focus();
+        let html = arguments[1];
+        if (window.trustedTypes && window.trustedTypes.createPolicy) {
+          try {
+            const policy = window.trustedTypes.createPolicy('seleniumIdentityPolicy_' + Math.random(), {
+              createHTML: (string) => string
+            });
+            html = policy.createHTML(html);
+          } catch (e) {
+            console.warn('TrustedTypes policy creation failed:', e);
+          }
+        }
+        arguments[0].innerHTML = html;
+        arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
+        """;
 
-    ((org.openqa.selenium.JavascriptExecutor) webDriver)
-        .executeScript(script, inputArea, htmlPrompt);
+    ((JavascriptExecutor) webDriver).executeScript(script, inputArea, htmlPrompt);
   }
 
   private void clickSendButton() {
@@ -107,24 +96,19 @@ public class GeminiPage {
     By responseBlockLocator =
         By.xpath(
             "(//div[contains(@class, 'markdown') and contains(@id, 'model-response-message-content')])[last()]");
-
-    // Use WebDriverWait with a lambda expression to wait until aria-busy becomes "false" and text
-    // is present
     WebDriverWait wait = new WebDriverWait(webDriver, GENERATION_TIMEOUT);
     return wait.until(driver -> {
       try {
         WebElement el = driver.findElement(responseBlockLocator);
         String ariaBusy = el.getAttribute("aria-busy");
-
-        // Completion condition: aria-busy is "false" and content is not empty
         if ("false".equals(ariaBusy)) {
-          el.getText();
-          if (!el.getText().trim().isEmpty()) {
+          String text = el.getText();
+          if (text != null && !text.trim().isEmpty()) {
             return el;
           }
         }
-      } catch (Exception e) {
-        // Ignore exceptions while the element is being dynamically rendered on the DOM
+      } catch (Exception ignored) {
+        // Ignore transient exceptions while the element is being dynamically rendered
       }
       return null;
     });

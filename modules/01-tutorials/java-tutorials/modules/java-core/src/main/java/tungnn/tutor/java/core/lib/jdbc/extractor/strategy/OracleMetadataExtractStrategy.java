@@ -37,14 +37,14 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
     // 1.1 Query Table Comments
     StringBuilder sqlTables =
         new StringBuilder(
-                """
-                         SELECT t.table_name, tc.comments
-                         FROM all_tables t
-                         LEFT JOIN all_tab_comments tc
-                                ON tc.owner = t.owner AND tc.table_name = t.table_name
-                         WHERE t.owner = ?
-                         \
-                        """);
+            """
+             SELECT t.table_name, tc.comments
+             FROM all_tables t
+             LEFT JOIN all_tab_comments tc
+                    ON tc.owner = t.owner AND tc.table_name = t.table_name
+             WHERE t.owner = ?
+             \
+            """);
 
     if (hasWhitelist) {
       sqlTables

@@ -14,7 +14,6 @@ public record JobResponse(
     Instant finishedAt,
     ErrorResponse error,
     String downloadUrl) {
-
   public static JobResponse from(TranslationJob job) {
     var error =
         job.status() == JobStatus.FAILED

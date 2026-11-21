@@ -1,7 +1,6 @@
 package tungnn.tutor.java.tool.doctrans.core.domain.text;
 
 public interface TextTranslationRequest {
-
   TextUnit textUnit();
 
   LanguageCode targetLanguage();

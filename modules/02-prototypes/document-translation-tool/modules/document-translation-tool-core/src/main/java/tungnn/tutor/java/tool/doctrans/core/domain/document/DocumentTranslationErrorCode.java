@@ -5,7 +5,6 @@ public enum DocumentTranslationErrorCode {
   UNSUPPORTED_FORMAT("DOC_UNSUPPORTED_FORMAT", "Unsupported document format"),
   TRANSLATION_FAILED("DOC_TRANSLATION_FAILED", "Translation service call failed"),
   UNKNOWN_ERROR("DOC_UNKNOWN_ERROR", "An unknown error occurred");
-
   private final String code;
   private final String defaultMessage;
 

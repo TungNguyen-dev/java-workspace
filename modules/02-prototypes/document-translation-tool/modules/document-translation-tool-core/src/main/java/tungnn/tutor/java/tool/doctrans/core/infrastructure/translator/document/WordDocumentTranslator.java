@@ -16,7 +16,6 @@ import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
 
 public class WordDocumentTranslator extends AbstractDocumentTranslator<XWPFDocument> {
-
   public WordDocumentTranslator(
       TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
     super(textTranslator, textTranslationMemory);
@@ -34,17 +33,14 @@ public class WordDocumentTranslator extends AbstractDocumentTranslator<XWPFDocum
   @Override
   protected List<DocumentTextBlock> collectTextBlock(XWPFDocument document) {
     List<DocumentTextBlock> textBlocks = new ArrayList<>();
-
     // 1. Paragraphs
     DocumentSemanticUnitCollector.collectParagraphs(document).stream()
         .map(ParagraphDocumentTextBlock::new)
         .forEach(textBlocks::add);
-
     // 2. Table Cells
     DocumentSemanticUnitCollector.collectTableCells(document).stream()
         .map(TableCellDocumentTextBlock::new)
         .forEach(textBlocks::add);
-
     return textBlocks;
   }
 
@@ -58,7 +54,6 @@ public class WordDocumentTranslator extends AbstractDocumentTranslator<XWPFDocum
   }
 
   // --- Implementations of DocumentTextBlock ---
-
   private record ParagraphDocumentTextBlock(XWPFParagraph paragraph) implements DocumentTextBlock {
     @Override
     public String content() {
@@ -71,7 +66,6 @@ public class WordDocumentTranslator extends AbstractDocumentTranslator<XWPFDocum
       if (runs != null && !runs.isEmpty()) {
         // Keep the first run to preserve formatting styles (font, color, etc.)
         runs.getFirst().setText(content, 0);
-
         // Remove subsequent runs to prevent old content duplication
         for (int i = runs.size() - 1; i > 0; i--) {
           paragraph.removeRun(i);

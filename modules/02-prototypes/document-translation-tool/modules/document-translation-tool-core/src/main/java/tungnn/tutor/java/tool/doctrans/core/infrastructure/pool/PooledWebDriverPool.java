@@ -8,19 +8,16 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import tungnn.tutor.java.selenium.driver.options.ChromeOptionUtil;
 
 public class PooledWebDriverPool implements WebDriverPool {
-
   private final GenericObjectPool<WebDriver> pool;
 
   public PooledWebDriverPool(int maxTotal) {
     PooledWebDriverFactory factory = new PooledWebDriverFactory(maxTotal);
-
     GenericObjectPoolConfig<WebDriver> config = new GenericObjectPoolConfig<>();
     config.setMaxTotal(maxTotal);
     config.setMaxIdle(maxTotal);
     config.setTestOnBorrow(true);
     config.setBlockWhenExhausted(true);
     config.setMaxWait(Duration.ofMinutes(600));
-
     this.pool = new GenericObjectPool<>(factory, config);
   }
 
@@ -42,7 +39,6 @@ public class PooledWebDriverPool implements WebDriverPool {
     if (driver == null) {
       return;
     }
-
     try {
       pool.returnObject(driver);
     } catch (Exception e) {

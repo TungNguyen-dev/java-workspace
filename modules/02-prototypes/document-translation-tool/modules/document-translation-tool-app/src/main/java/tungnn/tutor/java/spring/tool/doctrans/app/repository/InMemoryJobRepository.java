@@ -9,7 +9,6 @@ import tungnn.tutor.java.spring.tool.doctrans.app.model.TranslationJob;
 
 @Component
 public class InMemoryJobRepository {
-
   private final Map<String, TranslationJob> jobs = new ConcurrentHashMap<>();
 
   public void save(TranslationJob job) {

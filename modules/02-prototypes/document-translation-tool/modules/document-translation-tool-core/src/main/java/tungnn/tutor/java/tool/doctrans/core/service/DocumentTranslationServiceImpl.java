@@ -13,10 +13,8 @@ import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.S
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.document.WordDocumentTranslator;
 
 public class DocumentTranslationServiceImpl implements DocumentTranslationService {
-
   private static final Logger LOGGER =
       LoggerFactory.getLogger(DocumentTranslationServiceImpl.class);
-
   private final WordDocumentTranslator wordDocumentTranslator;
   private final ExcelDocumentTranslator excelDocumentTranslator;
   private final SlideShowDocumentTranslator slideShowDocumentTranslator;
@@ -27,7 +25,6 @@ public class DocumentTranslationServiceImpl implements DocumentTranslationServic
       ExcelDocumentTranslator excelDocumentTranslator,
       SlideShowDocumentTranslator slideShowDocumentTranslator,
       MarkdownDocumentTranslator markdownDocumentTranslator) {
-
     this.wordDocumentTranslator = wordDocumentTranslator;
     this.excelDocumentTranslator = excelDocumentTranslator;
     this.slideShowDocumentTranslator = slideShowDocumentTranslator;
@@ -42,21 +39,18 @@ public class DocumentTranslationServiceImpl implements DocumentTranslationServic
   @Override
   public DocumentTranslationResult translateDocument(Path documentPath, String targetLang) {
     validateInputs(documentPath, targetLang);
-
     var mediaType = TikaFormatDetectorUtil.detectMediaType(documentPath);
     var mimeType =
         TikaFormatDetectorUtil.findExtensionByMediaType(mediaType)
             .orElseThrow(() ->
                 new IllegalArgumentException(
                     "Unsupported or unknown file format for path: " + documentPath));
-
     var request =
         new DocumentTranslationRequest.Standard(
             new DocumentTranslationRequest.DocumentSource(documentPath),
             LanguageCode.valueOf(targetLang.toUpperCase()),
             null,
             null);
-
     return switch (mimeType.toLowerCase()) {
       case "xlsx" -> excelDocumentTranslator.translate(request);
       case "pptx" -> slideShowDocumentTranslator.translate(request);

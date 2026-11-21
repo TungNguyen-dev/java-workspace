@@ -33,32 +33,26 @@ public class ExcelDocumentTranslator extends AbstractDocumentTranslator<Workbook
   @Override
   protected List<DocumentTextBlock> collectTextBlock(Workbook document) {
     var textBlocks = new ArrayList<DocumentTextBlock>();
-
     // 1. Cell
     DocumentSemanticUnitCollector.collectCells(document).stream()
         .map(CellDocumentTextBlock::new)
         .forEach(textBlocks::add);
-
     // 2. Comment
     DocumentSemanticUnitCollector.collectComments(document).stream()
         .map(CommentDocumentTextBlock::new)
         .forEach(textBlocks::add);
-
     // 3. Header
     DocumentSemanticUnitCollector.collectHeaders(document).stream()
         .map(HeaderDocumentTextBlock::new)
         .forEach(textBlocks::add);
-
     // 4. Footer
     DocumentSemanticUnitCollector.collectFooters(document).stream()
         .map(FooterDocumentTextBlock::new)
         .forEach(textBlocks::add);
-
     // 5. Shape
     DocumentSemanticUnitCollector.collectTextShapes(document).stream()
         .map(ShapeDocumentTextBlock::new)
         .forEach(textBlocks::add);
-
     return textBlocks;
   }
 

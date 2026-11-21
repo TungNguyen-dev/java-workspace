@@ -21,7 +21,6 @@ import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 
 public class CsvFileTextTranslationMemory implements TextTranslationMemory {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(CsvFileTextTranslationMemory.class);
   private static final String FILE_NAME_PREFIX = "text-translation-memory_";
   private static final String FILE_EXTENSION = ".csv";
