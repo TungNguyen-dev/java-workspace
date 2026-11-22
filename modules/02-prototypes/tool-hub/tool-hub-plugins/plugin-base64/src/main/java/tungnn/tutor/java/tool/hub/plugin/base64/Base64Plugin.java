@@ -7,19 +7,19 @@ import org.pf4j.Plugin;
 import tungnn.tutor.java.tool.hub.api.*;
 
 public class Base64Plugin extends Plugin {
-
   @Extension
   public static class Base64Tool implements ToolExtension {
     @Override
     public ToolDescriptor descriptor() {
-      return new ToolDescriptor("base64", "Base64", "Encode/decode Base64", "encoding");
+      return new ToolDescriptor(
+          "base64", "Base64", "Encode/decode Base64", "encoding", ToolLayout.TRANSFORM);
     }
 
     @Override
     public List<ParamSpec> params() {
       return List.of(
-          new ParamSpec("mode", "enum:encode|decode", true, "Chế độ"),
-          new ParamSpec("text", "string", true, "Nội dung"));
+          new ParamSpec("mode", "enum:encode|decode", true, "Chế độ", "encode"),
+          new ParamSpec("text", "text", true, "Nội dung"));
     }
 
     @Override

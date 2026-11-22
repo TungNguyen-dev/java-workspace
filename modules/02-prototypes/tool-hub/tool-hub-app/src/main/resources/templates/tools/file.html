@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: page(${tool.name}, ~{::content})}">
+<body>
+<section th:fragment="content" class="layout-file">
+<div th:replace="~{fragments/fields :: header}"></div>
+<div th:replace="~{fragments/result :: error}"></div>
+<form class="panel file-panel" method="post" enctype="multipart/form-data"
+th:action="@{/tools/{id}(id=${tool.id})}">
+<div class="file-col">
+<th:block th:each="f : ${tool.fileFields()}"><div th:replace="~{fragments/fields :: field(${f})}"></div></th:block>
+</div>
+<div class="file-col">
+<th:block th:each="f : ${tool.nonFileFields()}"><div th:replace="~{fragments/fields :: field(${f})}"></div></th:block>
+<div th:replace="~{fragments/fields :: actions}"></div>
+</div>
+</form>
+<section th:replace="~{fragments/result :: result}"></section>
+</section>
+</body>
+</html>

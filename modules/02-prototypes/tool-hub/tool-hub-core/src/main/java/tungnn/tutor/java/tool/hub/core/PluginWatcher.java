@@ -20,28 +20,20 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Theo dõi thư mục plugins: thả/sửa/xoá file *.zip thì tự load/reload/unload plugin. */
 public class PluginWatcher implements Runnable, AutoCloseable {
-
   private static final Logger log = LoggerFactory.getLogger(PluginWatcher.class);
-
   private static final long DEBOUNCE_MS = 700;
   private static final long STABLE_CHECK_MS = 300;
-  private static final int STABLE_MAX_RETRY = 20; // tối đa ~6s chờ file copy xong
-
+  private static final int STABLE_MAX_RETRY = 20;
   private final Path dir;
   private final PluginService service;
-
   private final ScheduledExecutorService worker =
       Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "plugin-watcher-worker");
         t.setDaemon(true);
         return t;
       });
-
-  /** Mỗi file zip chỉ giữ 1 tác vụ đang chờ; sự kiện mới sẽ thay tác vụ cũ (debounce). */
   private final Map<Path, ScheduledFuture<?>> pending = new ConcurrentHashMap<>();
-
   private volatile boolean running = true;
 
   public PluginWatcher(Path dir, PluginService service) {
@@ -51,7 +43,7 @@ public class PluginWatcher implements Runnable, AutoCloseable {
 
   private static boolean isPluginZip(Path file) {
     String name = file.getFileName().toString().toLowerCase();
-    return name.endsWith(".zip") && !name.startsWith("."); // bỏ qua file tạm kiểu .xxx.zip
+    return name.endsWith(".zip") && !name.startsWith(".");
   }
 
   @Override
@@ -59,12 +51,10 @@ public class PluginWatcher implements Runnable, AutoCloseable {
     try (WatchService ws = dir.getFileSystem().newWatchService()) {
       dir.register(ws, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
       log.info("Đang theo dõi thư mục plugins: {}", dir);
-
       while (running && !Thread.currentThread().isInterrupted()) {
         WatchKey key = ws.take();
-
         for (WatchEvent<?> ev : key.pollEvents()) {
-          if (ev.kind() == OVERFLOW) { // context() == null, bỏ qua
+          if (ev.kind() == OVERFLOW) {
             log.warn("WatchService bị overflow, có thể đã bỏ lỡ sự kiện");
             continue;
           }
@@ -72,8 +62,7 @@ public class PluginWatcher implements Runnable, AutoCloseable {
           if (!isPluginZip(file)) continue;
           schedule(file, ev.kind());
         }
-
-        if (!key.reset()) { // thư mục bị xoá/không còn truy cập được
+        if (!key.reset()) {
           log.warn("Thư mục plugins không còn hợp lệ, dừng watcher: {}", dir);
           break;
         }
@@ -88,7 +77,6 @@ public class PluginWatcher implements Runnable, AutoCloseable {
   }
 
   private void schedule(Path file, WatchEvent.Kind<?> kind) {
-    // Hủy tác vụ cũ của cùng file để gộp nhiều event (CREATE + nhiều MODIFY khi đang copy)
     pending.compute(
         file,
         (f, old) -> {
@@ -129,14 +117,13 @@ public class PluginWatcher implements Runnable, AutoCloseable {
     String id = service.pluginIdOf(file);
     if (id != null) {
       log.info("Reload plugin '{}' ({} thay đổi)", id, file.getFileName());
-      service.unloadOne(id); // MODIFY = unload rồi load lại
+      service.unloadOne(id);
     } else {
       log.info("Nạp plugin mới từ {}", file.getFileName());
     }
     service.loadOne(file);
   }
 
-  /** Chờ đến khi kích thước file không đổi giữa hai lần kiểm tra (copy xong). */
   private boolean waitUntilStable(Path file) throws InterruptedException {
     try {
       long last = -1;

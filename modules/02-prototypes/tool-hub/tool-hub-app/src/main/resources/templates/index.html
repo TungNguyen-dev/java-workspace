@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: page('Tools', ~{::content})}">
+<body>
+<section th:fragment="content">
+    <h1>Tools</h1>
+    <div class="empty" th:if="${#maps.isEmpty(catalog)}">
+        <p>Chưa có plugin nào được nạp.</p>
+        <p class="muted">Thả file <code>plugin-*.zip</code> vào thư mục <code>plugins</code> — tool sẽ xuất hiện khi tải
+            lại trang.</p>
+    </div>
+    <th:block th:each="entry : ${catalog}">
+        <h2 class="cat-title" th:text="${entry.key}">category</h2>
+        <div class="cards">
+            <a class="card" th:each="t : ${entry.value}" th:href="@{/tools/{id}(id=${t.id})}">
+                <div class="card-title" th:text="${t.name}">name</div>
+                <div class="muted" th:text="${t.description}">description</div>
+                <div class="card-foot">
+                    <span class="badge badge-layout" th:text="${t.layout}">LAYOUT</span>
+                    <code th:text="${t.id}">id</code>
+                </div>
+            </a>
+        </div>
+    </th:block>
+</section>
+</body>
+</html>

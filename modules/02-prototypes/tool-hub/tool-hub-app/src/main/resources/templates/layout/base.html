@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:fragment="page(title, content)">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0c10">
+<title th:text="${title} + ' · Tool Hub'">Tool Hub</title>
+<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="topbar">
+<a class="brand" th:href="@{/}">🧰 Tool Hub</a>
+<span class="muted" th:text="${toolCount} + ' tool'">0 tool</span>
+</header>
+<div class="shell">
+<nav class="sidebar">
+<p class="muted" th:if="${#maps.isEmpty(catalog)}">Chưa có tool nào.</p>
+<th:block th:each="entry : ${catalog}">
+<div class="sidebar-cat" th:text="${entry.key}">category</div>
+<a th:each="t : ${entry.value}"
+th:href="@{/tools/{id}(id=${t.id})}"
+th:text="${t.name}"
+th:classappend="${tool != null and tool.id == t.id} ? 'active'">tool</a>
+</th:block>
+</nav>
+<main class="content">
+<div class="alert alert-warn" th:if="${flash}" th:text="${flash}">flash</div>
+<th:block th:replace="${content}"/>
+</main>
+</div>
+</body>
+</html>

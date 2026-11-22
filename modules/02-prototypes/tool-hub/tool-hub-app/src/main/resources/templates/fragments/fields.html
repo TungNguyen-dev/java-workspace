@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="header" class="tool-header">
+    <h1 th:text="${tool.name}">Tool</h1>
+    <p class="muted" th:text="${tool.description}">description</p>
+    <span class="badge" th:text="${tool.category}">category</span>
+    <span class="badge badge-layout" th:text="${tool.layout}">LAYOUT</span>
+</div>
+<div th:fragment="field(f)" class="field"
+     th:classappend="${(errors[f.name] != null ? 'has-error ' : '') + 'w-' + #strings.toLowerCase(f.widget.name())}"
+     th:with="fid='f-' + ${f.name}, val=${values[f.name]}">
+    <th:block th:switch="${f.widget.name()}">
+        <label th:case="'CHECKBOX'" class="check" th:for="${fid}">
+            <input type="checkbox" value="true" th:id="${fid}" th:name="${f.name}"
+                   th:checked="${val == 'true' or val == 'on'}">
+            <span th:text="${f.label}">label</span>
+        </label>
+        <th:block th:case="*">
+            <label th:for="${fid}">
+                <span th:text="${f.label}">label</span><span class="req" th:if="${f.required}">*</span>
+                <small class="muted" th:if="${f.label != f.name}" th:text="'(' + ${f.name} + ')'"></small>
+            </label>
+            <th:block th:switch="${f.widget.name()}">
+<textarea th:case="'TEXTAREA'" th:id="${fid}" th:name="${f.name}" rows="12"
+          spellcheck="false" th:text="${val}"></textarea>
+                <input th:case="'NUMBER'" type="number" step="any" th:id="${fid}" th:name="${f.name}"
+                       th:value="${val}">
+                <select th:case="'SELECT'" th:id="${fid}" th:name="${f.name}">
+                    <option th:unless="${f.required}" value="">—</option>
+                    <option th:each="o : ${f.options}" th:value="${o}" th:text="${o}"
+                            th:selected="${o == val}">opt
+                    </option>
+                </select>
+                <div th:case="'FILE'" class="dropzone">
+                    <input type="file" th:id="${fid}" th:name="${f.name}">
+                    <small class="muted">Chọn lại file mỗi lần chạy.</small>
+                </div>
+                <input th:case="*" type="text" th:id="${fid}" th:name="${f.name}" th:value="${val}">
+            </th:block>
+        </th:block>
+    </th:block>
+    <div class="field-error" th:if="${errors[f.name] != null}" th:text="${errors[f.name]}">error</div>
+</div>
+<div th:fragment="actions" class="actions">
+    <button type="submit" class="btn">▶ Run</button>
+    <a class="btn btn-ghost" th:href="@{/tools/{id}(id=${tool.id})}">Reset</a>
+</div>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="error" class="alert alert-error" th:if="${error}" th:text="${error}">error</div>
+<section th:fragment="result" class="result" th:if="${result != null}">
+<div class="result-head">
+<strong>Kết quả</strong>
+<span class="muted" th:text="${result.elapsedMs} + ' ms'">0 ms</span>
+</div>
+<div class="alert alert-info" th:if="${result.message}" th:text="${result.message}">msg</div>
+<th:block th:switch="${result.kind.name()}">
+<p th:case="'EMPTY'" class="muted">Tool chạy xong, không có dữ liệu trả về.</p>
+<pre th:case="'TEXT'" class="output" th:text="${result.text}">text</pre>
+<pre th:case="'JSON'" class="output output-json" th:text="${result.text}">{}</pre>
+<div th:case="'FILE'" class="download">
+<a class="btn" th:href="@{/tools/{id}/download/{token}(id=${tool.id},token=${result.downloadToken})}">
+⬇ Tải <span th:text="${result.filename}">file</span>
+</a>
+<span class="muted" th:text="${#numbers.formatInteger(result.size, 1, 'COMMA')} + ' bytes'">0 bytes</span>
+</div>
+<div th:case="'TABLE'" class="table-wrap">
+<table class="data">
+<thead>
+<tr><th th:each="c : ${result.columns}" th:text="${c}">col</th></tr>
+</thead>
+<tbody>
+<tr th:each="row : ${result.rows}">
+<td th:each="cell : ${row}" th:text="${cell}">cell</td>
+</tr>
+<tr th:if="${#lists.isEmpty(result.rows)}">
+<td class="muted" th:colspan="${#lists.size(result.columns)}">Không có dòng nào.</td>
+</tr>
+</tbody>
+</table>
+<small class="muted" th:text="${#lists.size(result.rows)} + ' dòng'">0 dòng</small>
+</div>
+</th:block>
+</section>
+</body>
+</html>

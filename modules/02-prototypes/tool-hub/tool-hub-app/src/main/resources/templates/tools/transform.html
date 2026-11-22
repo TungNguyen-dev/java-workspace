@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: page(${tool.name}, ~{::content})}">
+<body>
+<section th:fragment="content" class="layout-transform"
+th:with="primary=${tool.primaryText()}">
+<div th:replace="~{fragments/fields :: header}"></div>
+<div th:replace="~{fragments/result :: error}"></div>
+<form method="post" enctype="multipart/form-data" th:action="@{/tools/{id}(id=${tool.id})}">
+<div class="toolbar panel">
+<th:block th:each="f : ${tool.secondaryFields()}"><div th:replace="~{fragments/fields :: field(${f})}"></div></th:block>
+<div th:replace="~{fragments/fields :: actions}"></div>
+</div>
+<div class="split">
+<div class="pane">
+<th:block th:if="${primary != null}"><div th:replace="~{fragments/fields :: field(${primary})}"></div></th:block>
+</div>
+<div class="pane">
+<div class="field">
+<label for="output">
+Output
+<small class="muted" th:if="${result != null}" th:text="'(' + ${result.elapsedMs} + ' ms)'"></small>
+</label>
+<textarea id="output" rows="12" readonly spellcheck="false"
+th:text="${result != null and result.textual()} ? ${result.text} : ''"></textarea>
+</div>
+</div>
+</div>
+</form>
+<th:block th:if="${result != null and !result.textual()}">
+<section th:replace="~{fragments/result :: result}"></section>
+</th:block>
+<div class="alert alert-info" th:if="${result != null and result.textual() and result.message != null}"
+th:text="${result.message}"></div>
+</section>
+</body>
+</html>

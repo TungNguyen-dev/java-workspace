@@ -14,7 +14,6 @@ import tungnn.tutor.java.tool.hub.api.ToolExtension;
 
 public class PluginService {
   private static final Logger log = LoggerFactory.getLogger(PluginService.class);
-
   private final PluginManager pm;
   private final ToolRegistry registry;
   private final Path dataRoot;
@@ -43,7 +42,7 @@ public class PluginService {
   }
 
   public synchronized void loadAll() {
-    pm.loadPlugins(); // tự giải nén *.zip trong thư mục plugins
+    pm.loadPlugins();
     pm.startPlugins();
     pm.getPlugins().forEach(w -> registerExtensions(w.getPluginId()));
   }
@@ -67,7 +66,7 @@ public class PluginService {
     PluginWrapper w = pm.getPlugin(pluginId);
     registry.unregisterPlugin(pluginId);
     pm.stopPlugin(pluginId);
-    pm.unloadPlugin(pluginId); // cần để classloader được GC
+    pm.unloadPlugin(pluginId);
     if (w != null) deleteRecursively(w.getPluginPath());
   }
 
