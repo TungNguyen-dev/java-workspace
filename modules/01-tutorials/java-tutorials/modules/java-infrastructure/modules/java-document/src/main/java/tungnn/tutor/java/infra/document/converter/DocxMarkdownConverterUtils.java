@@ -33,8 +33,6 @@ public final class DocxMarkdownConverterUtils {
         var document = new XWPFDocument(inputStream)) {
       var sb = new StringBuilder();
       var lists = new ListCounters();
-      var previousWasListItem = false;
-      BigInteger currentTopListId = null;
 
       for (var element : document.getBodyElements()) {
         if (element instanceof XWPFParagraph paragraph) {
@@ -43,30 +41,17 @@ public final class DocxMarkdownConverterUtils {
           if (mdText.isBlank()) {
             continue;
           }
-          if (listItem != null) {
-            var numId = paragraph.getNumID();
-            var topLevel = paragraph.getNumIlvl() == null || paragraph.getNumIlvl().intValue() == 0;
-            var newList = topLevel && numId != null && !numId.equals(currentTopListId);
-            if (previousWasListItem && !newList) {
-              sb.setLength(sb.length() - 1);
-            }
-            if (topLevel) {
-              currentTopListId = numId;
-            }
-          } else {
+          if (listItem == null) {
             lists.reset();
-            currentTopListId = null;
           }
-          sb.append(mdText).append("\n");
-          previousWasListItem = listItem != null;
+          // Thêm newline cho mỗi item/paragraph (tạo dòng trống phân tách rõ ràng)
+          sb.append(mdText).append("\n\n");
         } else if (element instanceof XWPFTable table) {
           var mdTable = tableToMarkdown(table);
           if (!mdTable.isBlank()) {
-            sb.append(mdTable).append("\n");
+            sb.append(mdTable).append("\n\n");
           }
           lists.reset();
-          currentTopListId = null;
-          previousWasListItem = false;
         }
       }
       return sb.toString().stripTrailing() + "\n";
