@@ -26,7 +26,13 @@ theo quy tắc và định dạng dưới đây. Đầu vào thường có **nhi
   Lấy đúng phần quy đổi trong ngoặc của bản gốc; không tự tính lại, không làm tròn, không bịa thêm.
   Dải liều giữ nguyên dạng "3~4,5g"; thập phân dùng dấu phẩy.
 - Không lặp lại liều cổ trong ngoặc, không ghi cách bào chế nếu bản gốc không có.
-- Phần cách dùng/sắc thuốc (đoạn nằm giữa danh sách vị thuốc và "Công dụng:") không đưa vào đầu ra.
+- Phần cách dùng/sắc thuốc của phụ phương (đoạn nằm giữa danh sách vị thuốc và "Công dụng:", ví dụ "Năm vị trên, dùng 1 đấu nước, …")
+  **phải được giữ lại đầy đủ**, đặt trên một dòng riêng ngay sau dòng vị thuốc, bắt đầu bằng nhãn "Cách dùng: ".
+  Giữ nguyên văn toàn bộ nội dung cách dùng: không rút gọn, không viết lại, không đổi hay bỏ đơn vị cổ
+  (đấu, thăng, tiền, lạng...), giữ cả ghi chú "(cách dùng hiện đại: …)" nếu có.
+  Quy tắc bỏ đơn vị cổ ở trên **chỉ áp dụng cho dòng vị thuốc**, không áp dụng cho dòng "Cách dùng:".
+  Nếu bản gốc đã có nhãn "Cách dùng", "【Cách dùng】" hoặc "Cách dùng:" thì chỉ giữ một nhãn "Cách dùng: ".
+  Phụ phương không có phần cách dùng thì bỏ dòng này, không tự thêm.
 - "Công dụng:" và "Chủ trị:" (nếu có): mỗi nhãn nằm trên một dòng riêng, nhãn và nội dung cùng dòng,
   hai nhãn không gộp chung một dòng; giữ nguyên nội dung, không thêm bớt.
 - Phụ phương chỉ được mô tả bằng lời, không có danh sách vị thuốc (ví dụ "tức … thêm …"): vẫn có header,
@@ -38,8 +44,8 @@ theo quy tắc và định dạng dưới đây. Đầu vào thường có **nhi
 
 # Định dạng đầu ra
 - Chỉ trả về nội dung đã chuẩn hoá: không lời chào, không lời dẫn, không giải thích, không hỏi lại, không bọc code fence.
-- Mỗi phụ phương gồm: dòng header `##### <Tên phụ phương>`, dòng vị thuốc, dòng "Công dụng: …", dòng "Chủ trị: …";
-  các dòng cách nhau một dòng trống.
+- Mỗi phụ phương gồm: dòng header `##### <Tên phụ phương>`, dòng vị thuốc, dòng "Cách dùng: …", dòng "Công dụng: …",
+  dòng "Chủ trị: …"; các dòng cách nhau một dòng trống.
 - Dòng vị thuốc kết thúc bằng đúng một dấu chấm.
 
 # Sample
@@ -60,6 +66,8 @@ Các phương trên đều có công năng thanh nhiệt ở khí phận. Trong 
 
 Tri mẫu 18 g, Thạch cao 50 g, Cam thảo 6 g, Ngạnh mễ 9 g, Nhân sâm 10 g.
 
+Cách dùng: Năm vị trên, dùng 1 đấu nước, nấu đến khi gạo chín, thuốc thành, bỏ bã, uống ấm 1 thăng, ngày 3 lần.
+
 Công dụng: thanh nhiệt, ích khí, sinh tân.
 
 Chủ trị: khí phận nhiệt thịnh, khí âm lưỡng thương.
@@ -68,6 +76,8 @@ Chủ trị: khí phận nhiệt thịnh, khí âm lưỡng thương.
 
 Tri mẫu 18 g, Cam thảo 6 g, Thạch cao 50 g, Ngạnh mễ 6 g, Quế chi 5~9 g.
 
+Cách dùng: Tán thô, mỗi lần dùng 5 tiền, thêm 1,5 chén nước, sắc còn 8 phần, bỏ bã uống ấm.
+
 Công dụng: thanh nhiệt, thông lạc, hòa dinh vệ.
 
 Chủ trị: ôn ngược, mạch bình thường, người không lạnh chỉ nóng.
@@ -75,6 +85,8 @@ Chủ trị: ôn ngược, mạch bình thường, người không lạnh chỉ 
 ##### Chi tử Kim hoa thang (《Y tông kim giám》)
 
 tức Hoàng liên giải độc thang thêm Đại hoàng.
+
+Cách dùng: Sắc uống.
 
 Công dụng: tả hỏa giải độc.
 
