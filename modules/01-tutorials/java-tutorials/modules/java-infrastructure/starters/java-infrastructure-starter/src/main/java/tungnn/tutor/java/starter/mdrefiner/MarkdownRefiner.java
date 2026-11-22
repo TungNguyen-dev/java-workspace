@@ -26,7 +26,9 @@ public final class MarkdownRefiner {
   private static final Pattern BOLD_SPAN = Pattern.compile("\\*\\*([^*]+)\\*\\*");
   private static final Pattern DOSAGE = Pattern.compile("(?<=\\d)(mg|kg|g|ml)\\b");
   private static final Pattern LIST_OR_SPECIAL_START =
-      Pattern.compile("^\\s*([-*+>|#]|\\d+[.)])\\s");
+      Pattern.compile("^\\s*([-*+>#]|\\d+[.)])\\s|^\\s*\\|");
+
+  private static final Pattern TABLE_ROW = Pattern.compile("^\\s*\\|");
 
   private final boolean spaceBeforeUnit;
 
@@ -71,7 +73,11 @@ public final class MarkdownRefiner {
       out.append(line);
       if (i == lines.length - 1) break;
       var next = lines[i + 1];
-      boolean hardBreak = line.endsWith("  ") || line.isBlank() || next.isBlank();
+      boolean hardBreak =
+          line.endsWith("  ")
+              || line.isBlank()
+              || next.isBlank()
+              || TABLE_ROW.matcher(line).find();
       boolean nextIsSpecial = LIST_OR_SPECIAL_START.matcher(next).find();
       if (hardBreak || nextIsSpecial) {
         out.append('\n');
@@ -86,6 +92,11 @@ public final class MarkdownRefiner {
 
   private String refineLine(String line) {
     if (line.isBlank()) return "";
+
+    // Dòng bảng markdown (| a | b |, |---|---|): giữ nguyên cấu trúc, chỉ bỏ khoảng trắng thừa ở hai đầu.
+    if (TABLE_ROW.matcher(line).find()) {
+      return line.strip();
+    }
 
     line = BULLET.matcher(line).replaceFirst("$1- $2");
 
