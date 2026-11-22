@@ -6,12 +6,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellReference;
 
 public final class ExcelEditorUtilsIndex1Based {
-
   private ExcelEditorUtilsIndex1Based() {}
-
-  // ==========================================
-  // THAO TÁC THEO SỐ (1-BASED INDEX)
-  // ==========================================
 
   public static Row cloneRow(Sheet sheet, int rowNum, int templateRowNum) {
     return ExcelEditorUtils.cloneRow(sheet, rowNum - 1, templateRowNum - 1);
@@ -33,10 +28,6 @@ public final class ExcelEditorUtilsIndex1Based {
   public static Cell getOrCreateCell(Sheet sheet, int rowNum, int colNum) {
     return ExcelEditorUtils.getOrCreateCell(sheet, rowNum - 1, colNum - 1);
   }
-
-  // =========================================================================
-  // CELL REFERENCE METHODS (Get/Set by "A1", "B5")
-  // =========================================================================
 
   public static Cell getOrCreateCellByAddress(Sheet sheet, String address) {
     var ref = new CellReference(address);

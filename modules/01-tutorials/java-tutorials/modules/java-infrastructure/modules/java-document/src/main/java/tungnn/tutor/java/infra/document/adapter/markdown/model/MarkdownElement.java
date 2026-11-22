@@ -1,6 +1,5 @@
 package tungnn.tutor.java.infra.document.adapter.markdown.model;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public sealed interface MarkdownElement
@@ -9,9 +8,8 @@ public sealed interface MarkdownElement
   String toMarkdown();
 
   record MarkdownDocument(List<MarkdownBlock> blocks) implements MarkdownElement {
-
-    public MarkdownDocument(List<MarkdownBlock> blocks) {
-      this.blocks = blocks != null ? new ArrayList<>(blocks) : new ArrayList<>();
+    public MarkdownDocument {
+      blocks = blocks != null ? List.copyOf(blocks) : List.of();
     }
 
     @Override

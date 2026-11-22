@@ -7,7 +7,6 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellRangeAddress;
 
 public final class ExcelEditorUtils {
-
   private ExcelEditorUtils() {}
 
   public static Row cloneRow(Sheet sheet, int rowIndex, int templateRowIndex) {
@@ -15,14 +14,12 @@ public final class ExcelEditorUtils {
     if (sourceRow == null) {
       throw new IllegalArgumentException("Template row " + templateRowIndex + " does not exist");
     }
-
     var targetRow = sheet.getRow(rowIndex);
     if (targetRow != null) {
       sheet.removeRow(targetRow);
     }
     targetRow = sheet.createRow(rowIndex);
     targetRow.setHeight(sourceRow.getHeight());
-
     short last = sourceRow.getLastCellNum();
     if (last >= 0) {
       for (var i = 0; i < last; i++) {
@@ -33,7 +30,6 @@ public final class ExcelEditorUtils {
         }
       }
     }
-
     copyMergedRegions(sheet, sourceRow.getRowNum(), targetRow.getRowNum());
     return targetRow;
   }
@@ -42,7 +38,6 @@ public final class ExcelEditorUtils {
     if (srcRowStart > srcRowEnd) {
       return;
     }
-
     int rowOffset = dstRowStart - srcRowStart;
     for (int currentSrc = srcRowStart; currentSrc <= srcRowEnd; currentSrc++) {
       int currentDst = currentSrc + rowOffset;
@@ -52,40 +47,31 @@ public final class ExcelEditorUtils {
 
   public static void cloneRows(
       Sheet srcSheet, int srcFrom, int srcTo, Sheet dstSheet, int dstFrom) {
-
     if (srcSheet == null || dstSheet == null) {
       throw new IllegalArgumentException("Source sheet and destination sheet must not be null");
     }
     if (srcFrom > srcTo) {
       throw new IllegalArgumentException("Source 'from' row cannot be greater than 'to' row");
     }
-
     Row lastClonedRow = null;
     int rowCount = srcTo - srcFrom + 1;
-
     if (srcSheet == dstSheet && dstFrom > srcFrom) {
       dstSheet.shiftRows(dstFrom, dstSheet.getLastRowNum(), rowCount);
     }
-
     for (int i = 0; i < rowCount; i++) {
       int srcRowNum = srcFrom + i;
       int dstRowNum = dstFrom + i;
-
       Row srcRow = srcSheet.getRow(srcRowNum);
       Row dstRow = dstSheet.getRow(dstRowNum);
-
       if (dstRow != null) {
         dstSheet.removeRow(dstRow);
       }
       dstRow = dstSheet.createRow(dstRowNum);
       lastClonedRow = dstRow;
-
       if (srcRow == null) {
         continue;
       }
-
       dstRow.setHeight(srcRow.getHeight());
-
       short lastCellNum = srcRow.getLastCellNum();
       if (lastCellNum >= 0) {
         for (int j = 0; j < lastCellNum; j++) {
@@ -97,7 +83,6 @@ public final class ExcelEditorUtils {
         }
       }
     }
-
     for (CellRangeAddress mergedRegion : srcSheet.getMergedRegions()) {
       if (mergedRegion.getFirstRow() >= srcFrom && mergedRegion.getLastRow() <= srcTo) {
         int rowOffset = dstFrom - srcFrom;
@@ -115,11 +100,9 @@ public final class ExcelEditorUtils {
   public static Row insertRow(Sheet sheet, int templateRowIndex) {
     int lastRow = sheet.getLastRowNum();
     int targetRowIndex = templateRowIndex + 1;
-
     if (targetRowIndex <= lastRow) {
       ExcelDocumentUtils.shiftRows(sheet, targetRowIndex, lastRow, 1);
     }
-
     var sourceRow = sheet.getRow(templateRowIndex);
     var targetRow = sheet.getRow(targetRowIndex);
     if (targetRow != null) {
@@ -127,7 +110,6 @@ public final class ExcelEditorUtils {
     }
     targetRow = sheet.createRow(targetRowIndex);
     targetRow.setHeight(sourceRow.getHeight());
-
     short last = sourceRow.getLastCellNum();
     if (last >= 0) {
       for (var i = 0; i < last; i++) {
@@ -138,7 +120,6 @@ public final class ExcelEditorUtils {
         }
       }
     }
-
     copyMergedRegions(sheet, sourceRow.getRowNum(), targetRow.getRowNum());
     return targetRow;
   }
@@ -148,18 +129,15 @@ public final class ExcelEditorUtils {
     if (row == null) {
       row = sheet.createRow(rowNum);
     }
-
     Cell cell = row.getCell(colNum);
     if (cell == null) {
       cell = row.createCell(colNum);
     }
-
     return cell;
   }
 
   public static void copyCell(Cell sourceCell, Cell targetCell, boolean copyValue) {
     targetCell.setCellStyle(sourceCell.getCellStyle());
-
     if (sourceCell.getHyperlink() != null) {
       ExcelDocumentUtils.addHyperlinkToCell(
           targetCell.getSheet().getWorkbook(),
@@ -167,7 +145,6 @@ public final class ExcelEditorUtils {
           sourceCell.getHyperlink().getAddress(),
           sourceCell.getHyperlink().getType());
     }
-
     if (sourceCell.getCellComment() != null) {
       var srcComment = sourceCell.getCellComment();
       ExcelDocumentUtils.setCellComment(
@@ -177,12 +154,10 @@ public final class ExcelEditorUtils {
           srcComment.getAuthor(),
           srcComment.getString().getString());
     }
-
     if (!copyValue) {
       targetCell.setBlank();
       return;
     }
-
     switch (sourceCell.getCellType()) {
       case BOOLEAN -> targetCell.setCellValue(sourceCell.getBooleanCellValue());
       case ERROR -> targetCell.setCellErrorValue(sourceCell.getErrorCellValue());
@@ -198,7 +173,6 @@ public final class ExcelEditorUtils {
     int numRegions = sheet.getNumMergedRegions();
     for (int i = 0; i < numRegions; i++) {
       CellRangeAddress region = sheet.getMergedRegion(i);
-
       if (region.getFirstRow() == sourceRowNum) {
         int rowSpan = region.getLastRow() - region.getFirstRow();
         ExcelDocumentUtils.mergeCells(
@@ -216,7 +190,6 @@ public final class ExcelEditorUtils {
     short firstCell = row.getFirstCellNum();
     short lastCell = row.getLastCellNum();
     if (firstCell < 0) return;
-
     for (int i = firstCell; i < lastCell; i++) {
       Cell cell = row.getCell(i);
       if (cell != null) {

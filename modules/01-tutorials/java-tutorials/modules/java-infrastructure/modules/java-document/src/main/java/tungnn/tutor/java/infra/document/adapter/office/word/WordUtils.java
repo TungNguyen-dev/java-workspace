@@ -11,7 +11,6 @@ import java.util.function.Predicate;
 import org.apache.poi.xwpf.usermodel.*;
 
 public final class WordUtils {
-
   private WordUtils() {}
 
   public static XWPFDocument readDocument(InputStream inputStream) throws IOException {
@@ -25,27 +24,21 @@ public final class WordUtils {
 
   public static Map<String, List<XWPFRun>> collectTextRuns(
       XWPFDocument document, Predicate<String> textPredicate) {
-
     var textToRuns = new LinkedHashMap<String, List<XWPFRun>>();
-
     collectBodyElements(document.getBodyElements(), textPredicate, textToRuns);
-
     for (XWPFHeader header : document.getHeaderList()) {
       collectParagraphs(header.getParagraphs(), textPredicate, textToRuns);
       collectTables(header.getTables(), textPredicate, textToRuns);
     }
-
     for (XWPFFooter footer : document.getFooterList()) {
       collectParagraphs(footer.getParagraphs(), textPredicate, textToRuns);
       collectTables(footer.getTables(), textPredicate, textToRuns);
     }
-
     return textToRuns;
   }
 
   public static void applyTranslations(
       Map<String, List<XWPFRun>> textToRuns, Map<String, String> translations) {
-
     textToRuns.forEach((source, runs) -> {
       var translated = translations.get(source);
       if (translated != null) {
@@ -62,7 +55,6 @@ public final class WordUtils {
       List<IBodyElement> bodyElements,
       Predicate<String> textPredicate,
       Map<String, List<XWPFRun>> textToRuns) {
-
     for (IBodyElement element : bodyElements) {
       if (element instanceof XWPFParagraph paragraph) {
         collectParagraph(paragraph, textPredicate, textToRuns);
@@ -76,7 +68,6 @@ public final class WordUtils {
       List<XWPFParagraph> paragraphs,
       Predicate<String> textPredicate,
       Map<String, List<XWPFRun>> textToRuns) {
-
     paragraphs.forEach(paragraph -> collectParagraph(paragraph, textPredicate, textToRuns));
   }
 
@@ -84,13 +75,11 @@ public final class WordUtils {
       List<XWPFTable> tables,
       Predicate<String> textPredicate,
       Map<String, List<XWPFRun>> textToRuns) {
-
     tables.forEach(table -> collectTable(table, textPredicate, textToRuns));
   }
 
   private static void collectTable(
       XWPFTable table, Predicate<String> textPredicate, Map<String, List<XWPFRun>> textToRuns) {
-
     table
         .getRows()
         .forEach(row ->
@@ -99,7 +88,6 @@ public final class WordUtils {
 
   private static void collectTableCell(
       XWPFTableCell cell, Predicate<String> textPredicate, Map<String, List<XWPFRun>> textToRuns) {
-
     collectParagraphs(cell.getParagraphs(), textPredicate, textToRuns);
     collectTables(cell.getTables(), textPredicate, textToRuns);
   }
@@ -108,7 +96,6 @@ public final class WordUtils {
       XWPFParagraph paragraph,
       Predicate<String> textPredicate,
       Map<String, List<XWPFRun>> textToRuns) {
-
     for (XWPFRun run : paragraph.getRuns()) {
       var text = normalize(run.getText(0));
       if (textPredicate.test(text)) {

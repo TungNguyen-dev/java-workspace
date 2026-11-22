@@ -11,7 +11,6 @@ import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.mime.MimeTypes;
 
 public final class TikaFormatDetectorUtil {
-
   private static final Tika TIKA = new Tika();
   private static final MimeTypes MIME_TYPES = MimeTypes.getDefaultMimeTypes();
 
@@ -21,7 +20,6 @@ public final class TikaFormatDetectorUtil {
 
   public static MediaType detectMediaType(Path path) {
     Objects.requireNonNull(path, "Path must not be null");
-
     try {
       String mediaTypeStr = TIKA.detect(path);
       MediaType mediaType = MediaType.parse(mediaTypeStr);
@@ -43,11 +41,9 @@ public final class TikaFormatDetectorUtil {
     try {
       MimeType mimeType = MIME_TYPES.forName(mimeTypeStr);
       String ext = mimeType.getExtension();
-
       if (ext == null || ext.isEmpty()) {
         return Optional.empty();
       }
-
       return Optional.of(ext.startsWith(".") ? ext.substring(1) : ext);
     } catch (MimeTypeException e) {
       return Optional.empty();

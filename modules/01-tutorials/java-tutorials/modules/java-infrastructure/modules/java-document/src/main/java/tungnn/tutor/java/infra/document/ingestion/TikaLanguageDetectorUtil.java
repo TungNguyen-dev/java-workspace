@@ -4,7 +4,6 @@ import java.io.IOException;
 import org.apache.tika.language.detect.LanguageDetector;
 
 public final class TikaLanguageDetectorUtil {
-
   private static final LanguageDetector LANGUAGE_DETECTOR;
   private static final String UNKNOWN_LANGUAGE = "unknown";
 

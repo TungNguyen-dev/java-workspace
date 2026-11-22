@@ -4,7 +4,6 @@ import java.nio.file.Path;
 import tungnn.tutor.java.infra.document.ingestion.TikaFormatDetectorUtil;
 
 public class TikaDetectMimeTypeSample {
-
   static void main() {
     var storageDir = Path.of("storage");
     var path = storageDir.resolve("tika.md");

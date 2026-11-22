@@ -18,6 +18,7 @@ import com.vladsch.flexmark.ast.Text;
 import com.vladsch.flexmark.ast.ThematicBreak;
 import com.vladsch.flexmark.ext.tables.TableBlock;
 import com.vladsch.flexmark.ext.tables.TableCell;
+import com.vladsch.flexmark.ext.tables.TableSeparator;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
@@ -32,15 +33,19 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
+import org.apache.poi.xwpf.usermodel.XWPFAbstractNum;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFHyperlinkRun;
+import org.apache.poi.xwpf.usermodel.XWPFNumbering;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFStyle;
 import org.apache.poi.xwpf.usermodel.XWPFStyles;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTAbstractNum;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFonts;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTLvl;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPrGeneral;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
@@ -48,19 +53,15 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyle;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STJc;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STNumberFormat;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STShd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STStyleType;
 
-/** Converts Markdown to Word (.docx) with global styling options. */
 public final class MarkdownDocxConverterUtils {
 
   private MarkdownDocxConverterUtils() {
     throw new UnsupportedOperationException("Utility class cannot be instantiated");
   }
-
-  // ==========================================================================
-  // Options
-  // ==========================================================================
 
   public static void convertMarkdownToDocx(Path mdPath, Path docxPath) throws IOException {
     convertMarkdownToDocx(mdPath, docxPath, Options.defaults());
@@ -78,39 +79,30 @@ public final class MarkdownDocxConverterUtils {
   public static XWPFDocument toDocument(String markdown, Options options) {
     XWPFDocument document = new XWPFDocument();
     ensureHeadingStyles(document, options);
-
     MutableDataSet parserOptions = new MutableDataSet();
     parserOptions.set(Parser.EXTENSIONS, List.of(TablesExtension.create()));
     Node root = Parser.builder(parserOptions).build().parse(markdown == null ? "" : markdown);
-
     new Renderer(document, options).renderChildren(root, 0, false);
     return document;
   }
-
-  // ==========================================================================
-  // Public API
-  // ==========================================================================
 
   private static void ensureHeadingStyles(XWPFDocument document, Options options) {
     XWPFStyles styles = document.getStyles();
     if (styles == null) {
       styles = document.createStyles();
     }
-
     for (int level = 1; level <= 6; level++) {
       String styleId = "Heading" + level;
       if (styles.styleExist(styleId)) {
         continue;
       }
       HeadingStyle hs = options.headings().get(level - 1);
-
       CTStyle ct = CTStyle.Factory.newInstance();
       ct.setStyleId(styleId);
       ct.setType(STStyleType.PARAGRAPH);
       ct.addNewName().setVal("heading " + level);
       ct.addNewUiPriority().setVal(BigInteger.valueOf(9));
       ct.addNewQFormat();
-
       CTPPrGeneral ppr = ct.addNewPPr();
       ppr.addNewKeepNext();
       ppr.addNewKeepLines();
@@ -121,7 +113,6 @@ public final class MarkdownDocxConverterUtils {
         ppr.addNewJc().setVal(STJc.CENTER);
       }
       ppr.addNewOutlineLvl().setVal(BigInteger.valueOf(level - 1));
-
       CTRPr rpr = ct.addNewRPr();
       CTFonts fonts = rpr.addNewRFonts();
       fonts.setAscii(options.bodyFont());
@@ -140,20 +131,17 @@ public final class MarkdownDocxConverterUtils {
       rpr.addNewColor().setVal(hs.colorHex());
       rpr.addNewSz().setVal(BigInteger.valueOf(hs.sizePt() * 2L));
       rpr.addNewSzCs().setVal(BigInteger.valueOf(hs.sizePt() * 2L));
-
       styles.addStyle(new XWPFStyle(ct, styles));
     }
   }
 
-  /** Numbering scheme prepended to a heading. Counters restart under each parent heading. */
   public enum Numbering {
     NONE,
-    UPPER_ROMAN, // I. II. III.
-    DECIMAL, // 1. 2. 3.
-    LOWER_LETTER // a) b) c)
+    UPPER_ROMAN,
+    DECIMAL,
+    LOWER_LETTER
   }
 
-  /** Format of a single heading level. Sizes in points, colour as RRGGBB hex. */
   public record HeadingStyle(
       int sizePt,
       String colorHex,
@@ -164,21 +152,17 @@ public final class MarkdownDocxConverterUtils {
       boolean centered,
       Numbering numbering) {}
 
-  // ==========================================================================
-  // Heading styles
-  // ==========================================================================
-
   public record Options(
       String bodyFont,
       String codeFont,
       int bodySizePt,
       double lineSpacing,
       List<HeadingStyle> headings) {
-
     public Options {
       if (headings == null || headings.size() != 6) {
         throw new IllegalArgumentException("Exactly 6 heading styles are required");
       }
+      headings = List.copyOf(headings);
     }
 
     public static Options defaults() {
@@ -186,26 +170,16 @@ public final class MarkdownDocxConverterUtils {
           "Times New Roman",
           "Courier New",
           13,
-          1.5, // Default line spacing
+          1.5,
           List.of(
-              // H1: no numbering, UPPERCASE, centered
               new HeadingStyle(13, "1F3864", 18, 6, false, true, true, Numbering.NONE),
-              // H2: UPPERCASE, I. II. III.
               new HeadingStyle(13, "2F5496", 14, 6, false, true, false, Numbering.UPPER_ROMAN),
-              // H3: UPPERCASE, 1. 2. 3., centered
               new HeadingStyle(13, "2F5496", 12, 4, false, true, true, Numbering.DECIMAL),
-              // H4: a) b) c)
               new HeadingStyle(13, "1F3864", 10, 4, false, false, false, Numbering.LOWER_LETTER),
-              // H5: centered, no numbering
               new HeadingStyle(13, "1F3864", 8, 3, false, false, true, Numbering.NONE),
-              // H6: unchanged
               new HeadingStyle(13, "595959", 8, 3, true, false, false, Numbering.NONE)));
     }
   }
-
-  // ==========================================================================
-  // Rendering
-  // ==========================================================================
 
   private record Ctx(boolean bold, boolean italic, boolean bodyFont) {
     Ctx withBold() {
@@ -218,9 +192,11 @@ public final class MarkdownDocxConverterUtils {
   }
 
   private static final class Renderer {
+    private static final String[] BULLETS = {"•", "◦", "▪"};
     private final XWPFDocument doc;
     private final Options opt;
     private final int[] headingCounters = new int[7];
+    private int nextAbstractNumId = 1;
 
     Renderer(XWPFDocument doc, Options opt) {
       this.doc = doc;
@@ -254,16 +230,24 @@ public final class MarkdownDocxConverterUtils {
       return p.getCTP().isSetPPr() ? p.getCTP().getPPr() : p.getCTP().addNewPPr();
     }
 
+    private static int listDepth(ListBlock list) {
+      int depth = 0;
+      for (Node a = list.getParent(); a != null; a = a.getParent()) {
+        if (a instanceof ListBlock) {
+          depth++;
+        }
+      }
+      return depth;
+    }
+
     private String nextHeadingLabel(int level) {
       for (int i = level + 1; i < headingCounters.length; i++) {
         headingCounters[i] = 0;
       }
-
       Numbering numbering = opt.headings().get(level - 1).numbering();
       if (numbering == Numbering.NONE) {
         return "";
       }
-
       int n = ++headingCounters[level];
       return switch (numbering) {
         case UPPER_ROMAN -> toRoman(n) + ".";
@@ -278,8 +262,6 @@ public final class MarkdownDocxConverterUtils {
         renderBlock(n, indent, quote);
       }
     }
-
-    // ---- paragraphs -------------------------------------------------------
 
     void renderBlock(Node node, int indent, boolean quote) {
       switch (node) {
@@ -313,7 +295,7 @@ public final class MarkdownDocxConverterUtils {
 
     private XWPFParagraph newBody(int indent, boolean quote) {
       XWPFParagraph p = doc.createParagraph();
-      p.setAlignment(ParagraphAlignment.BOTH); // Justify alignment
+      p.setAlignment(ParagraphAlignment.BOTH);
       p.setSpacingAfter(120);
       p.setSpacingBetween(opt.lineSpacing());
       if (indent > 0) {
@@ -330,29 +312,24 @@ public final class MarkdownDocxConverterUtils {
       return p;
     }
 
-    // ---- lists ------------------------------------------------------------
-
     private void renderList(ListBlock list, int indent, boolean quote) {
       boolean ordered = list instanceof OrderedList;
-      int counter = ordered ? ((OrderedList) list).getStartNumber() : 0;
-
+      int start = ordered ? ((OrderedList) list).getStartNumber() : 1;
+      int level = Math.min(listDepth(list), 8);
+      BigInteger numId = createNumbering(ordered, start);
       for (Node item = list.getFirstChild(); item != null; item = item.getNext()) {
         if (!(item instanceof ListItem)) {
           continue;
         }
-        String marker = ordered ? (counter++) + "." : "\u2022";
         boolean first = true;
-
         for (Node child = item.getFirstChild(); child != null; child = child.getNext()) {
           if (child instanceof Paragraph para) {
             XWPFParagraph p = newBody(indent + 720, quote);
             p.setSpacingAfter(60);
             if (first) {
+              p.setNumID(numId);
+              p.setNumILvl(BigInteger.valueOf(level));
               p.setIndentationHanging(360);
-              XWPFRun m = p.createRun();
-              styleBody(m);
-              m.setText(marker);
-              m.addTab();
               first = false;
             }
             writeInline(para, p, new Ctx(false, false, true));
@@ -363,11 +340,35 @@ public final class MarkdownDocxConverterUtils {
       }
     }
 
-    // ---- code / rule ------------------------------------------------------
+    private BigInteger createNumbering(boolean ordered, int start) {
+      XWPFNumbering numbering =
+          doc.getNumbering() != null ? doc.getNumbering() : doc.createNumbering();
+      BigInteger abstractId = BigInteger.valueOf(nextAbstractNumId++);
+      CTAbstractNum abs = CTAbstractNum.Factory.newInstance();
+      abs.setAbstractNumId(abstractId);
+      for (int lvl = 0; lvl <= 8; lvl++) {
+        CTLvl l = abs.addNewLvl();
+        l.setIlvl(BigInteger.valueOf(lvl));
+        l.addNewStart().setVal(BigInteger.valueOf(lvl == 0 ? start : 1));
+        if (ordered) {
+          l.addNewNumFmt().setVal(STNumberFormat.DECIMAL);
+          l.addNewLvlText().setVal("%" + (lvl + 1) + ".");
+        } else {
+          l.addNewNumFmt().setVal(STNumberFormat.BULLET);
+          l.addNewLvlText().setVal(BULLETS[lvl % BULLETS.length]);
+        }
+        l.addNewLvlJc().setVal(STJc.LEFT);
+        var ind = l.addNewPPr().addNewInd();
+        ind.setLeft(BigInteger.valueOf(720L * (lvl + 1)));
+        ind.setHanging(BigInteger.valueOf(360));
+      }
+      numbering.addAbstractNum(new XWPFAbstractNum(abs, numbering));
+      return numbering.addNum(abstractId);
+    }
 
     private void renderCode(String code, int indent) {
       String text = code.stripTrailing();
-      for (String line : text.split("\\r?\\n", -1)) {
+      for (String line : text.split("\\R", -1)) {
         XWPFParagraph p = doc.createParagraph();
         p.setSpacingAfter(0);
         p.setSpacingBetween(1.0);
@@ -377,7 +378,6 @@ public final class MarkdownDocxConverterUtils {
         CTShd shd = ppr(p).addNewShd();
         shd.setVal(STShd.CLEAR);
         shd.setFill("F2F2F2");
-
         XWPFRun r = p.createRun();
         r.setFontFamily(opt.codeFont());
         r.setFontSize(Math.max(8, opt.bodySizePt() - 1));
@@ -396,13 +396,14 @@ public final class MarkdownDocxConverterUtils {
       bottom.setColor("A6A6A6");
     }
 
-    // ---- tables -----------------------------------------------------------
-
     private void renderTable(TableBlock tableBlock) {
       List<List<TableCell>> rows = new ArrayList<>();
       for (Node section = tableBlock.getFirstChild();
           section != null;
           section = section.getNext()) {
+        if (section instanceof TableSeparator) {
+          continue;
+        }
         for (Node row = section.getFirstChild(); row != null; row = row.getNext()) {
           if (row instanceof com.vladsch.flexmark.ext.tables.TableRow) {
             List<TableCell> cells = new ArrayList<>();
@@ -418,7 +419,6 @@ public final class MarkdownDocxConverterUtils {
       if (rows.isEmpty()) {
         return;
       }
-
       int cols = rows.stream().mapToInt(List::size).max().orElse(1);
       XWPFTable table = doc.createTable(rows.size(), cols);
       table.setWidth("100%");
@@ -428,7 +428,6 @@ public final class MarkdownDocxConverterUtils {
       table.setRightBorder(XWPFTable.XWPFBorderType.SINGLE, 4, 0, "BFBFBF");
       table.setInsideHBorder(XWPFTable.XWPFBorderType.SINGLE, 4, 0, "BFBFBF");
       table.setInsideVBorder(XWPFTable.XWPFBorderType.SINGLE, 4, 0, "BFBFBF");
-
       for (int r = 0; r < rows.size(); r++) {
         List<TableCell> mdCells = rows.get(r);
         for (int c = 0; c < cols; c++) {
@@ -440,7 +439,6 @@ public final class MarkdownDocxConverterUtils {
           XWPFParagraph p = cell.getParagraphs().get(0);
           p.setSpacingAfter(0);
           p.setSpacingBetween(opt.lineSpacing());
-
           TableCell.Alignment alignment = md.getAlignment();
           ParagraphAlignment cellAlign = ParagraphAlignment.LEFT;
           if (alignment != null) {
@@ -452,7 +450,6 @@ public final class MarkdownDocxConverterUtils {
                 };
           }
           p.setAlignment(cellAlign);
-
           boolean header = md.isHeader();
           if (header) {
             cell.setColor("D9E2F3");
@@ -462,8 +459,6 @@ public final class MarkdownDocxConverterUtils {
       }
       doc.createParagraph().setSpacingAfter(60);
     }
-
-    // ---- inline -----------------------------------------------------------
 
     private void writeInline(Node parent, XWPFParagraph p, Ctx ctx) {
       for (Node n = parent.getFirstChild(); n != null; n = n.getNext()) {

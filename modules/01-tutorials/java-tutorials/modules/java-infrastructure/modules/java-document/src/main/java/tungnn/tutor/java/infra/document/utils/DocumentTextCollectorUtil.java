@@ -12,10 +12,8 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTbl;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTxbxContent;
 
 public final class DocumentTextCollectorUtil {
-
   private DocumentTextCollectorUtil() {}
 
-  // ---------- Word ----------
   public static List<XWPFRun> collectTextRuns(XWPFDocument document) {
     var runs = new ArrayList<XWPFRun>();
     for (XWPFHeader header : document.getHeaderList()) {
@@ -61,14 +59,11 @@ public final class DocumentTextCollectorUtil {
             }
           }
         }
-        default -> {
-          /* ignore */
-        }
+        default -> {}
       }
     }
   }
 
-  // ---------- Excel ----------
   public static List<RichTextString> collectRichTexts(Workbook document) {
     var texts = new ArrayList<RichTextString>();
     for (Sheet sheet : document) {
@@ -89,46 +84,37 @@ public final class DocumentTextCollectorUtil {
 
   public static List<XSSFTextRun> collectTextRunsInShape(Workbook document) {
     var runs = new ArrayList<XSSFTextRun>();
-
     for (Sheet sheet : document) {
       if (!(sheet instanceof XSSFSheet xssfSheet)) {
         continue;
       }
-
       XSSFDrawing drawing = xssfSheet.getDrawingPatriarch();
       if (drawing != null) {
         collectTextRunsInShape(drawing.getShapes(), runs);
       }
     }
-
     return runs;
   }
 
   public static List<HeaderFooter> collectHeaders(Workbook document) {
     var headers = new ArrayList<HeaderFooter>();
-
     for (Sheet sheet : document) {
       var header = sheet.getHeader();
-
       if (hasText(header)) {
         headers.add(header);
       }
     }
-
     return headers;
   }
 
   public static List<HeaderFooter> collectFooters(Workbook document) {
     var footers = new ArrayList<HeaderFooter>();
-
     for (Sheet sheet : document) {
       var footer = sheet.getFooter();
-
       if (hasText(footer)) {
         footers.add(footer);
       }
     }
-
     return footers;
   }
 
@@ -137,9 +123,7 @@ public final class DocumentTextCollectorUtil {
       switch (shape) {
         case XSSFShapeGroup group -> collectTextRunsInShapeGroup(group, runs);
         case XSSFSimpleShape simpleShape -> collectTextRunsInSimpleShape(simpleShape, runs);
-        default -> {
-          /* ignore image, chart, object,... */
-        }
+        default -> {}
       }
     }
   }
@@ -164,20 +148,16 @@ public final class DocumentTextCollectorUtil {
         || hasText(headerFooter.getRight());
   }
 
-  // ---------- PowerPoint ----------
   public static List<XSLFTextRun> collectTextRuns(XMLSlideShow document) {
     var runs = new ArrayList<XSLFTextRun>();
-
     collectTextRunsInSlides(document, runs);
     collectTextRunsInMasters(document, runs);
-
     return runs;
   }
 
   private static void collectTextRunsInSlides(XMLSlideShow document, List<XSLFTextRun> runs) {
     for (XSLFSlide slide : document.getSlides()) {
       collectTextRunsInSheet(slide, runs);
-
       var notes = slide.getNotes();
       if (notes != null) {
         collectTextRunsInSheet(notes, runs);
@@ -188,7 +168,6 @@ public final class DocumentTextCollectorUtil {
   private static void collectTextRunsInMasters(XMLSlideShow document, List<XSLFTextRun> runs) {
     for (XSLFSlideMaster master : document.getSlideMasters()) {
       collectTextRunsInSheet(master, runs);
-
       for (XSLFSlideLayout layout : master.getSlideLayouts()) {
         collectTextRunsInSheet(layout, runs);
       }
@@ -205,9 +184,7 @@ public final class DocumentTextCollectorUtil {
         case XSLFGroupShape group -> collectTextRunsInSlideShow(group.getShapes(), runs);
         case XSLFTable table -> collectTextRunsInTable(table, runs);
         case XSLFTextShape textShape -> collectTextRunsInTextShape(textShape, runs);
-        default -> {
-          /* ignore image, chart, media,... */
-        }
+        default -> {}
       }
     }
   }

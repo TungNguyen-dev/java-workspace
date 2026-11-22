@@ -9,7 +9,6 @@ import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
 public final class TextExtractorUtils {
-
   private TextExtractorUtils() {}
 
   public static String extractText(XWPFDocument document) {

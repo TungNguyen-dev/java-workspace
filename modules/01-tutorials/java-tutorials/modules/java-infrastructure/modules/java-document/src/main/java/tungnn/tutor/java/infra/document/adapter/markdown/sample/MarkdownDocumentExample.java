@@ -10,8 +10,6 @@ public class MarkdownDocumentExample {
 
   static void main() throws IOException {
     Path samplePath = Path.of("storage", "sample.md");
-
-    // 1. Create a new Markdown document using a POI-style model
     MarkdownElement.MarkdownDocument doc =
         new MarkdownElement.MarkdownDocument(
             List.of(
@@ -21,13 +19,17 @@ public class MarkdownDocumentExample {
                 new MarkdownBlock.Heading(2, "Sample Source Code"),
                 new MarkdownBlock.CodeBlock(
                     "java",
-                    "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello Markdown POI\");\n    }\n}")));
+                    """
+                    public class Main {
+                        public static void main(String[] args) {
+                            System.out.println("Hello Markdown POI");
+                        }
+                    }\
+                    """)));
 
-    // 2. Write the document to file
     MarkdownDocumentUtils.writeDocument(doc, samplePath);
     System.out.println("Markdown file successfully written to: " + samplePath.toAbsolutePath());
 
-    // 3. Read back the written file and iterate through its blocks
     MarkdownElement.MarkdownDocument parsedDoc = MarkdownDocumentUtils.readDocument(samplePath);
     System.out.println("\n--- Reading content from parsed file ---");
     for (MarkdownBlock block : parsedDoc.blocks()) {

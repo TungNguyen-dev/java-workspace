@@ -11,7 +11,6 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
 
 public class WordAwareStripper extends PDFTextStripper {
-
   private final List<WordChunk> wordChunks = new ArrayList<>();
 
   public WordAwareStripper() {
@@ -30,22 +29,18 @@ public class WordAwareStripper extends PDFTextStripper {
     if (textPositions == null || textPositions.isEmpty() || text == null || text.isBlank()) {
       return;
     }
-
     TextPosition first = textPositions.getFirst();
     TextPosition last = textPositions.getLast();
-
     float x = first.getX();
     float y = first.getY();
     float width = last.getX() + last.getWidth() - first.getX();
     PDFont font = first.getFont();
-
     float fontSizePt = 0f;
     float height = 0f;
     for (TextPosition tp : textPositions) {
       fontSizePt = Math.max(fontSizePt, tp.getXScale());
       height = Math.max(height, tp.getHeight());
     }
-
     wordChunks.add(new WordChunk(text, getCurrentPageNo(), x, y, fontSizePt, font, width, height));
   }
 
@@ -62,7 +57,6 @@ public class WordAwareStripper extends PDFTextStripper {
       PDFont font,
       float width,
       float height) {
-
     public WordChunk {
       Objects.requireNonNull(text, "text cannot be null");
       Objects.requireNonNull(font, "font cannot be null");

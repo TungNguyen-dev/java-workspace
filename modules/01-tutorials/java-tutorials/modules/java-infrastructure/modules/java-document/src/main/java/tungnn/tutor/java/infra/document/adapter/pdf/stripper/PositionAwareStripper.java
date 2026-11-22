@@ -11,7 +11,6 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
 
 public class PositionAwareStripper extends PDFTextStripper {
-
   private final List<TextChunk> chunks = new ArrayList<>();
 
   public PositionAwareStripper() {
@@ -29,24 +28,20 @@ public class PositionAwareStripper extends PDFTextStripper {
     if (textPositions == null || textPositions.isEmpty()) {
       return;
     }
-
     for (TextPosition position : textPositions) {
       String unicode = position.getUnicode();
       if (unicode == null || unicode.isEmpty()) {
-        // Glyph has no Unicode mapping; skip rather than throw NPE.
         continue;
       }
-
       chunks.add(
           new TextChunk(
               unicode,
-              position.getX(), // screen-space x, origin upper-left
-              position.getY(), // screen-space y, origin upper-left
-              position.getFontSizeInPt(), // rendered pt size (Tf × Tm scaling)
+              position.getX(),
+              position.getY(),
+              position.getFontSizeInPt(),
               position.getFont(),
               position.getWidth(),
-              position.getHeight() // heuristic max-height, see TextChunk Javadoc
-              ));
+              position.getHeight()));
     }
   }
 
@@ -56,7 +51,6 @@ public class PositionAwareStripper extends PDFTextStripper {
 
   public record TextChunk(
       String text, float x, float y, float fontSizePt, PDFont font, float width, float height) {
-
     public TextChunk {
       Objects.requireNonNull(text, "text cannot be null");
       Objects.requireNonNull(font, "font cannot be null");

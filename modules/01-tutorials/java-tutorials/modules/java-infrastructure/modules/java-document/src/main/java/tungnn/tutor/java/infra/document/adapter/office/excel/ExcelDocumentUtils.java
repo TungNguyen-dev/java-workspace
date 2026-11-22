@@ -13,12 +13,7 @@ import org.apache.poi.ss.util.*;
 import org.apache.poi.xssf.usermodel.*;
 
 public class ExcelDocumentUtils {
-
   private ExcelDocumentUtils() {}
-
-  // ==========================================
-  // 1. WORKBOOK & SHEET MANAGEMENT
-  // ==========================================
 
   public static Workbook createNewWorkbook() {
     return new XSSFWorkbook();
@@ -66,20 +61,13 @@ public class ExcelDocumentUtils {
   }
 
   public static void setZoomMagnification(Sheet sheet, int scale) {
-    sheet.setZoom(scale); // 100 means 100%
+    sheet.setZoom(scale);
   }
-
-  // ==========================================
-  // 2. TEXT EXTRACTION
-  // ==========================================
 
   public static String extractAllText(Workbook workbook) {
     throw new UnsupportedOperationException("Use TextExtractorUtil#extractext() instead.");
   }
 
-  // ==========================================
-  // 3. CELL & ROW OPERATIONS & DATA HANDLING
-  // ==========================================
   public static Cell createCell(Row row, int colIndex, Object value) {
     return createCell(row, colIndex, value, null);
   }
@@ -89,7 +77,6 @@ public class ExcelDocumentUtils {
     if (style != null) {
       cell.setCellStyle(style);
     }
-
     switch (value) {
       case String s -> cell.setCellValue(s);
       case Number n -> cell.setCellValue(n.doubleValue());
@@ -100,7 +87,6 @@ public class ExcelDocumentUtils {
           throw new IllegalArgumentException(
               "Unsupported data type: " + value.getClass().getName());
     }
-
     return cell;
   }
 
@@ -138,7 +124,7 @@ public class ExcelDocumentUtils {
   public static void createNamedRange(Workbook workbook, String name, String formula) {
     var namedRange = workbook.createName();
     namedRange.setNameName(name);
-    namedRange.setRefersToFormula(formula); // e.g. "Sheet1!$A$1:$C$10"
+    namedRange.setRefersToFormula(formula);
   }
 
   public static void applyAutoFilter(Sheet sheet, String rangeStr) {
@@ -154,10 +140,6 @@ public class ExcelDocumentUtils {
     validation.setShowErrorBox(true);
     sheet.addValidationData(validation);
   }
-
-  // ==========================================
-  // 4. STYLING & FORMATTING
-  // ==========================================
 
   public static CellStyle createCustomStyle(
       Workbook workbook, Font font, HorizontalAlignment align, IndexedColors background) {
@@ -204,16 +186,12 @@ public class ExcelDocumentUtils {
   public static void setUserDefinedDataFormat(
       Workbook workbook, CellStyle style, String formatStr) {
     var format = workbook.createDataFormat();
-    style.setDataFormat(format.getFormat(formatStr)); // e.g. "#,##0.00"
+    style.setDataFormat(format.getFormat(formatStr));
   }
 
   public static void enableNewlinesInCell(CellStyle style) {
     style.setWrapText(true);
   }
-
-  // ==========================================
-  // 5. LAYOUT & ORGANIZATION
-  // ==========================================
 
   public static void adjustColumnWidthToFit(Sheet sheet, int colIndex) {
     sheet.autoSizeColumn(colIndex);
@@ -234,10 +212,6 @@ public class ExcelDocumentUtils {
       sheet.groupColumn(start, end);
     }
   }
-
-  // ==========================================
-  // 6. GRAPHICS, SHAPES & OBJECTS
-  // ==========================================
 
   public static void insertImage(
       Workbook workbook, Sheet sheet, byte[] imageBytes, int pictureType, int row, int col) {
@@ -277,17 +251,12 @@ public class ExcelDocumentUtils {
     }
   }
 
-  // ==========================================
-  // 7. ADVANCED INTERACTIVITY
-  // ==========================================
-
   public static void setCellComment(
       Workbook workbook, Sheet sheet, Cell cell, String author, String commentText) {
     var drawing = sheet.createDrawingPatriarch();
     var anchor = workbook.getCreationHelper().createClientAnchor();
     anchor.setCol1(cell.getColumnIndex() + 1);
     anchor.setRow1(cell.getRowIndex());
-
     var comment = drawing.createCellComment(anchor);
     comment.setString(workbook.getCreationHelper().createRichTextString(commentText));
     comment.setAuthor(author);
@@ -308,27 +277,20 @@ public class ExcelDocumentUtils {
     var fill = rule.createPatternFormatting();
     fill.setFillBackgroundColor(IndexedColors.LIGHT_TURQUOISE.getIndex());
     fill.setFillPattern(PatternFormatting.SOLID_FOREGROUND);
-
     CellRangeAddress[] regions = {CellRangeAddress.valueOf(rangeStr)};
     sheetCF.addConditionalFormatting(regions, rule);
   }
 
   public static XSSFPivotTable createPivotTable(
       Sheet dataSheet, Sheet pivotSheet, String dataRange, String targetStartCell) {
-
     if (dataSheet instanceof XSSFSheet xssfData && pivotSheet instanceof XSSFSheet xssfPivot) {
       var sourceArea = new AreaReference(dataRange, org.apache.poi.ss.SpreadsheetVersion.EXCEL2007);
       var targetPos = new CellReference(targetStartCell);
-
       return xssfPivot.createPivotTable(sourceArea, targetPos, xssfData);
     } else {
       throw new UnsupportedOperationException("Pivot Table must be run on XSSF format (.xlsx)");
     }
   }
-
-  // ==========================================
-  // 8. PRINTING & PAGE SETUP
-  // ==========================================
 
   public static void configurePrintSetup(
       Workbook workbook, Sheet sheet, boolean fitToPage, String printArea) {
@@ -340,16 +302,16 @@ public class ExcelDocumentUtils {
     }
     if (printArea != null) {
       var sheetIndex = workbook.getSheetIndex(sheet);
-      workbook.setPrintArea(sheetIndex, printArea); // e.g. "A1:F50"
+      workbook.setPrintArea(sheetIndex, printArea);
     }
   }
 
   public static void setRepeatingRowsAndColumns(Sheet sheet, String colRange, String rowRange) {
     if (colRange != null) {
-      sheet.setRepeatingColumns(CellRangeAddress.valueOf(colRange)); // e.g. "A:B"
+      sheet.setRepeatingColumns(CellRangeAddress.valueOf(colRange));
     }
     if (rowRange != null) {
-      sheet.setRepeatingRows(CellRangeAddress.valueOf(rowRange)); // e.g. "1:2"
+      sheet.setRepeatingRows(CellRangeAddress.valueOf(rowRange));
     }
   }
 
@@ -357,10 +319,8 @@ public class ExcelDocumentUtils {
       Sheet sheet, String leftHeader, boolean enableXSSFVersionEnhancement) {
     var header = sheet.getHeader();
     header.setLeft(leftHeader);
-
     var footer = sheet.getFooter();
     footer.setRight("Trang " + HeaderFooter.page() + " / " + HeaderFooter.numPages());
-
     if (enableXSSFVersionEnhancement && sheet instanceof XSSFSheet xssfSheet) {
       xssfSheet.getOddHeader().setCenter("Odd Page Header");
       xssfSheet.getEvenHeader().setCenter("Even Page Header");

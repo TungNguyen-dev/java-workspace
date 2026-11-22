@@ -2,6 +2,7 @@ package tungnn.tutor.java.infra.document.adapter.markdown;
 
 import com.vladsch.flexmark.ast.FencedCodeBlock;
 import com.vladsch.flexmark.ast.Heading;
+import com.vladsch.flexmark.ast.IndentedCodeBlock;
 import com.vladsch.flexmark.ast.ListItem;
 import com.vladsch.flexmark.ast.OrderedList;
 import com.vladsch.flexmark.ast.Paragraph;
@@ -20,27 +21,22 @@ import org.jsoup.nodes.Element;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.*;
 
 public final class MarkdownDocumentUtils {
-
   private MarkdownDocumentUtils() {
     throw new UnsupportedOperationException("Utility class cannot be instantiated");
   }
 
-  /** Read a Markdown file from the given path and parse it into a MarkdownDocument DOM. */
   public static MarkdownElement.MarkdownDocument readDocument(Path path) throws IOException {
     String content = Files.readString(path);
     return parse(content);
   }
 
-  /** Convert a Markdown string content into a MarkdownDocument. */
   public static MarkdownElement.MarkdownDocument parse(String markdownContent) {
     if (markdownContent == null) {
       return new MarkdownElement.MarkdownDocument(List.of());
     }
-
     MutableDataSet options = new MutableDataSet();
     Parser parser = Parser.builder(options).build();
     Node documentNode = parser.parse(markdownContent);
-
     List<MarkdownBlock> blocks = new ArrayList<>();
     for (Node child : documentNode.getChildren()) {
       MarkdownBlock block = convertNodeToBlock(child);
@@ -48,11 +44,9 @@ public final class MarkdownDocumentUtils {
         blocks.add(block);
       }
     }
-
     return new MarkdownElement.MarkdownDocument(blocks);
   }
 
-  /** Write a MarkdownDocument to a target file path. */
   public static void writeDocument(MarkdownElement.MarkdownDocument document, Path targetPath)
       throws IOException {
     String content = document.toMarkdown();
@@ -66,7 +60,9 @@ public final class MarkdownDocumentUtils {
       return new MarkdownBlock.Paragraph(paragraphNode.getContentChars().toString().trim());
     } else if (node instanceof FencedCodeBlock codeNode) {
       return new MarkdownBlock.CodeBlock(
-          codeNode.getInfo().toString().trim(), codeNode.getContentChars().toString().trim());
+          codeNode.getInfo().toString().trim(), codeContent(codeNode.getContentChars().toString()));
+    } else if (node instanceof IndentedCodeBlock codeNode) {
+      return new MarkdownBlock.CodeBlock("", codeContent(codeNode.getContentChars().toString()));
     } else if (node instanceof OrderedList orderedListNode) {
       List<MarkdownBlock.ListItem> items = new ArrayList<>();
       for (Node itemNode : orderedListNode.getChildren()) {
@@ -83,33 +79,22 @@ public final class MarkdownDocumentUtils {
       }
       return new MarkdownBlock.OrderedList(orderedListNode.getStartNumber(), items);
     }
-
-    // Fallback strategy: Luôn setup fallback đưa về dạng Paragraph nếu không thuộc nhánh nào
     String fallbackText = node.getChars().toString().trim();
     if (!fallbackText.isBlank()) {
       return new MarkdownBlock.Paragraph(fallbackText);
     }
-
     return null;
   }
 
-  /**
-   * Convert an HTML string to Markdown. - Remove empty anchor tags <a name="..."></a> and attribute
-   * strings like {#...} - Unwrap internal backlinks (.html or relative links), keeping only the
-   * inner text.
-   *
-   * @param htmlString Input HTML string
-   * @return Cleaned Markdown string
-   */
+  private static String codeContent(String raw) {
+    return raw.replaceFirst("(?:[ \t]\\R)+$", "");
+  }
+
   public static String convertHtmlToMarkdown(String htmlString) {
     if (htmlString == null || htmlString.isBlank()) {
       return "";
     }
-
-    // STEP 1: Preprocess HTML using Jsoup to clean unwanted link tags
     Document doc = Jsoup.parseBodyFragment(htmlString);
-
-    // 1.1. Remove empty <a name="..."></a> tags
     for (Element a : doc.select("a[name]")) {
       if (a.text().isBlank() && a.children().isEmpty()) {
         a.remove();
@@ -117,23 +102,15 @@ public final class MarkdownDocumentUtils {
         a.removeAttr("name");
       }
     }
-
-    // 1.2. Unwrap internal links (.html or lacking http/https protocol)
     for (Element a : doc.select("a[href]")) {
       String href = a.attr("href");
       if (href.endsWith(".html") || !href.contains("://")) {
         a.unwrap();
       }
     }
-
-    // STEP 2: Configure Flexmark Converter
     MutableDataSet options = new MutableDataSet();
-
-    // Disable generation of ID/Name attributes like {#id} in Markdown output
     options.set(FlexmarkHtmlConverter.OUTPUT_ATTRIBUTES_ID, false);
     options.set(FlexmarkHtmlConverter.SKIP_ATTRIBUTES, true);
-
-    // STEP 3: Convert cleaned HTML to Markdown
     return FlexmarkHtmlConverter.builder(options).build().convert(doc.body().html()).trim();
   }
 }

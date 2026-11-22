@@ -8,7 +8,6 @@ import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 
 public final class TikaContentExtractionUtil {
-
   private static final Tika TIKA = new Tika();
 
   private TikaContentExtractionUtil() {
@@ -17,7 +16,6 @@ public final class TikaContentExtractionUtil {
 
   public static String extractContent(Path path) {
     Objects.requireNonNull(path, "Path must not be null");
-
     try {
       return TIKA.parseToString(path);
     } catch (IOException | TikaException e) {
@@ -27,7 +25,6 @@ public final class TikaContentExtractionUtil {
 
   public static String extractContent(InputStream inputStream) {
     Objects.requireNonNull(inputStream, "InputStream must not be null");
-
     try {
       return TIKA.parseToString(inputStream);
     } catch (IOException | TikaException e) {

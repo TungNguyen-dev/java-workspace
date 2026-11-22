@@ -11,7 +11,6 @@ import java.util.function.Predicate;
 import org.apache.poi.xslf.usermodel.*;
 
 public final class PowerPointUtils {
-
   private PowerPointUtils() {}
 
   public static XMLSlideShow readPresentation(InputStream inputStream) throws IOException {
@@ -25,20 +24,16 @@ public final class PowerPointUtils {
 
   public static Map<String, List<XSLFTextRun>> collectTextRuns(
       XMLSlideShow presentation, Predicate<String> textPredicate) {
-
     var textToRuns = new LinkedHashMap<String, List<XSLFTextRun>>();
-
     presentation
         .getSlides()
         .forEach(slide ->
             slide.getShapes().forEach(shape -> collectShape(shape, textPredicate, textToRuns)));
-
     return textToRuns;
   }
 
   public static void applyTranslations(
       Map<String, List<XSLFTextRun>> textToRuns, Map<String, String> translations) {
-
     textToRuns.forEach((source, runs) -> {
       var translated = translations.get(source);
       if (translated != null) {
@@ -53,17 +48,14 @@ public final class PowerPointUtils {
 
   private static void collectShape(
       XSLFShape shape, Predicate<String> textPredicate, Map<String, List<XSLFTextRun>> textToRuns) {
-
     if (shape instanceof XSLFGroupShape groupShape) {
       groupShape.getShapes().forEach(child -> collectShape(child, textPredicate, textToRuns));
       return;
     }
-
     if (shape instanceof XSLFTable table) {
       collectTable(table, textPredicate, textToRuns);
       return;
     }
-
     if (shape instanceof XSLFTextShape textShape) {
       collectTextShape(textShape, textPredicate, textToRuns);
     }
@@ -71,7 +63,6 @@ public final class PowerPointUtils {
 
   private static void collectTable(
       XSLFTable table, Predicate<String> textPredicate, Map<String, List<XSLFTextRun>> textToRuns) {
-
     table
         .getRows()
         .forEach(row ->
@@ -82,7 +73,6 @@ public final class PowerPointUtils {
       XSLFTableCell cell,
       Predicate<String> textPredicate,
       Map<String, List<XSLFTextRun>> textToRuns) {
-
     collectTextShape(cell, textPredicate, textToRuns);
   }
 
@@ -90,7 +80,6 @@ public final class PowerPointUtils {
       XSLFTextShape textShape,
       Predicate<String> textPredicate,
       Map<String, List<XSLFTextRun>> textToRuns) {
-
     for (XSLFTextParagraph paragraph : textShape.getTextParagraphs()) {
       for (XSLFTextRun run : paragraph.getTextRuns()) {
         var text = normalize(run.getRawText());

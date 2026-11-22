@@ -7,7 +7,6 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Workbook;
 
 public class CellStyleRegistry {
-
   private final Map<String, CellStyle> cellStyleMap = new HashMap<>();
   private final Workbook workbook;
 
@@ -17,10 +16,6 @@ public class CellStyleRegistry {
     }
     this.workbook = workbook;
   }
-
-  // ==========================================
-  // ENUM METHODS (Sử dụng chính)
-  // ==========================================
 
   public CellStyle getOrCreate(CellStyleEnum styleEnum, Supplier<CellStyle> styleSupplier) {
     return getOrCreate(styleEnum.name(), styleSupplier);
@@ -33,10 +28,6 @@ public class CellStyleRegistry {
   public CellStyle get(CellStyleEnum styleEnum) {
     return get(styleEnum.name());
   }
-
-  // ==========================================
-  // STRING OVERLOADS (Dự phòng cho key động)
-  // ==========================================
 
   public CellStyle getOrCreate(String key, Supplier<CellStyle> styleSupplier) {
     return cellStyleMap.computeIfAbsent(
