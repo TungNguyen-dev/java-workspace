@@ -12,11 +12,16 @@ import reactor.core.publisher.Flux;
 import tungnn.tutor.java.ai.config.LlmProvider;
 import tungnn.tutor.java.ai.util.StringUtils;
 
-public record SpringAiLlmClient(LlmProvider provider, String model, ChatClient chatClient) implements LlmClient {
+public record SpringAiLlmClient(LlmProvider provider, String model, ChatClient chatClient)
+    implements LlmClient {
   private static final Logger LOGGER = LoggerFactory.getLogger(SpringAiLlmClient.class);
+
   public SpringAiLlmClient(ChatModel chatModel, LlmProvider provider, String model) {
     Objects.requireNonNull(chatModel, "chatModel must not be null");
-    this(Objects.requireNonNull(provider, "provider must not be null"), Objects.requireNonNull(model, "model must not be null"), ChatClient.create(chatModel));
+    this(
+        Objects.requireNonNull(provider, "provider must not be null"),
+        Objects.requireNonNull(model, "model must not be null"),
+        ChatClient.create(chatModel));
   }
 
   @Override

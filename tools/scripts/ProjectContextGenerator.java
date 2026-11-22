@@ -147,19 +147,18 @@ public final class ProjectContextGenerator {
     writer.write("## File Inventory\n\n| Extension | Count |\n| --- | --- |\n");
     byExtension.entrySet().stream()
         .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-        .forEach(
-            e -> {
-              try {
-                writer.write(
-                    "| "
-                        + (e.getKey().isEmpty() ? "(none)" : e.getKey())
-                        + " | "
-                        + e.getValue()
-                        + " |\n");
-              } catch (IOException ex) {
-                throw new RuntimeException(ex);
-              }
-            });
+        .forEach(e -> {
+          try {
+            writer.write(
+                "| "
+                    + (e.getKey().isEmpty() ? "(none)" : e.getKey())
+                    + " | "
+                    + e.getValue()
+                    + " |\n");
+          } catch (IOException ex) {
+            throw new RuntimeException(ex);
+          }
+        });
     writer.write("\n| File | Size |\n| --- | --- |\n");
     for (Path file : files) {
       writer.write("| `" + relative(root, file) + "` | " + humanSize(sizeOf(file)) + " |\n");

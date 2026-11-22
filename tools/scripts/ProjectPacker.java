@@ -79,35 +79,34 @@ public class ProjectPacker {
       paths
           .filter(Files::isRegularFile)
           .filter(path -> path.toString().endsWith(".java"))
-          .forEach(
-              filePath -> {
-                try {
-                  Path relativePath = sourceDir.relativize(filePath);
-                  System.out.println("Processing: " + relativePath);
+          .forEach(filePath -> {
+            try {
+              Path relativePath = sourceDir.relativize(filePath);
+              System.out.println("Processing: " + relativePath);
 
-                  writer.write(FILE_BOUNDARY_START);
-                  writer.newLine();
-                  writer.write(
-                      FILE_PATH_HEADER
-                          + relativePath.toString().replace('\\', '/')); // Normalize path separator
-                  writer.newLine();
+              writer.write(FILE_BOUNDARY_START);
+              writer.newLine();
+              writer.write(
+                  FILE_PATH_HEADER
+                      + relativePath.toString().replace('\\', '/')); // Normalize path separator
+              writer.newLine();
 
-                  // Read the entire file content into a String and write it to the writer.
-                  String content = Files.readString(filePath);
-                  writer.write(content);
+              // Read the entire file content into a String and write it to the writer.
+              String content = Files.readString(filePath);
+              writer.write(content);
 
-                  // Ensure the end boundary is always on a new line, even if the source file
-                  // doesn't end with one.
-                  if (!content.endsWith("\n") && !content.endsWith("\r\n")) {
-                    writer.newLine();
-                  }
+              // Ensure the end boundary is always on a new line, even if the source file
+              // doesn't end with one.
+              if (!content.endsWith("\n") && !content.endsWith("\r\n")) {
+                writer.newLine();
+              }
 
-                  writer.write(FILE_BOUNDARY_END);
-                  writer.newLine();
-                } catch (IOException e) {
-                  throw new RuntimeException("Error processing file: " + filePath, e);
-                }
-              });
+              writer.write(FILE_BOUNDARY_END);
+              writer.newLine();
+            } catch (IOException e) {
+              throw new RuntimeException("Error processing file: " + filePath, e);
+            }
+          });
     } catch (RuntimeException e) {
       // Unwrap the IOException from the RuntimeException thrown in the lambda
       throw new IOException(e.getCause());
