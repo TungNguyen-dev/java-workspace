@@ -3,10 +3,15 @@ package tungnn.tutor.java.starter.mdrefiner;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import tungnn.tutor.java.ai.client.LlmClient;
+import tungnn.tutor.java.ai.util.LlmOutputUtils;
+import tungnn.tutor.java.infra.document.adapter.markdown.MarkdownDocumentUtils;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.CodeBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
@@ -55,6 +60,35 @@ public final class MarkdownActions {
       checkRange(blocks, index, 1);
       blocks.set(index, new Heading(level, textOf(blocks.get(index))));
       return blocks;
+    });
+  }
+
+  /**
+   * Chuyển mọi OrderedList (1., 2., 3., ...) ở cấp document thành các Paragraph riêng biệt, mỗi item
+   * một Paragraph, đúng thứ tự. `keepNumber` = true thì giữ số thứ tự ở đầu text ("1. ...", bắt
+   * đầu từ startNumber của list); false thì chỉ giữ nội dung. Item có nhiều block (hoặc list lồng
+   * nhau) được nối bằng xuống dòng trong cùng một Paragraph.
+   */
+  public static MarkdownAction orderedListToParagraphs(boolean keepNumber) {
+    return edit(blocks -> {
+      var out = new ArrayList<MarkdownBlock>();
+      for (var block : blocks) {
+        if (!(block instanceof OrderedList list)) {
+          out.add(block);
+          continue;
+        }
+        int number = list.startNumber();
+        for (var item : list.items()) {
+          var text =
+              item.blocks().stream()
+                  .map(MarkdownActions::textOf)
+                  .filter(t -> !t.isEmpty())
+                  .collect(Collectors.joining("\n"));
+          out.add(new Paragraph(keepNumber ? number + ". " + text : text));
+          number++;
+        }
+      }
+      return out;
     });
   }
 
@@ -117,9 +151,133 @@ public final class MarkdownActions {
     });
   }
 
-  /** Paragraph bắt đầu bằng "Mục", có ít nhất 4 khoảng trắng liền nhau (hoặc tab) ở giữa. */
+  /** Paragraph bắt đầu bằng "Mục" hoặc "Tiết" (theo sau là khoảng trắng) thì thành Heading. */
   public static MarkdownAction muc(int level) {
-    return headingIf(Pattern.compile("(?s)^Mục\\s.*?(\\s{4,}|\\t)\\S"), level);
+    return headingIf(Pattern.compile("^(?:Mục|Tiết)\\s"), level);
+  }
+
+  /**
+   * Với mỗi section có Heading cấp `level` và text là `headingText` (không phân biệt hoa thường),
+   * lấy toàn bộ nội dung của section (các block sau Heading, đến Heading kế tiếp có cấp &lt;=
+   * `level` hoặc hết document) dưới dạng markdown, đưa qua `transformer`, rồi thay nội dung section
+   * bằng kết quả (được parse lại thành block). Heading được giữ nguyên.
+   *
+   * <p>Section rỗng, hoặc kết quả trả về rỗng, thì giữ nguyên section gốc.
+   */
+  public static MarkdownAction transformSection(
+      String headingText, int level, UnaryOperator<String> transformer) {
+    if (level < 1 || level > 6) {
+      throw new IllegalArgumentException("level phải 1..6");
+    }
+    var wanted = normalizeTitle(headingText);
+    return edit(blocks -> {
+      var out = new ArrayList<MarkdownBlock>();
+      int i = 0;
+      while (i < blocks.size()) {
+        var block = blocks.get(i++);
+        out.add(block);
+        if (!(block instanceof Heading h)
+            || h.level() != level
+            || !normalizeTitle(h.text()).equalsIgnoreCase(wanted)) {
+          continue;
+        }
+        int end = i;
+        while (end < blocks.size()
+            && !(blocks.get(end) instanceof Heading next && next.level() <= level)) {
+          end++;
+        }
+        var section = blocks.subList(i, end);
+        var content =
+            section.stream().map(MarkdownBlock::toMarkdown).collect(Collectors.joining("\n")).strip();
+        if (content.isEmpty()) {
+          out.addAll(section);
+        } else {
+          var result = transformer.apply(content);
+          var newBlocks =
+              result == null || result.isBlank()
+                  ? section
+                  : MarkdownDocumentUtils.parse(result.strip()).blocks();
+          out.addAll(newBlocks.isEmpty() ? section : newBlocks);
+        }
+        i = end;
+      }
+      return out;
+    });
+  }
+
+  /**
+   * Lấy toàn bộ nội dung section "#### `headingText`" (cấp `level`), gửi cho LLM kèm `systemPrompt`
+   * (user message = nội dung section dạng markdown), rồi thay nội dung section bằng câu trả lời.
+   * Output của LLM được làm sạch (bỏ khối think, code fence bao ngoài) trước khi parse lại.
+   */
+  public static MarkdownAction llmSection(
+      String headingText, int level, LlmClient llmClient, String systemPrompt) {
+    Objects.requireNonNull(llmClient, "llmClient must not be null");
+    return transformSection(
+        headingText,
+        level,
+        content -> LlmOutputUtils.clean(llmClient.chat(systemPrompt, content)));
+  }
+
+  /** "[1.] Tên phương [(nguồn)]: nội dung" ở đầu paragraph: group(1) = tên, phần còn lại = nội dung. */
+  private static final Pattern NAME_PREFIX =
+      Pattern.compile("^\\s*(?:\\d+\\.\\s*)?([^:：(（\\n]+?)\\s*(?:[(（][^)）]*[)）])?\\s*[:：]\\s*");
+
+  /**
+   * Chuẩn hóa Heading cấp `level` (header tên phương) và Paragraph liền sau nó:
+   *
+   * <ul>
+   *   <li>Heading có tên: nếu Paragraph liền sau bắt đầu bằng "tên [(nguồn)]:" thì bỏ phần đó, vì
+   *       tên đã nằm ở header.
+   *   <li>Heading rỗng: nếu Paragraph liền sau bắt đầu bằng "tên [(nguồn)]:" thì lấy tên đưa lên
+   *       header và bỏ phần đó khỏi Paragraph. Các nhãn "Công dụng:", "Chủ trị:" không bị coi là tên.
+   * </ul>
+   *
+   * Paragraph không còn nội dung sau khi bỏ tên thì bị xóa.
+   */
+  public static MarkdownAction fixHeadingName(int level) {
+    if (level < 1 || level > 6) {
+      throw new IllegalArgumentException("level phải 1..6");
+    }
+    return edit(blocks -> {
+      var out = new ArrayList<MarkdownBlock>();
+      for (int i = 0; i < blocks.size(); i++) {
+        var block = blocks.get(i);
+        if (!(block instanceof Heading h)
+            || h.level() != level
+            || i + 1 >= blocks.size()
+            || !(blocks.get(i + 1) instanceof Paragraph p)) {
+          out.add(block);
+          continue;
+        }
+        var name = normalizeTitle(h.text());
+        var m = NAME_PREFIX.matcher(Normalizer.normalize(p.text(), Normalizer.Form.NFC));
+        if (!m.find()) {
+          out.add(block);
+          continue;
+        }
+        var prefixName = normalizeTitle(m.group(1));
+        var rest = Normalizer.normalize(p.text(), Normalizer.Form.NFC).substring(m.end()).strip();
+        boolean sameName = !name.isEmpty() && prefixName.equalsIgnoreCase(name);
+        boolean emptyHeader = name.isEmpty() && !prefixName.matches("(?iu)(công dụng|chủ trị)");
+        if (!sameName && !emptyHeader) {
+          out.add(block);
+          continue;
+        }
+        out.add(sameName ? h : new Heading(level, prefixName));
+        if (!rest.isEmpty()) {
+          out.add(new Paragraph(rest));
+        }
+        i++; // đã xử lý Paragraph liền sau
+      }
+      return out;
+    });
+  }
+
+  private static String normalizeTitle(String s) {
+    return Normalizer.normalize(s == null ? "" : s, Normalizer.Form.NFC)
+        .strip()
+        .replaceAll("\\s+", " ");
   }
 
   /**
