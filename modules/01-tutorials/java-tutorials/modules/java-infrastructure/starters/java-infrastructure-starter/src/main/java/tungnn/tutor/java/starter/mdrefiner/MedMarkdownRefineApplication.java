@@ -19,6 +19,9 @@ public class MedMarkdownRefineApplication {
   /** System prompt để chuẩn hoá nội dung section "Phụ phương" bằng LLM. */
   private static final String PHU_PHUONG_PROMPT_RESOURCE = "prompts/phuphuong-normalize.md";
 
+  /** System prompt để chuyển nội dung section "Cách dùng" sang hướng dẫn hiện đại bằng LLM. */
+  private static final String CACH_DUNG_PROMPT_RESOURCE = "prompts/cachdung-modern.md";
+
   static void main() throws IOException {
     var mdPath = Path.of("storage/sample/Chuong_4_Thanh_nhiet_te_ban_dich_tieng_Viet.md");
     var outPath = mdPath.resolveSibling("Chuong_4_Thanh_nhiet_te_ban_dich_tieng_Viet-refined.md");
@@ -26,6 +29,7 @@ public class MedMarkdownRefineApplication {
     var original = MarkdownDocumentUtils.readDocument(mdPath);
     var thanhPhanPrompt = loadPrompt(THANH_PHAN_PROMPT_RESOURCE);
     var phuPhuongPrompt = loadPrompt(PHU_PHUONG_PROMPT_RESOURCE);
+    var cachDungPrompt = loadPrompt(CACH_DUNG_PROMPT_RESOURCE);
     var llmClient = LlmClientUtils.fromEnv(LlmProvider.DEEPSEEK);
 
     var refined =
@@ -34,8 +38,8 @@ public class MedMarkdownRefineApplication {
                 "Gộp 2 paragraph đầu thành tên chương", MarkdownActions.mergeToParagraph(0, 2, " "))
             .step("Chuyển tên chương thành heading", MarkdownActions.toHeading(0, 1))
             .step(
-                "Thêm '## I. Đại cương' sau header '#'",
-                MarkdownActions.insertHeadingAfterHeading(1, 2, "I. Đại cương"))
+                "Thêm '## Đại cương' sau header '#'",
+                MarkdownActions.insertHeadingAfterHeading(1, 2, "Đại cương"))
             .step(
                 "Xoá OrderedList đầu tiên, chuyển các ordered list còn lại thành paragraph riêng biệt",
                 doc ->
@@ -50,8 +54,17 @@ public class MedMarkdownRefineApplication {
                     b -> b instanceof MarkdownBlock.Paragraph(String text) && text.isBlank()))
             .step("Paragraph trước '【Thành phần】' thành heading", MarkdownActions.thanhPhan(3))
             .step(
+                "Header '###': tên chính viết HOA, nội dung trong ngoặc viết hoa chữ cái đầu mỗi từ",
+                MarkdownActions.headingMainUpperParenTitle(3))
+            .step(
                 "Paragraph '【...】' / '[...]' thành heading + content",
                 MarkdownActions.bracketHeading(4))
+            .step(
+                "Đổi '#### Giải phương' thành '#### Giải nghĩa bài thuốc'",
+                MarkdownActions.renameHeading(4, "Giải phương", "Giải nghĩa bài thuốc"))
+            .step(
+                "Đổi '#### Vận dụng' thành '#### Vận dụng lâm sàng'",
+                MarkdownActions.renameHeading(4, "Vận dụng", "Vận dụng lâm sàng"))
             .step(
                 "Biến đổi nội dung section '#### Thành phần' bằng LLM (DeepSeek)",
                 MarkdownActions.llmSection("Thành phần", 4, llmClient, thanhPhanPrompt))
@@ -59,9 +72,19 @@ public class MedMarkdownRefineApplication {
                 "Chuẩn hoá nội dung section '#### Phụ phương' bằng LLM (DeepSeek)",
                 MarkdownActions.llmSection("Phụ phương", 4, llmClient, phuPhuongPrompt))
             .step(
+                "Đổi '#### Phụ phương' thành '#### Các bài thuốc biến phương gia giảm' (sau bước LLM, vì bước đó tìm theo tên 'Phụ phương')",
+                MarkdownActions.renameHeading(
+                    4, "Phụ phương", "Các bài thuốc biến phương gia giảm"))
+            .step(
+                "Chuyển nội dung section '#### Cách dùng' thành hướng dẫn sử dụng hiện đại bằng LLM (DeepSeek)",
+                MarkdownActions.llmSection("Cách dùng", 4, llmClient, cachDungPrompt))
+            .step(
                 "Header phụ phương: tên chỉ nằm ở header, bỏ tên lặp lại ở nội dung",
                 MarkdownActions.fixHeadingName(5))
             .step("Chuẩn hóa văn bản", normalize(MarkdownRefiner.defaultMedical()))
+            .step(
+                "Đổi '#### Cách dùng' + nội dung thành '* Lưu ý cách dùng: ...' (sau LLM và sau chuẩn hóa, vì heading là ranh giới section và bước chuẩn hóa đổi '* ' thành '- ')",
+                MarkdownActions.headingToInlineLabel(4, "Cách dùng", "* Lưu ý cách dùng: "))
             .run(original);
 
     System.out.println("\n--- Result ---");

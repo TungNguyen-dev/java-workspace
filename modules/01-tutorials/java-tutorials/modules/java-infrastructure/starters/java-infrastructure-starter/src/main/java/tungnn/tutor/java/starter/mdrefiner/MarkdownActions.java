@@ -3,6 +3,7 @@ package tungnn.tutor.java.starter.mdrefiner;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -55,8 +56,175 @@ public final class MarkdownActions {
   }
 
   /**
+   * Đổi text của mọi Heading cấp `level` có text là `from` (không phân biệt hoa thường, bỏ khoảng
+   * trắng thừa) thành `to`. Ví dụ "#### Giải phương" -> "#### Giải nghĩa bài thuốc". Chỉ ở cấp
+   * document.
+   */
+  public static MarkdownAction renameHeading(int level, String from, String to) {
+    if (level < 1 || level > 6) {
+      throw new IllegalArgumentException("level phải 1..6");
+    }
+    var wanted = normalizeTitle(from);
+    return edit(blocks -> {
+      for (int i = 0; i < blocks.size(); i++) {
+        if (blocks.get(i) instanceof Heading h
+            && h.level() == level
+            && normalizeTitle(h.text()).equalsIgnoreCase(wanted)) {
+          blocks.set(i, new Heading(level, to));
+        }
+      }
+      return blocks;
+    });
+  }
+
+  /**
+   * Với mỗi Heading cấp `level` có text là `headingText` (không phân biệt hoa thường, bỏ khoảng
+   * trắng thừa): bỏ Heading và gộp Paragraph nội dung liền sau nó (bỏ qua paragraph rỗng) thành một
+   * Paragraph duy nhất "`label` nội dung". Ví dụ "#### Cách dùng" + "Sắc uống." -> "* Lưu ý cách
+   * dùng: Sắc uống.". Heading không có Paragraph nội dung liền sau thì chỉ còn `label`. Các block
+   * khác trong section được giữ nguyên. Chỉ ở cấp document.
+   *
+   * <p>Lưu ý: các action theo section ({@link #transformSection}) coi Heading là ranh giới section;
+   * dùng action này sau chúng, nếu không section phía trên sẽ "nuốt" luôn nội dung bên dưới.
+   */
+  public static MarkdownAction headingToInlineLabel(int level, String headingText, String label) {
+    if (level < 1 || level > 6) {
+      throw new IllegalArgumentException("level phải 1..6");
+    }
+    var wanted = normalizeTitle(headingText);
+    return edit(blocks -> {
+      var out = new ArrayList<MarkdownBlock>();
+      for (int i = 0; i < blocks.size(); i++) {
+        var block = blocks.get(i);
+        if (!(block instanceof Heading h)
+            || h.level() != level
+            || !normalizeTitle(h.text()).equalsIgnoreCase(wanted)) {
+          out.add(block);
+          continue;
+        }
+        int next = i + 1;
+        while (next < blocks.size()
+            && blocks.get(next) instanceof Paragraph(String t)
+            && t.isBlank()) {
+          next++;
+        }
+        if (next < blocks.size() && blocks.get(next) instanceof Paragraph(String content)) {
+          out.add(new Paragraph(label + content.strip()));
+          i = next; // đã gộp Paragraph nội dung
+        } else {
+          out.add(new Paragraph(label.stripTrailing()));
+        }
+      }
+      return out;
+    });
+  }
+
+  private static final Locale VI = Locale.forLanguageTag("vi");
+
+  /**
+   * Viết hoa chữ cái đầu mỗi từ (và hạ các chữ còn lại về thường) cho text của mọi Heading cấp
+   * `level`, kể cả phần trong ngoặc (tên sách, chú thích): "BẠCH HỔ THANG (Thương hàn luận)" ->
+   * "Bạch Hổ Thang (Thương Hàn Luận)".
+   */
+  public static MarkdownAction titleCaseHeading(int level) {
+    if (level < 1 || level > 6) {
+      throw new IllegalArgumentException("level phải 1..6");
+    }
+    return edit(blocks -> {
+      for (int i = 0; i < blocks.size(); i++) {
+        if (blocks.get(i) instanceof Heading h && h.level() == level) {
+          blocks.set(i, new Heading(level, titleCase(h.text())));
+        }
+      }
+      return blocks;
+    });
+  }
+
+  /**
+   * Với mọi Heading cấp `level`: phần tên chính (ngoài ngoặc) viết HOA toàn bộ, phần trong ngoặc
+   * ( ), （ ） hoặc 《 》 viết hoa chữ cái đầu mỗi từ. Ví dụ "Trúc Diệp Thạch Cao Thang (Thương hàn
+   * luận)" -> "TRÚC DIỆP THẠCH CAO THANG (Thương Hàn Luận)". Không có ngoặc thì chỉ viết hoa tên.
+   */
+  public static MarkdownAction headingMainUpperParenTitle(int level) {
+    if (level < 1 || level > 6) {
+      throw new IllegalArgumentException("level phải 1..6");
+    }
+    return edit(blocks -> {
+      for (int i = 0; i < blocks.size(); i++) {
+        if (blocks.get(i) instanceof Heading h && h.level() == level) {
+          blocks.set(i, new Heading(level, mainUpperParenTitle(h.text())));
+        }
+      }
+      return blocks;
+    });
+  }
+
+  private static String mainUpperParenTitle(String text) {
+    var s = Normalizer.normalize(text == null ? "" : text, Normalizer.Form.NFC);
+    var out = new StringBuilder(s.length());
+    var outside = new StringBuilder();
+    var inside = new StringBuilder();
+    int depth = 0;
+    for (int i = 0; i < s.length(); ) {
+      int cp = s.codePointAt(i);
+      i += Character.charCount(cp);
+      boolean open = cp == '(' || cp == '（' || cp == '《';
+      boolean close = cp == ')' || cp == '）' || cp == '》';
+      if (open && depth == 0) {
+        out.append(outside.toString().toUpperCase(VI));
+        outside.setLength(0);
+        out.appendCodePoint(cp);
+        depth = 1;
+      } else if (depth > 0) {
+        if (open) {
+          depth++;
+        }
+        if (close && --depth == 0) {
+          out.append(titleCase(inside.toString()));
+          inside.setLength(0);
+          out.appendCodePoint(cp);
+        } else {
+          inside.appendCodePoint(cp);
+        }
+      } else {
+        outside.appendCodePoint(cp);
+      }
+    }
+    out.append(outside.toString().toUpperCase(VI));
+    out.append(titleCase(inside.toString())); // ngoặc không đóng
+    return out.toString();
+  }
+
+  /** Ký tự mở ngoặc/trích dẫn: từ ngay sau nó vẫn được coi là đầu từ. */
+  private static final String OPENING_MARKS = "([{（【《「『“‘\"'";
+
+  private static String titleCase(String text) {
+    var s = Normalizer.normalize(text == null ? "" : text, Normalizer.Form.NFC);
+    var out = new StringBuilder(s.length());
+    boolean startOfWord = true;
+    for (int i = 0; i < s.length(); ) {
+      int cp = s.codePointAt(i);
+      i += Character.charCount(cp);
+      if (Character.isWhitespace(cp)) {
+        out.appendCodePoint(cp);
+        startOfWord = true;
+      } else if (Character.isLetter(cp)) {
+        var ch = new String(Character.toChars(cp));
+        out.append(startOfWord ? ch.toUpperCase(VI) : ch.toLowerCase(VI));
+        startOfWord = false;
+      } else {
+        out.appendCodePoint(cp);
+        if (OPENING_MARKS.indexOf(cp) < 0) {
+          startOfWord = false;
+        }
+      }
+    }
+    return out.toString();
+  }
+
+  /**
    * Chèn một Heading (`level`, `text`) ngay sau Heading đầu tiên có cấp `afterLevel` (ví dụ chèn "##
-   * I. Đại cương" sau tiêu đề "# ..."). Không có Heading cấp `afterLevel` thì giữ nguyên document.
+   * Đại cương" sau tiêu đề "# ..."). Không có Heading cấp `afterLevel` thì giữ nguyên document.
    */
   public static MarkdownAction insertHeadingAfterHeading(int afterLevel, int level, String text) {
     if (level < 1 || level > 6) {
