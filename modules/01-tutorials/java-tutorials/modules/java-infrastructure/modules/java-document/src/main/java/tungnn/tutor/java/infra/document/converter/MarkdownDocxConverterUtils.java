@@ -174,7 +174,7 @@ public final class MarkdownDocxConverterUtils {
           List.of(
               new HeadingStyle(13, "1F3864", 18, 6, false, true, true, Numbering.NONE),
               new HeadingStyle(13, "2F5496", 14, 6, false, true, false, Numbering.UPPER_ROMAN),
-              new HeadingStyle(13, "2F5496", 12, 4, false, true, true, Numbering.DECIMAL),
+              new HeadingStyle(13, "2F5496", 12, 4, false, false, true, Numbering.DECIMAL),
               new HeadingStyle(13, "1F3864", 10, 4, false, false, false, Numbering.LOWER_LETTER),
               new HeadingStyle(13, "1F3864", 8, 3, false, false, true, Numbering.NONE),
               new HeadingStyle(13, "595959", 8, 3, true, false, false, Numbering.NONE)));
