@@ -17,7 +17,7 @@ public class LlmTextTranslator extends AbstractTextTranslator {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(LlmTextTranslator.class);
   private static final ObjectMapper OBJECT_MAPPER = JsonUtil.createJsonMapper();
-  private static final String SYSTEM_PROMPT_RESOURCE = "prompt-trans-v3.md";
+  private static final String SYSTEM_PROMPT_RESOURCE = "prompt-trans-dongy-v5.md";
   private static final String SYSTEM_PROMPT;
 
   private final LlmClient llmClient;
@@ -47,8 +47,7 @@ public class LlmTextTranslator extends AbstractTextTranslator {
   static int defaultConcurrency(LlmProvider provider) {
     return switch (provider) {
       case OLLAMA, OLLAMA_OPENAI, LM_STUDIO, VLLM -> 1;
-      case GOOGLE_GENAI -> 3;
-      case HUGGING_FACE, DEEPSEEK -> 10;
+      case GOOGLE_GENAI, HUGGING_FACE, DEEPSEEK -> 10;
       default -> DEFAULT_MAX_CONCURRENCY;
     };
   }
