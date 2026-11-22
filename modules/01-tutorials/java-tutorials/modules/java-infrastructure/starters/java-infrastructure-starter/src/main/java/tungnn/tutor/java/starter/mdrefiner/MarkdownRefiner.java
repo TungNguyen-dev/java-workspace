@@ -17,6 +17,7 @@ public final class MarkdownRefiner {
   private static final Pattern PROTECTED = Pattern.compile("`[^`]*`|\\]\\([^)]*\\)|https?://\\S+");
 
   private static final Pattern INVISIBLE = Pattern.compile("[\\u200B\\u200C\\u200D\\uFEFF\\u00AD]");
+  private static final Pattern BOOK_BRACKETS = Pattern.compile("[《》]");
   private static final Pattern BULLET = Pattern.compile("^(\\s*)[•●▪◦·+*]\\s+(.*)$");
   private static final Pattern HEADING_NO_SPACE = Pattern.compile("^(#{1,6})([^#\\s].*)$");
   private static final Pattern HEADING_TRAILING = Pattern.compile("\\s+#+\\s*$");
@@ -61,6 +62,7 @@ public final class MarkdownRefiner {
   private String normalizeChars(String s) {
     s = Normalizer.normalize(s, Normalizer.Form.NFC); // chuẩn hóa dấu tiếng Việt
     s = INVISIBLE.matcher(s).replaceAll("");
+    s = BOOK_BRACKETS.matcher(s).replaceAll(""); // bỏ 《 》 quanh tên sách
     return s.replace('\u00A0', ' ').replace("\t", "    ").replace("\r\n", "\n");
   }
 

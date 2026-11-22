@@ -54,6 +54,26 @@ public final class MarkdownActions {
     };
   }
 
+  /**
+   * Chèn một Heading (`level`, `text`) ngay sau Heading đầu tiên có cấp `afterLevel` (ví dụ chèn "##
+   * I. Đại cương" sau tiêu đề "# ..."). Không có Heading cấp `afterLevel` thì giữ nguyên document.
+   */
+  public static MarkdownAction insertHeadingAfterHeading(int afterLevel, int level, String text) {
+    if (level < 1 || level > 6) {
+      throw new IllegalArgumentException("level phải 1..6");
+    }
+    var heading = new Heading(level, text);
+    return edit(blocks -> {
+      for (int i = 0; i < blocks.size(); i++) {
+        if (blocks.get(i) instanceof Heading h && h.level() == afterLevel) {
+          blocks.add(i + 1, heading);
+          break;
+        }
+      }
+      return blocks;
+    });
+  }
+
   /** Chuyển block tại `index` thành Heading (lấy text của block đó). */
   public static MarkdownAction toHeading(int index, int level) {
     return edit(blocks -> {
@@ -89,6 +109,19 @@ public final class MarkdownActions {
         }
       }
       return out;
+    });
+  }
+
+  /** Xóa OrderedList đầu tiên tìm thấy ở cấp document (nếu có). */
+  public static MarkdownAction removeFirstOrderedList() {
+    return edit(blocks -> {
+      for (int i = 0; i < blocks.size(); i++) {
+        if (blocks.get(i) instanceof OrderedList) {
+          blocks.remove(i);
+          break;
+        }
+      }
+      return blocks;
     });
   }
 
@@ -151,9 +184,36 @@ public final class MarkdownActions {
     });
   }
 
-  /** Paragraph bắt đầu bằng "Mục" hoặc "Tiết" (theo sau là khoảng trắng) thì thành Heading. */
+  /** "Mục 1", "Tiết 2", "Tiết thứ ba", "Mục IV" (kèm dấu `:`/`.`/`-` và khoảng trắng/tab theo sau). */
+  private static final Pattern MUC_PREFIX =
+      Pattern.compile("^(?:Mục|Tiết)\\s+(?:thứ\\s+\\p{L}+|\\d+|[IVXLC]+)(?![\\p{L}\\p{N}])\\s*[:.\\-–—]?\\s*");
+
+  /**
+   * Paragraph bắt đầu bằng "Mục N" / "Tiết N" (N là số, số La Mã, hoặc "thứ nhất"...) thì chuyển
+   * thành Heading cấp `level`, bỏ phần prefix "Mục N"/"Tiết N". Ví dụ "Tiết 1&lt;tab&gt;Thanh khí phận
+   * nhiệt" -> "## Thanh khí phận nhiệt". Chỉ ở cấp document; text được gộp khoảng trắng liền nhau.
+   */
   public static MarkdownAction muc(int level) {
-    return headingIf(Pattern.compile("^(?:Mục|Tiết)\\s"), level);
+    if (level < 1 || level > 6) {
+      throw new IllegalArgumentException("level phải 1..6");
+    }
+    return edit(blocks -> {
+      for (int i = 0; i < blocks.size(); i++) {
+        if (!(blocks.get(i) instanceof Paragraph(String text))) {
+          continue;
+        }
+        var raw = Normalizer.normalize(text, Normalizer.Form.NFC).strip();
+        var m = MUC_PREFIX.matcher(raw);
+        if (!m.find()) {
+          continue;
+        }
+        var title = raw.substring(m.end()).replaceAll("\\s+", " ").strip();
+        if (!title.isEmpty()) {
+          blocks.set(i, new Heading(level, title));
+        }
+      }
+      return blocks;
+    });
   }
 
   /**
@@ -219,9 +279,9 @@ public final class MarkdownActions {
         content -> LlmOutputUtils.clean(llmClient.chat(systemPrompt, content)));
   }
 
-  /** "[1.] Tên phương [(nguồn)]: nội dung" ở đầu paragraph: group(1) = tên, phần còn lại = nội dung. */
+  /** "[1.] Tên phương [(nguồn)]: nội dung" ở đầu paragraph: group(1) = tên, group(2) = nguồn trong ngoặc (nếu có), phần còn lại = nội dung. */
   private static final Pattern NAME_PREFIX =
-      Pattern.compile("^\\s*(?:\\d+\\.\\s*)?([^:：(（\\n]+?)\\s*(?:[(（][^)）]*[)）])?\\s*[:：]\\s*");
+      Pattern.compile("^\\s*(?:\\d+\\.\\s*)?([^:：(（\\n]+?)\\s*([(（][^)）]*[)）])?\\s*[:：]\\s*");
 
   /**
    * Chuẩn hóa Heading cấp `level` (header tên phương) và Paragraph liền sau nó:
@@ -250,7 +310,8 @@ public final class MarkdownActions {
           out.add(block);
           continue;
         }
-        var name = normalizeTitle(h.text());
+        // So khớp theo tên thuần: bỏ phần nguồn trong ngoặc ở cuối header (nếu có).
+        var name = normalizeTitle(h.text().replaceAll("\\s*[(（][^)）]*[)）]\\s*$", ""));
         var m = NAME_PREFIX.matcher(Normalizer.normalize(p.text(), Normalizer.Form.NFC));
         if (!m.find()) {
           out.add(block);
@@ -264,7 +325,8 @@ public final class MarkdownActions {
           out.add(block);
           continue;
         }
-        out.add(sameName ? h : new Heading(level, prefixName));
+        var fullName = m.group(2) == null ? prefixName : prefixName + " " + normalizeTitle(m.group(2));
+        out.add(sameName ? h : new Heading(level, fullName));
         if (!rest.isEmpty()) {
           out.add(new Paragraph(rest));
         }
@@ -285,11 +347,25 @@ public final class MarkdownActions {
    * Heading. Chỉ ở cấp document; block liền trước không phải Paragraph thì giữ nguyên.
    */
   public static MarkdownAction headingBefore(Pattern pattern, int level) {
+    return headingBefore(pattern, level, false);
+  }
+
+  /**
+   * Như {@link #headingBefore(Pattern, int)}; `numbered` = true thì đánh số thứ tự 1, 2, 3... vào
+   * đầu text heading ("1. Tên"). Bộ đếm được reset về 0 mỗi khi gặp Heading có cấp nhỏ hơn `level`
+   * (super header, ví dụ "##" khi `level` = 3), nên mỗi nhóm đánh số lại từ 1.
+   */
+  public static MarkdownAction headingBefore(Pattern pattern, int level, boolean numbered) {
     if (level < 1 || level > 6) {
       throw new IllegalArgumentException("level phải 1..6");
     }
     return edit(blocks -> {
-      for (int i = 1; i < blocks.size(); i++) {
+      int counter = 0;
+      for (int i = 0; i < blocks.size(); i++) {
+        if (blocks.get(i) instanceof Heading h && h.level() < level) {
+          counter = 0;
+          continue;
+        }
         if (!(blocks.get(i) instanceof Paragraph(String text))
             || !pattern.matcher(Normalizer.normalize(text, Normalizer.Form.NFC).strip()).find()) {
           continue;
@@ -299,7 +375,7 @@ public final class MarkdownActions {
         if (prev >= 0 && blocks.get(prev) instanceof Paragraph(String prevText)) {
           var title =
               Normalizer.normalize(prevText, Normalizer.Form.NFC).strip().replaceAll("\\s+", " ");
-          blocks.set(prev, new Heading(level, title));
+          blocks.set(prev, new Heading(level, numbered ? ++counter + ". " + title : title));
         }
       }
       return blocks;
@@ -308,7 +384,15 @@ public final class MarkdownActions {
 
   /** Paragraph liền trước paragraph "【Thành phần】..." (tên bài thuốc) thành Heading. */
   public static MarkdownAction thanhPhan(int level) {
-    return headingBefore(Pattern.compile("^【\\s*Thành phần\\s*】"), level);
+    return thanhPhan(level, false);
+  }
+
+  /**
+   * Như {@link #thanhPhan(int)}; `numbered` = true thì đánh số "1. ", "2. "... và reset khi sang
+   * Heading cấp nhỏ hơn `level` (super header "##").
+   */
+  public static MarkdownAction thanhPhan(int level, boolean numbered) {
+    return headingBefore(Pattern.compile("^【\\s*Thành phần\\s*】"), level, numbered);
   }
 
   /** 【title】content hoặc [title]content ở đầu paragraph. */

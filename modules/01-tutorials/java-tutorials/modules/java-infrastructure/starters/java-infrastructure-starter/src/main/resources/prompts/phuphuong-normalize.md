@@ -10,12 +10,12 @@ theo quy tắc và định dạng dưới đây. Đầu vào thường có **nhi
 ## Header tên phụ phương
 - Mỗi phụ phương bắt đầu bằng một dòng header cấp 5 có tên: `##### <Tên phụ phương>`, theo sau là một dòng trống.
   Header **luôn phải có tên**, không bao giờ để trống (không được chỉ ghi `#####`).
-- Tên phụ phương là phần chữ đứng đầu đoạn, trước phần nguồn sách trong ngoặc và trước dấu `:`.
-  Bỏ số thứ tự đầu dòng ("1.", "2."...) nếu có, và bỏ phần nguồn sách trong ngoặc, kể cả ngoặc `《 》`.
-  Giữ nguyên chữ của tên, không sửa, không thêm.
-  - `Bạch hổ gia Nhân sâm thang (《Thương hàn luận》): …` → `##### Bạch hổ gia Nhân sâm thang`
-  - `Thần tê đan (《Ôn nhiệt kinh vĩ》, dẫn phương của Diệp Thiên Sĩ): …` → `##### Thần tê đan`
-  - `1. Chi tử Kim hoa thang (《Y tông kim giám》): …` → `##### Chi tử Kim hoa thang`
+- Tên phụ phương là phần chữ đứng đầu đoạn, trước dấu `:`, **bao gồm cả phần nguồn sách trong ngoặc `( )`**
+  (kể cả ngoặc `《 》`, và phần dẫn phương nếu có trong ngoặc). Bỏ số thứ tự đầu dòng ("1.", "2."...) nếu có.
+  Giữ nguyên chữ của tên và phần trong ngoặc, không sửa, không thêm, không bớt.
+  - `Bạch hổ gia Nhân sâm thang (《Thương hàn luận》): …` → `##### Bạch hổ gia Nhân sâm thang (《Thương hàn luận》)`
+  - `Thần tê đan (《Ôn nhiệt kinh vĩ》, dẫn phương của Diệp Thiên Sĩ): …` → `##### Thần tê đan (《Ôn nhiệt kinh vĩ》, dẫn phương của Diệp Thiên Sĩ)`
+  - `1. Chi tử Kim hoa thang (《Y tông kim giám》): …` → `##### Chi tử Kim hoa thang (《Y tông kim giám》)`
 - Tên phương chỉ nằm ở header, không lặp lại ở dòng vị thuốc bên dưới (dòng vị thuốc không có "Tên phương:" ở đầu).
 - Xuất đủ tất cả phụ phương của đầu vào, đúng thứ tự, mỗi phương một header riêng; không bỏ, không gộp.
   Đầu vào chỉ có một phụ phương cũng phải có header.
@@ -56,7 +56,7 @@ Các phương trên đều có công năng thanh nhiệt ở khí phận. Trong 
 
 ## Output
 
-##### Bạch hổ gia Nhân sâm thang
+##### Bạch hổ gia Nhân sâm thang (《Thương hàn luận》)
 
 Tri mẫu 18 g, Thạch cao 50 g, Cam thảo 6 g, Ngạnh mễ 9 g, Nhân sâm 10 g.
 
@@ -64,7 +64,7 @@ Công dụng: thanh nhiệt, ích khí, sinh tân.
 
 Chủ trị: khí phận nhiệt thịnh, khí âm lưỡng thương.
 
-##### Bạch hổ gia Quế chi thang
+##### Bạch hổ gia Quế chi thang (《Kim quỹ yếu lược》)
 
 Tri mẫu 18 g, Cam thảo 6 g, Thạch cao 50 g, Ngạnh mễ 6 g, Quế chi 5~9 g.
 
@@ -72,7 +72,7 @@ Công dụng: thanh nhiệt, thông lạc, hòa dinh vệ.
 
 Chủ trị: ôn ngược, mạch bình thường, người không lạnh chỉ nóng.
 
-##### Chi tử Kim hoa thang
+##### Chi tử Kim hoa thang (《Y tông kim giám》)
 
 tức Hoàng liên giải độc thang thêm Đại hoàng.
 

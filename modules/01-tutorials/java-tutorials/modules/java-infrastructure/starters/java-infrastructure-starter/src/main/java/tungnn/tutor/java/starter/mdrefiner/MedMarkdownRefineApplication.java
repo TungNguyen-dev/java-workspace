@@ -34,9 +34,16 @@ public class MedMarkdownRefineApplication {
                 "Gộp 2 paragraph đầu thành tên chương", MarkdownActions.mergeToParagraph(0, 2, " "))
             .step("Chuyển tên chương thành heading", MarkdownActions.toHeading(0, 1))
             .step(
-                "Chuyển các ordered list (1, 2, 3, ...) thành paragraph riêng biệt",
-                MarkdownActions.orderedListToParagraphs(false))
-            .step("Paragraph 'Mục ...' / 'Tiết ...' thành heading", MarkdownActions.muc(2))
+                "Thêm '## I. Đại cương' sau header '#'",
+                MarkdownActions.insertHeadingAfterHeading(1, 2, "I. Đại cương"))
+            .step(
+                "Xoá OrderedList đầu tiên, chuyển các ordered list còn lại thành paragraph riêng biệt",
+                doc ->
+                    MarkdownActions.orderedListToParagraphs(false)
+                        .apply(MarkdownActions.removeFirstOrderedList().apply(doc)))
+            .step(
+                "Paragraph 'Mục N ...' / 'Tiết N ...' thành heading, bỏ prefix 'Mục N'/'Tiết N'",
+                MarkdownActions.muc(2))
             .step(
                 "Bỏ paragraph rỗng",
                 MarkdownActions.removeIf(
@@ -54,7 +61,6 @@ public class MedMarkdownRefineApplication {
             .step(
                 "Header phụ phương: tên chỉ nằm ở header, bỏ tên lặp lại ở nội dung",
                 MarkdownActions.fixHeadingName(5))
-            // .step("Sửa lỗi OCR", replaceText("Hoàng liên", "Hoàng liên"))
             .step("Chuẩn hóa văn bản", normalize(MarkdownRefiner.defaultMedical()))
             .run(original);
 
