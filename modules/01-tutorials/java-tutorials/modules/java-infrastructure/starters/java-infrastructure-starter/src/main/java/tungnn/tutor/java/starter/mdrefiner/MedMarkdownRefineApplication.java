@@ -23,8 +23,8 @@ public class MedMarkdownRefineApplication {
   private static final String CACH_DUNG_PROMPT_RESOURCE = "prompts/cachdung-modern.md";
 
   static void main() throws IOException {
-    var mdPath = Path.of("storage/sample/Chuong_4_Thanh_nhiet_te_ban_dich_tieng_Viet.md");
-    var outPath = mdPath.resolveSibling("Chuong_4_Thanh_nhiet_te_ban_dich_tieng_Viet-refined.md");
+    var mdPath = Path.of("storage/sample/Chuong_6_On_ly_ban_dich_tieng_Viet.md");
+    var outPath = mdPath.resolveSibling("Chuong_6_On_ly_ban_dich_tieng_Viet-refined.md");
 
     var original = MarkdownDocumentUtils.readDocument(mdPath);
     var thanhPhanPrompt = loadPrompt(THANH_PHAN_PROMPT_RESOURCE);
