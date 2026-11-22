@@ -2,6 +2,7 @@ package tungnn.tutor.java.spring.tool.doctrans.app.config;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import tungnn.tutor.java.ai.config.LlmClientProperties;
@@ -44,7 +45,7 @@ public record TranslatorConfig(
     return llm.entrySet().stream()
         .filter(entry -> entry.getKey() != null && LlmProvider.from(entry.getKey()) == selected)
         .map(Map.Entry::getValue)
-        .filter(value -> value != null)
+        .filter(Objects::nonNull)
         .findFirst()
         .orElseGet(LlmSettings::empty);
   }

@@ -1,37 +1,43 @@
 package tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.client.ChatClient;
+import tungnn.tutor.java.ai.client.LlmClient;
+import tungnn.tutor.java.ai.config.LlmProvider;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
-import tungnn.tutor.java.tool.doctrans.core.infrastructure.translator.text.huggingface.HuggingFaceTextTranslator;
 
-class HuggingFaceTextTranslatorTest {
+class LlmTextTranslatorTest {
 
   private static TextTranslationRequest request(String content) {
     var textUnit = new TextTranslationRequest.TextUnit("unit-1", content);
     return new TextTranslationRequest.Standard(textUnit, LanguageCode.VI, null, null);
   }
 
-  private static ChatClient chatClientReturning(String content) {
-    var chatClient = mock(ChatClient.class, RETURNS_DEEP_STUBS);
-    when(chatClient.prompt().system(anyString()).user(anyString()).call().content())
-        .thenReturn(content);
-    return chatClient;
+  private static LlmClient llmClient() {
+    var llmClient = mock(LlmClient.class);
+    when(llmClient.provider()).thenReturn(LlmProvider.HUGGING_FACE);
+    return llmClient;
+  }
+
+  private static LlmClient llmClientReturning(String content) {
+    var llmClient = llmClient();
+    when(llmClient.chat(anyString(), anyString())).thenReturn(content);
+    return llmClient;
   }
 
   @Test
   void shouldTranslateSuccessfully() {
     var translator =
-        new HuggingFaceTextTranslator(
-            chatClientReturning("Thuốc này dùng để điều trị cao huyết áp."));
+        new LlmTextTranslator(llmClientReturning("Thuốc này dùng để điều trị cao huyết áp."));
 
     var result = translator.translate(request("本品用于治疗高血压。"));
 
@@ -44,9 +50,19 @@ class HuggingFaceTextTranslatorTest {
   }
 
   @Test
-  void shouldStripThinkBlock() {
+  void shouldSendSystemPromptFromResource() {
+    var llmClient = llmClientReturning("Xin chào");
+
+    new LlmTextTranslator(llmClient).translate(request("Hello"));
+
+    verify(llmClient).chat(contains("Native Vietnamese Wording"), anyString());
+  }
+
+  @Test
+  void shouldStripThinkBlockAndCodeFence() {
     var translator =
-        new HuggingFaceTextTranslator(chatClientReturning("<think>suy luận...</think>\nXin chào"));
+        new LlmTextTranslator(
+            llmClientReturning("<think>suy luận...</think>\n```text\nXin chào\n```"));
 
     var result = translator.translate(request("Hello"));
 
@@ -56,11 +72,10 @@ class HuggingFaceTextTranslatorTest {
 
   @Test
   void shouldReturnFailureWhenModelCallThrows() {
-    var chatClient = mock(ChatClient.class, RETURNS_DEEP_STUBS);
-    when(chatClient.prompt().system(anyString()).user(anyString()).call().content())
-        .thenThrow(new RuntimeException("HTTP 429"));
+    var llmClient = llmClient();
+    when(llmClient.chat(anyString(), anyString())).thenThrow(new RuntimeException("HTTP 429"));
 
-    var result = new HuggingFaceTextTranslator(chatClient).translate(request("Hello"));
+    var result = new LlmTextTranslator(llmClient).translate(request("Hello"));
 
     assertThat(result).isInstanceOf(TextTranslationResult.Failure.class);
     assertThat(((TextTranslationResult.Failure) result).error().message()).contains("429");
@@ -68,7 +83,7 @@ class HuggingFaceTextTranslatorTest {
 
   @Test
   void shouldReturnFailureWhenTranslationIsEmpty() {
-    var translator = new HuggingFaceTextTranslator(chatClientReturning("   "));
+    var translator = new LlmTextTranslator(llmClientReturning("   "));
 
     var result = translator.translate(request("Hello"));
 
@@ -76,10 +91,15 @@ class HuggingFaceTextTranslatorTest {
   }
 
   @Test
-  void cleanOutputShouldHandleFencesAndNull() {
-    assertThat(HuggingFaceTextTranslator.cleanOutput("```text\nXin chào\n```"))
-        .isEqualTo("Xin chào");
-    assertThat(HuggingFaceTextTranslator.cleanOutput("  Xin chào  ")).isEqualTo("Xin chào");
-    assertThat(HuggingFaceTextTranslator.cleanOutput(null)).isEmpty();
+  void shouldRejectInvalidConcurrency() {
+    assertThatThrownBy(() -> new LlmTextTranslator(llmClient(), 0))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void defaultConcurrencyShouldDependOnProvider() {
+    assertThat(LlmTextTranslator.defaultConcurrency(LlmProvider.OLLAMA)).isEqualTo(1);
+    assertThat(LlmTextTranslator.defaultConcurrency(LlmProvider.GOOGLE_GENAI)).isEqualTo(3);
+    assertThat(LlmTextTranslator.defaultConcurrency(LlmProvider.DEEPSEEK)).isEqualTo(10);
   }
 }

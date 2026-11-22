@@ -13,19 +13,19 @@ import tungnn.tutor.java.tool.doctrans.core.domain.text.AbstractTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
 
-/**
- * {@link tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator} backed by any LLM
- * provider supported by {@code java-ai} (Gemini, OpenAI, Anthropic, DeepSeek, Ollama, Hugging Face,
- * ...). The {@link LlmClient} is supplied from outside, so this class knows nothing about HTTP,
- * tokens or models.
- */
 public class LlmTextTranslator extends AbstractTextTranslator {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(LlmTextTranslator.class);
   private static final ObjectMapper OBJECT_MAPPER = JsonUtil.createJsonMapper();
-  private static final String SYSTEM_PROMPT =
-      ResourceUtil.getResourceAsString("prompt-trans-v2.md");
+  private static final String SYSTEM_PROMPT_RESOURCE = "prompt-trans-v3.md";
+  private static final String SYSTEM_PROMPT;
+
   private final LlmClient llmClient;
   private final int maxConcurrency;
+
+  static {
+    SYSTEM_PROMPT = ResourceUtil.getResourceAsString(SYSTEM_PROMPT_RESOURCE);
+  }
 
   public LlmTextTranslator(LlmClient llmClient) {
     this(llmClient, defaultConcurrency(llmClient.provider()));
@@ -37,9 +37,13 @@ public class LlmTextTranslator extends AbstractTextTranslator {
       throw new IllegalArgumentException("maxConcurrency must be >= 1");
     }
     this.maxConcurrency = maxConcurrency;
+    LOGGER.info(
+        "LlmTextTranslator initialized [provider={}, prompt={}, maxConcurrency={}]",
+        llmClient.provider(),
+        SYSTEM_PROMPT_RESOURCE,
+        maxConcurrency);
   }
 
-  /** Local servers handle one request at a time; hosted APIs tolerate more parallelism. */
   static int defaultConcurrency(LlmProvider provider) {
     return switch (provider) {
       case OLLAMA, OLLAMA_OPENAI, LM_STUDIO, VLLM -> 1;

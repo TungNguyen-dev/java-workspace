@@ -8,8 +8,6 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
-  config:
-    import: optional:classpath:spring-ai.yaml
 
 logging:
   level:
@@ -23,22 +21,40 @@ doctrans:
     memory: text-translation-memory
   worker-threads: 2
   translator:
-    provider: ${DOCTRANS_TRANSLATOR_PROVIDER:gemini}   # gemini | huggingface | ollama | deepseek
-    huggingface:
-      base-url: https://router.huggingface.co/v1
-      token: ${HF_TOKEN:}
-      model: ${HF_MODEL:}                                # e.g. a chat model id from /v1/models
-      temperature: 0
-      timeout-seconds: 120
-    ollama:
-      base-url: ${OLLAMA_BASE_URL:http://localhost:11434/v1}
-      token: ${OLLAMA_TOKEN:ollama}
-      model: ${OLLAMA_MODEL:llama3}                      # e.g. llama3, qwen2.5, deepseek-r1:8b
-      temperature: 0
-      timeout-seconds: 600
-    deepseek:
-      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
-      token: ${DEEPSEEK_API_KEY:}
-      model: ${DEEPSEEK_MODEL:deepseek-chat}           # deepseek-chat | deepseek-reasoner
-      temperature: 0
-      timeout-seconds: 120
+    provider: ${DOCTRANS_TRANSLATOR_PROVIDER:gemini}   # dummy | gemini | huggingface | ollama | ollama-openai | deepseek
+    llm:
+      gemini:
+        # base-url left blank -> Google GenAI SDK default endpoint
+        api-key: ${GEMINI_API_KEY:}
+        model: ${GEMINI_LLM_MODEL:gemini-2.5-flash}       # gemini-2.5-flash | gemini-2.5-pro | ...
+        temperature: 0
+        timeout-seconds: 120
+        max-retries: 2
+        max-concurrency: 10
+        extra:
+          # Set GOOGLE_CLOUD_PROJECT to use Vertex AI (ADC auth) instead of the API key
+          project: ${GOOGLE_CLOUD_PROJECT:}
+          location: ${GOOGLE_CLOUD_LOCATION:}
+      huggingface:
+        base-url: https://router.huggingface.co/v1
+        api-key: ${HF_TOKEN:}
+        model: ${HF_MODEL:}                                # e.g. a chat model id from /v1/models
+        temperature: 0
+        timeout-seconds: 120
+      ollama:                                              # native Ollama API (/api/chat), no API key
+        base-url: ${OLLAMA_NATIVE_BASE_URL:http://localhost:11434}
+        model: ${OLLAMA_MODEL:llama3}                      # e.g. llama3, qwen2.5, deepseek-r1:8b
+        temperature: 0
+        timeout-seconds: 600
+      ollama-openai:                                       # Ollama via its OpenAI-compatible endpoint
+        base-url: ${OLLAMA_BASE_URL:http://localhost:11434/v1}
+        api-key: ${OLLAMA_TOKEN:ollama}
+        model: ${OLLAMA_MODEL:llama3}
+        temperature: 0
+        timeout-seconds: 600
+      deepseek:
+        base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+        api-key: ${DEEPSEEK_API_KEY:}
+        model: ${DEEPSEEK_MODEL:deepseek-chat}           # deepseek-chat | deepseek-reasoner
+        temperature: 0
+        timeout-seconds: 120

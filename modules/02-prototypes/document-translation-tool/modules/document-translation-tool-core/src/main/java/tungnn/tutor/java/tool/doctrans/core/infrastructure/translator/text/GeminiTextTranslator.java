@@ -11,9 +11,11 @@ import tungnn.tutor.java.tool.doctrans.core.infrastructure.page.GeminiPage;
 import tungnn.tutor.java.tool.doctrans.core.infrastructure.pool.WebDriverPool;
 
 public class GeminiTextTranslator extends AbstractTextTranslator {
+
   private static final ObjectMapper OBJECT_MAPPER = JsonUtil.createJsonMapper();
+  private static final String PROMPT_TEMPLATE_RESOURCE = "prompt-trans-v3.md";
   private static final String PROMPT_TEMPLATE =
-      ResourceUtil.getResourceAsString("prompt-trans-v1.md");
+      ResourceUtil.getResourceAsString(PROMPT_TEMPLATE_RESOURCE);
   private final WebDriverPool webDriverPool;
 
   public GeminiTextTranslator(WebDriverPool webDriverPool) {

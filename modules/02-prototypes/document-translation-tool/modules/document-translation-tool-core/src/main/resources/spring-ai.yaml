@@ -1,9 +1,0 @@
-spring:
-  ai:
-    google:
-      genai:
-        api-key: ${GEMINI_API_KEY}
-        chat:
-          options:
-            model: ${GEMINI_LLM_MODEL}
-            temperature: 0.0
