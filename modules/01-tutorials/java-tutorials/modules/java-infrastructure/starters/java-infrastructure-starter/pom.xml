@@ -15,7 +15,31 @@
 
     <properties>
         <revision>1.0.0-SNAPSHOT</revision>
+        <!-- Giống java-ai: dependencyManagement của dependency không được thừa kế, nên phải import
+        lại BOM. Nếu không, java-jackson kéo jackson-annotations 2.18 và Spring AI (Jackson 3.1.x)
+        lỗi NoClassDefFoundError: JsonSerializeAs (cần jackson-annotations >= 2.21). -->
+        <jackson.version>3.1.5</jackson.version>
+        <jackson2.version>2.21.5</jackson2.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>tools.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson2.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
