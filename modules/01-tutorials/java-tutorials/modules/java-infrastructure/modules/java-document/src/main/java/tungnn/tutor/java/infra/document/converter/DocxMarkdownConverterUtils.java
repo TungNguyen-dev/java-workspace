@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.XWPFSDT;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 
 public final class DocxMarkdownConverterUtils {
@@ -121,38 +123,91 @@ public final class DocxMarkdownConverterUtils {
     return inlineMarkdown.isEmpty() ? text.strip() : inlineMarkdown;
   }
 
-  private static String processRunsToMarkdown(XWPFParagraph paragraph) {
-    var sb = new StringBuilder();
-    var runs = paragraph.getRuns();
-    if (runs == null || runs.isEmpty()) {
-      return paragraph.getText();
+  /** Đoạn text liên tiếp có cùng định dạng inline. */
+  private record Segment(String text, boolean bold, boolean italic, boolean code) {
+    boolean sameStyle(Segment other) {
+      return bold == other.bold && italic == other.italic && code == other.code;
     }
-    for (var run : runs) {
-      var runText = run.getText(0);
-      if (runText == null || runText.isEmpty()) {
-        continue;
-      }
-      var isBold = run.isBold();
-      var isItalic = run.isItalic();
-      var fontFamily = run.getFontFamily();
-      var isCode =
-          fontFamily != null
-              && (fontFamily.equalsIgnoreCase("Courier New")
-                  || fontFamily.toLowerCase().contains("code"));
-      if (isCode) {
-        runText = "`" + runText + "`";
-      } else {
-        if (isBold && isItalic) {
-          runText = "***" + runText + "***";
-        } else if (isBold) {
-          runText = "**" + runText + "**";
-        } else if (isItalic) {
-          runText = "*" + runText + "*";
+  }
+
+  /**
+   * Gom text của paragraph thành markdown inline.
+   *
+   * <p>Dùng {@link XWPFRun#text()} (không phải {@code getText(0)}): một run có thể chứa nhiều {@code
+   * <w:t>} xen kẽ {@code <w:tab/>}/{@code <w:br/>} (ví dụ "Tiết 1&lt;tab&gt;&lt;tab&gt;Thanh khí
+   * phận nhiệt"), {@code getText(0)} chỉ trả về phần text đầu tiên nên mất phần còn lại của dòng.
+   * Đồng thời duyệt {@link XWPFParagraph#getIRuns()} để không bỏ sót text nằm trong content
+   * control (SDT).
+   */
+  private static String processRunsToMarkdown(XWPFParagraph paragraph) {
+    var segments = new ArrayList<Segment>();
+    for (var element : paragraph.getIRuns()) {
+      if (element instanceof XWPFRun run) {
+        var text = run.text();
+        if (text == null || text.isEmpty()) {
+          continue;
+        }
+        var fontFamily = run.getFontFamily();
+        var isCode =
+            fontFamily != null
+                && (fontFamily.equalsIgnoreCase("Courier New")
+                    || fontFamily.toLowerCase().contains("code"));
+        addSegment(
+            segments, new Segment(text, !isCode && run.isBold(), !isCode && run.isItalic(), isCode));
+      } else if (element instanceof XWPFSDT sdt && sdt.getContent() != null) {
+        var text = sdt.getContent().getText();
+        if (text != null && !text.isEmpty()) {
+          addSegment(segments, new Segment(text, false, false, false));
         }
       }
-      sb.append(runText);
     }
-    return sb.toString();
+    if (segments.isEmpty()) {
+      var text = paragraph.getText();
+      return text == null ? "" : text;
+    }
+    var sb = new StringBuilder();
+    for (var segment : segments) {
+      sb.append(renderSegment(segment));
+    }
+    // Tab/xuống dòng ở đầu hoặc cuối paragraph không mang nghĩa (và tab đầu dòng sẽ thành code block).
+    return sb.toString().strip();
+  }
+
+  /** Gộp segment liền nhau có cùng định dạng để không sinh "**a****b**". */
+  private static void addSegment(List<Segment> segments, Segment next) {
+    if (!segments.isEmpty()) {
+      var last = segments.getLast();
+      if (last.sameStyle(next)) {
+        segments.set(segments.size() - 1, new Segment(last.text() + next.text(), last.bold(),
+            last.italic(), last.code()));
+        return;
+      }
+    }
+    segments.add(next);
+  }
+
+  /** Dấu định dạng ôm sát phần chữ, khoảng trắng đầu/cuối để ngoài dấu (tránh "**text **"). */
+  private static String renderSegment(Segment segment) {
+    var text = segment.text();
+    var core = text.strip();
+    if (core.isEmpty()) {
+      return text;
+    }
+    var lead = text.substring(0, text.indexOf(core.charAt(0)));
+    var trail = text.substring(lead.length() + core.length());
+    String marked;
+    if (segment.code()) {
+      marked = "`" + core + "`";
+    } else if (segment.bold() && segment.italic()) {
+      marked = "***" + core + "***";
+    } else if (segment.bold()) {
+      marked = "**" + core + "**";
+    } else if (segment.italic()) {
+      marked = "*" + core + "*";
+    } else {
+      marked = core;
+    }
+    return lead + marked + trail;
   }
 
   private static String tableToMarkdown(XWPFTable table) {
