@@ -27,27 +27,18 @@
             <artifactId>pf4j</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- Java Infrastructure -->
         <dependency>
             <groupId>tungnn.tutor.java.infrastructure</groupId>
-            <artifactId>java-document</artifactId>
-            <version>${java-document.version}</version>
+            <artifactId>java-infrastructure-starter</artifactId>
+            <version>${java.workspace.infrastructure.version}</version>
             <exclusions>
-                <exclusion>
-                    <groupId>tungnn.tutor.java</groupId>
-                    <artifactId>java-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.oracle.database.jdbc</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
+                <!-- Loại bỏ Log4j2 Implementation để nhường quyền cho Spring Boot / App chính -->
                 <exclusion>
                     <groupId>org.apache.logging.log4j</groupId>
                     <artifactId>log4j-core</artifactId>
                 </exclusion>
+                <!-- Loại bỏ SLF4J -> Log4j2 Binding để tránh trùng lặp/xung đột binding -->
                 <exclusion>
                     <groupId>org.apache.logging.log4j</groupId>
                     <artifactId>log4j-slf4j2-impl</artifactId>
