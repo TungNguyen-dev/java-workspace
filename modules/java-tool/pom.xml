@@ -147,9 +147,9 @@
     </dependencyManagement>
 
     <modules>
-        <module>modules/tool-crawler-core</module>
-        <module>modules/tool-document-translation-core</module>
-        <module>modules/tool-med-md-refine-core</module>
+        <module>tool-crawler-core</module>
+        <module>tool-document-translation-core</module>
+        <module>tool-med-md-refine-core</module>
     </modules>
 
     <dependencies>

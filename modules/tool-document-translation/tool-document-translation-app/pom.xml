@@ -7,7 +7,7 @@
         <groupId>tungnn.tutor.java.tool</groupId>
         <artifactId>tool-document-translation</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>tool-document-translation-app</artifactId>

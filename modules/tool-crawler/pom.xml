@@ -22,7 +22,7 @@
     </properties>
 
     <modules>
-        <module>modules/tool-crawler-app</module>
+        <module>tool-crawler-app</module>
     </modules>
 
     <dependencies>

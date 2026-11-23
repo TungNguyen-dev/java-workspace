@@ -22,7 +22,7 @@
     </properties>
 
     <modules>
-        <module>modules/tool-document-translation-app</module>
+        <module>tool-document-translation-app</module>
     </modules>
 
     <dependencies>
