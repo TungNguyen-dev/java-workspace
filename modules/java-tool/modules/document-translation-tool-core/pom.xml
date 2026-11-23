@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>tungnn.tutor.java.tool</groupId>
+        <artifactId>java-tool</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>document-translation-tool-core</artifactId>
+
+    <name>document-translation-tool-core</name>
+    <description>document-translation-tool-core</description>
+
+    <properties>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>2.0.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>tungnn.tutor.java.infra</groupId>
+            <artifactId>java-ai</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tungnn.tutor.java</groupId>
+            <artifactId>java-lib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tungnn.tutor.java.infra</groupId>
+            <artifactId>java-csv</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tungnn.tutor.java.infra</groupId>
+            <artifactId>java-document</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tungnn.tutor.java.infra</groupId>
+            <artifactId>java-jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tungnn.tutor.java.infra</groupId>
+            <artifactId>java-selenium</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

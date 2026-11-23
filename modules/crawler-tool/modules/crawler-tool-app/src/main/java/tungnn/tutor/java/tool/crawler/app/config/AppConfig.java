@@ -1,0 +1,26 @@
+package tungnn.tutor.java.tool.crawler.app.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import tungnn.tutor.java.tool.crawler.app.service.BatchCrawlExecutor;
+import tungnn.tutor.java.tool.crawler.core.infra.pool.*;
+
+@Configuration
+public class AppConfig {
+
+  @Bean
+  public WebDriverPool driverPool() {
+    return new PooledWebDriverPool(10);
+  }
+
+  @Bean
+  public WebCrawlerPool webCrawlerPool(WebDriverPool driverPool) {
+    var factory = new KeyedPooledWebCrawlerFactory(driverPool);
+    return new KeyedPooledWebCrawlerPool(factory);
+  }
+
+  @Bean
+  public BatchCrawlExecutor batchCrawlExecutor(WebCrawlerPool webCrawlerPool) {
+    return new BatchCrawlExecutor(webCrawlerPool);
+  }
+}
