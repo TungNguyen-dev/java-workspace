@@ -35,7 +35,9 @@ clean_local_repository() {
 
     rm -rf "$LOCAL_REPOSITORY/tungnn/tutor/java/java-tutor"
     rm -rf "$LOCAL_REPOSITORY/tungnn/tutor/java/java-core"
-    rm -rf "$LOCAL_REPOSITORY/tungnn/tutor/java/infrastructure"
+    rm -rf "$LOCAL_REPOSITORY/tungnn/tutor/java/java-lib"
+    rm -rf "$LOCAL_REPOSITORY/tungnn/tutor/java/java-jls"
+    rm -rf "$LOCAL_REPOSITORY/tungnn/tutor/java/infra"
     rm -rf "$LOCAL_REPOSITORY/tungnn/tutor/java/java-benchmark"
 }
 
