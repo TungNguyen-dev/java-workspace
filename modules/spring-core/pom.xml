@@ -10,12 +10,12 @@
     </parent>
 
     <groupId>tungnn.tutor.java.spring</groupId>
-    <artifactId>spring-tutorials</artifactId>
+    <artifactId>spring-core</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
 
-    <name>spring-tutorials</name>
-    <description>spring-tutorials</description>
+    <name>spring-core</name>
+    <description>spring-core</description>
 
     <!-- Shared Properties -->
     <properties>
@@ -23,11 +23,6 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
-    <!-- Modules -->
-    <modules>
-        <module>modules/spring-core</module>
-    </modules>
 
     <dependencies>
         <!-- Spring Boot Core (Exclude Default Logging) -->
