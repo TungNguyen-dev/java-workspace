@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: document-translation-tool
+    name: tool-document-translation
   servlet:
     multipart:
       max-file-size: 50MB

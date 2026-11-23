@@ -11,19 +11,14 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>crawler-tool-core</artifactId>
+    <artifactId>tool-med-md-refine-core</artifactId>
 
-    <properties>
-    </properties>
-
+    <name>tool-med-md-refine-core</name>
+    <description>Core logic for refining medical (Dong y) Markdown documents</description>
     <dependencies>
         <dependency>
-            <groupId>tungnn.tutor.java</groupId>
-            <artifactId>java-lib</artifactId>
-        </dependency>
-        <dependency>
             <groupId>tungnn.tutor.java.infra</groupId>
-            <artifactId>java-selenium</artifactId>
+            <artifactId>java-ai</artifactId>
         </dependency>
         <dependency>
             <groupId>tungnn.tutor.java.infra</groupId>

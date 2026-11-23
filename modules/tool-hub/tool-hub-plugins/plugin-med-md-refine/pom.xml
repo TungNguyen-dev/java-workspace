@@ -14,7 +14,7 @@
     </description>
     <properties>
         <java-document.version>1.0.0-SNAPSHOT</java-document.version>
-        <med-md-refine-core.version>0.0.1-SNAPSHOT</med-md-refine-core.version>
+        <tool-med-md-refine-core.version>0.0.1-SNAPSHOT</tool-med-md-refine-core.version>
         <junit.version>6.0.3</junit.version>
     </properties>
     <dependencies>
@@ -30,8 +30,8 @@
         </dependency>
         <dependency>
             <groupId>tungnn.tutor.java.tool</groupId>
-            <artifactId>med-md-refine-core</artifactId>
-            <version>${med-md-refine-core.version}</version>
+            <artifactId>tool-med-md-refine-core</artifactId>
+            <version>${tool-med-md-refine-core.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>tungnn.tutor.java.infra</groupId>

@@ -10,10 +10,10 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>document-translation-tool-core</artifactId>
+    <artifactId>tool-document-translation-core</artifactId>
 
-    <name>document-translation-tool-core</name>
-    <description>document-translation-tool-core</description>
+    <name>tool-document-translation-core</name>
+    <description>tool-document-translation-core</description>
 
     <properties>
     </properties>

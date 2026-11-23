@@ -14,7 +14,7 @@ TIMESTAMP="$(date +'%Y%m%d-%H%M%S')"
 DEFAULT_LOG_FILE="storage/logs/crawler/run-translator-${TIMESTAMP}.log"
 
 LOG_FILE="${LOG_FILE:-$DEFAULT_LOG_FILE}"
-JAR_FILE="${JAR_FILE:-tools/bin/document-translation-tool-app-0.0.1-SNAPSHOT.jar}"
+JAR_FILE="${JAR_FILE:-tools/bin/tool-document-translation-app-0.0.1-SNAPSHOT.jar}"
 
 # ------------------------------------------------------------------------------
 # Pre-flight Checks

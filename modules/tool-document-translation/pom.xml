@@ -10,19 +10,19 @@
     </parent>
 
     <groupId>tungnn.tutor.java.tool</groupId>
-    <artifactId>crawler-tool</artifactId>
+    <artifactId>tool-document-translation</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>crawler-tool</name>
-    <description>crawler-tool</description>
+    <name>tool-document-translation</name>
+    <description>tool-document-translation</description>
 
     <properties>
         <java.version>25</java.version>
     </properties>
 
     <modules>
-        <module>modules/crawler-tool-app</module>
+        <module>modules/tool-document-translation-app</module>
     </modules>
 
     <dependencies>

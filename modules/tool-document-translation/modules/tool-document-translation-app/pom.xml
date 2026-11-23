@@ -5,15 +5,15 @@
 
     <parent>
         <groupId>tungnn.tutor.java.tool</groupId>
-        <artifactId>document-translation-tool</artifactId>
+        <artifactId>tool-document-translation</artifactId>
         <version>0.0.1-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>document-translation-tool-app</artifactId>
+    <artifactId>tool-document-translation-app</artifactId>
 
-    <name>document-translation-tool-app</name>
-    <description>document-translation-tool-app</description>
+    <name>tool-document-translation-app</name>
+    <description>tool-document-translation-app</description>
 
     <properties>
         <java.version>25</java.version>
@@ -22,7 +22,7 @@
     <dependencies>
         <dependency>
             <groupId>tungnn.tutor.java.tool</groupId>
-            <artifactId>document-translation-tool-core</artifactId>
+            <artifactId>tool-document-translation-core</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 

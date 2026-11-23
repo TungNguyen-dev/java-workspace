@@ -19,8 +19,8 @@
         <module>modules/java-benchmark</module>
         <module>modules/java-tool</module>
         <module>modules/spring-core</module>
-        <module>modules/crawler-tool</module>
-        <module>modules/document-translation-tool</module>
+        <module>modules/tool-crawler</module>
+        <module>modules/tool-document-translation</module>
         <module>modules/tool-hub</module>
     </modules>
 </project>

@@ -10,7 +10,7 @@ Tài liệu tham khảo và plan trước của mình khác nhau ở một đi�
 | B. `HttpClient` thuần (như tài liệu tham khảo) | Không thêm dependency | Tự lo request/response, retry, parse |
 
 Chọn A, nhưng **không** thêm `spring-ai-starter-model-openai`. Starter sẽ tự tạo thêm `ChatModel`, xung đột với `ChatClient.Builder` đang auto-config từ Google GenAI. Thay vào đó:
-- Thêm dependency `org.springframework.ai:spring-ai-openai` (không phải starter) vào `document-translation-tool-core/pom.xml`. Version đã được `spring-ai-bom` 1.1.8 quản lý.
+- Thêm dependency `org.springframework.ai:spring-ai-openai` (không phải starter) vào `tool-document-translation-core/pom.xml`. Version đã được `spring-ai-bom` 1.1.8 quản lý.
 - Tự dựng `OpenAiChatModel` trỏ tới `https://router.huggingface.co/v1`, không qua auto-config. Cách này phù hợp nguyên tắc "Hugging Face chỉ là chi tiết infrastructure", và Gemini vẫn chạy song song không bị ảnh hưởng.
 
 Cần xác minh khi code: `OpenAiApi.builder()` mặc định nối thêm `/v1/chat/completions`. Có thể phải đặt `baseUrl = https://router.huggingface.co` hoặc dùng `completionsPath("/chat/completions")` kèm base có `/v1`, tùy chữ ký builder ở 1.1.8.

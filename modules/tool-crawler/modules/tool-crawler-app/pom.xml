@@ -5,15 +5,15 @@
 
     <parent>
         <groupId>tungnn.tutor.java.tool</groupId>
-        <artifactId>crawler-tool</artifactId>
+        <artifactId>tool-crawler</artifactId>
         <version>0.0.1-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>crawler-tool-app</artifactId>
+    <artifactId>tool-crawler-app</artifactId>
 
-    <name>crawler-tool-app</name>
-    <description>crawler-tool-app</description>
+    <name>tool-crawler-app</name>
+    <description>tool-crawler-app</description>
 
     <properties>
         <java.version>25</java.version>
@@ -23,7 +23,7 @@
     <dependencies>
         <dependency>
             <groupId>tungnn.tutor.java.tool</groupId>
-            <artifactId>crawler-tool-core</artifactId>
+            <artifactId>tool-crawler-core</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>

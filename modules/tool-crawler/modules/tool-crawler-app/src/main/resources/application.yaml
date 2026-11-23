@@ -1,6 +1,6 @@
 spring:
   application:
-    name: crawler-tool-app
+    name: tool-crawler-app
 crawler:
   storage:
     baseDir: storage/app/crawler
