@@ -86,9 +86,9 @@ public final class MarkdownActions {
     var wanted = normalizeTitle(from);
     return edit(blocks -> {
       for (int i = 0; i < blocks.size(); i++) {
-        if (blocks.get(i) instanceof Heading h
-            && h.level() == level
-            && normalizeTitle(h.text()).equalsIgnoreCase(wanted)) {
+        if (blocks.get(i) instanceof Heading(int level1, String text)
+            && level1 == level
+            && normalizeTitle(text).equalsIgnoreCase(wanted)) {
           blocks.set(i, new Heading(level, to));
         }
       }
@@ -115,9 +115,9 @@ public final class MarkdownActions {
       var out = new ArrayList<MarkdownBlock>();
       for (int i = 0; i < blocks.size(); i++) {
         var block = blocks.get(i);
-        if (!(block instanceof Heading h)
-            || h.level() != level
-            || !normalizeTitle(h.text()).equalsIgnoreCase(wanted)) {
+        if (!(block instanceof Heading(int level1, String text))
+            || level1 != level
+            || !normalizeTitle(text).equalsIgnoreCase(wanted)) {
           out.add(block);
           continue;
         }
@@ -149,8 +149,8 @@ public final class MarkdownActions {
     }
     return edit(blocks -> {
       for (int i = 0; i < blocks.size(); i++) {
-        if (blocks.get(i) instanceof Heading h && h.level() == level) {
-          blocks.set(i, new Heading(level, titleCase(h.text())));
+        if (blocks.get(i) instanceof Heading(int level1, String text) && level1 == level) {
+          blocks.set(i, new Heading(level, titleCase(text)));
         }
       }
       return blocks;
@@ -168,8 +168,8 @@ public final class MarkdownActions {
     }
     return edit(blocks -> {
       for (int i = 0; i < blocks.size(); i++) {
-        if (blocks.get(i) instanceof Heading h && h.level() == level) {
-          blocks.set(i, new Heading(level, mainUpperParenTitle(h.text())));
+        if (blocks.get(i) instanceof Heading(int level1, String text) && level1 == level) {
+          blocks.set(i, new Heading(level, mainUpperParenTitle(text)));
         }
       }
       return blocks;
@@ -275,12 +275,11 @@ public final class MarkdownActions {
     return edit(blocks -> {
       var out = new ArrayList<MarkdownBlock>();
       for (var block : blocks) {
-        if (!(block instanceof OrderedList list)) {
+        if (!(block instanceof OrderedList(int number, List<ListItem> items))) {
           out.add(block);
           continue;
         }
-        int number = list.startNumber();
-        for (var item : list.items()) {
+          for (var item : items) {
           var text =
               item.blocks().stream()
                   .map(MarkdownActions::textOf)
@@ -415,9 +414,9 @@ public final class MarkdownActions {
       while (i < blocks.size()) {
         var block = blocks.get(i++);
         out.add(block);
-        if (!(block instanceof Heading h)
-            || h.level() != level
-            || !normalizeTitle(h.text()).equalsIgnoreCase(wanted)) {
+        if (!(block instanceof Heading(int level1, String text))
+            || level1 != level
+            || !normalizeTitle(text).equalsIgnoreCase(wanted)) {
           continue;
         }
         int end = i;
@@ -483,19 +482,19 @@ public final class MarkdownActions {
         if (!(block instanceof Heading h)
             || h.level() != level
             || i + 1 >= blocks.size()
-            || !(blocks.get(i + 1) instanceof Paragraph p)) {
+            || !(blocks.get(i + 1) instanceof Paragraph(String text))) {
           out.add(block);
           continue;
         }
         // So khớp theo tên thuần: bỏ phần nguồn trong ngoặc ở cuối header (nếu có).
         var name = normalizeTitle(h.text().replaceAll("\\s*[(（][^)）]*[)）]\\s*$", ""));
-        var m = NAME_PREFIX.matcher(Normalizer.normalize(p.text(), Normalizer.Form.NFC));
+        var m = NAME_PREFIX.matcher(Normalizer.normalize(text, Normalizer.Form.NFC));
         if (!m.find()) {
           out.add(block);
           continue;
         }
         var prefixName = normalizeTitle(m.group(1));
-        var rest = Normalizer.normalize(p.text(), Normalizer.Form.NFC).substring(m.end()).strip();
+        var rest = Normalizer.normalize(text, Normalizer.Form.NFC).substring(m.end()).strip();
         boolean sameName = !name.isEmpty() && prefixName.equalsIgnoreCase(name);
         boolean emptyHeader = name.isEmpty() && !prefixName.matches("(?iu)(công dụng|chủ trị)");
         if (!sameName && !emptyHeader) {
