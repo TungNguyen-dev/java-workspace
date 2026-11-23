@@ -12,7 +12,7 @@ public class SharedMemorySample {
   private static final long LENGTH_OFFSET = 0;
   private static final long DATA_OFFSET = Integer.BYTES;
 
-  public static void main(String[] args) throws Throwable {
+  static void main(String[] args) throws Throwable {
     if (args.length != 1) {
       System.out.println("Usage: java SharedMemorySample <writer|reader>");
       return;

@@ -38,7 +38,7 @@ public final class DateTimeApiSamples {
 
   private DateTimeApiSamples() {}
 
-  public static void main(String[] args) {
+  static void main(String[] args) {
     parsingAndFormatting();
     arithmetic();
     adjustment();

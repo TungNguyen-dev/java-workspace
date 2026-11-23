@@ -9,7 +9,7 @@ import tungnn.tutor.java.core.lib.jdbc.extractor.model.DatabaseSchema;
 
 public class Demo {
 
-  public static void main(String[] args) {
+  static void main(String[] args) {
     String url = System.getenv("DB_URL");
     String user = System.getenv("DB_USER");
     String password = System.getenv("DB_PASS");
