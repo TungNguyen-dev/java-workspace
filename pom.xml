@@ -21,6 +21,6 @@
         <module>modules/spring-core</module>
         <module>modules/tool-crawler</module>
         <module>modules/tool-document-translation</module>
-        <module>modules/tool-hub</module>
+        <module>modules/tool-dev-desk</module>
     </modules>
 </project>

@@ -5,21 +5,22 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>tungnn.tutor.java.tool</groupId>
-        <artifactId>tool-hub</artifactId>
+        <artifactId>tool-dev-desk</artifactId>
         <version>1.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
-    <artifactId>plugin-document-converter</artifactId>
-    <description>Plugin chuyển đổi tài liệu (DOCX ↔ Markdown, trích xuất text) dùng converter của java-document
+    <artifactId>plugin-med-md-refine</artifactId>
+    <description>Plugin refine nội dung file Markdown theo bộ rule, dùng markdown adapter của java-document
     </description>
     <properties>
         <java-document.version>1.0.0-SNAPSHOT</java-document.version>
-        <log4j.version>2.26.1</log4j.version>
+        <tool-med-md-refine-core.version>0.0.1-SNAPSHOT</tool-med-md-refine-core.version>
+        <junit.version>6.0.3</junit.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>tungnn.tutor.java.tool</groupId>
-            <artifactId>tool-hub-api</artifactId>
+            <artifactId>tool-dev-desk-api</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -27,34 +28,65 @@
             <artifactId>pf4j</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- Java Infrastructure -->
         <dependency>
-            <groupId>tungnn.tutor.java.infra</groupId>
-            <artifactId>java-document</artifactId>
-            <version>${java.workspace.infra.version}</version>
+            <groupId>tungnn.tutor.java.tool</groupId>
+            <artifactId>tool-med-md-refine-core</artifactId>
+            <version>${tool-med-md-refine-core.version}</version>
             <exclusions>
-                <!-- Loại bỏ Log4j2 Implementation để nhường quyền cho Spring Boot / App chính -->
                 <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-core</artifactId>
-                </exclusion>
-                <!-- Loại bỏ SLF4J -> Log4j2 Binding để tránh trùng lặp/xung đột binding -->
-                <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-slf4j2-impl</artifactId>
+                    <groupId>tungnn.tutor.java.infra</groupId>
+                    <artifactId>java-ai</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-to-slf4j</artifactId>
-            <version>${log4j.version}</version>
+            <groupId>tungnn.tutor.java.infra</groupId>
+            <artifactId>java-document</artifactId>
+            <version>${java-document.version}</version>
             <exclusions>
+                <exclusion>
+                    <groupId>org.apache.poi</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.pdfbox</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.tika</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-compress</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tungnn.tutor.java</groupId>
+                    <artifactId>java-lib</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.oracle.database.jdbc</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.postgresql</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-api</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>
@@ -76,6 +108,10 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.4</version>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>

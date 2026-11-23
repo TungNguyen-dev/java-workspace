@@ -5,7 +5,7 @@ server:
       tracking-modes: cookie
 spring:
   application:
-    name: tool-hub-app
+    name: tool-dev-desk-app
   thymeleaf:
     cache: false
   servlet:

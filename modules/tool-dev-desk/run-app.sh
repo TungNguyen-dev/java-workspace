@@ -37,7 +37,7 @@ cd "$SCRIPT_DIR"
 mvn -q clean install
 
 mkdir -p dist/plugins
-cp tool-hub-plugins/*/target/plugin-*.zip dist/plugins/
+cp tool-dev-desk-plugins/*/target/plugin-*.zip dist/plugins/
 
 cd dist
-exec java -jar ../tool-hub-app/target/tool-hub-app-*.jar "$@"
+exec java -jar ../tool-dev-desk-app/target/tool-dev-desk-app-*.jar "$@"

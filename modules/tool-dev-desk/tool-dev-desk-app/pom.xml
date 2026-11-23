@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>tungnn.tutor.java.tool</groupId>
-        <artifactId>tool-hub</artifactId>
+        <artifactId>tool-dev-desk</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>tool-hub-app</artifactId>
+    <artifactId>tool-dev-desk-app</artifactId>
     <description>Web UI (Spring MVC + Thymeleaf) tự sinh giao diện cho các tool plugin</description>
     <dependencyManagement>
         <dependencies>
@@ -24,7 +24,7 @@
     <dependencies>
         <dependency>
             <groupId>tungnn.tutor.java.tool</groupId>
-            <artifactId>tool-hub-core</artifactId>
+            <artifactId>tool-dev-desk-core</artifactId>
             <version>${project.version}</version>
             <exclusions>
                 <exclusion>

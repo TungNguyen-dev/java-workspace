@@ -4,18 +4,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>tungnn.tutor.java.tool</groupId>
-    <artifactId>tool-hub</artifactId>
+    <artifactId>tool-dev-desk</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
-        <module>tool-hub-api</module>
-        <module>tool-hub-core</module>
-        <module>tool-hub-plugins/plugin-base64</module>
-        <module>tool-hub-plugins/plugin-samples</module>
-        <module>tool-hub-plugins/plugin-document-converter</module>
-        <module>tool-hub-plugins/plugin-docs-trans</module>
-        <module>tool-hub-plugins/plugin-med-md-refine</module>
-        <module>tool-hub-app</module>
+        <module>tool-dev-desk-api</module>
+        <module>tool-dev-desk-core</module>
+        <module>tool-dev-desk-plugins/plugin-base64</module>
+        <module>tool-dev-desk-plugins/plugin-samples</module>
+        <module>tool-dev-desk-plugins/plugin-document-converter</module>
+        <module>tool-dev-desk-plugins/plugin-docs-trans</module>
+        <module>tool-dev-desk-plugins/plugin-med-md-refine</module>
+        <module>tool-dev-desk-app</module>
     </modules>
     <properties>
         <maven.compiler.release>25</maven.compiler.release>
@@ -29,7 +29,7 @@
         <dependencies>
             <dependency>
                 <groupId>tungnn.tutor.java.tool</groupId>
-                <artifactId>tool-hub-api</artifactId>
+                <artifactId>tool-dev-desk-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
