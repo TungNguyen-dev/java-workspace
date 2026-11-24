@@ -8,7 +8,7 @@ import java.util.List;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 import tungnn.tutor.java.jackson.JsonException;
-import tungnn.tutor.java.jackson.v3.JsonUtil;
+import tungnn.tutor.java.jackson.v3.JsonUtils;
 import tungnn.tutor.java.jackson.v3.ObjectMapperCreator;
 
 public class JsonDemoRunner {
@@ -21,10 +21,10 @@ public class JsonDemoRunner {
         // =========================
         User user = new User("Tung", 25);
 
-        String json = JsonUtil.toJson(mapper, user);
+        String json = JsonUtils.toJson(mapper, user);
         System.out.println("JSON: " + json);
 
-        User userBack = JsonUtil.fromJson(mapper, json, User.class);
+        User userBack = JsonUtils.fromJson(mapper, json, User.class);
         System.out.println("Object: " + userBack.name() + ", " + userBack.age());
 
         // =========================
@@ -34,10 +34,10 @@ public class JsonDemoRunner {
         users.add(new User("A", 20));
         users.add(new User("B", 30));
 
-        String listJson = JsonUtil.toJson(mapper, users);
+        String listJson = JsonUtils.toJson(mapper, users);
         System.out.println("List JSON: " + listJson);
 
-        List<User> usersBack = JsonUtil.fromJson(mapper, listJson, new TypeReference<>() {});
+        List<User> usersBack = JsonUtils.fromJson(mapper, listJson, new TypeReference<>() {});
         System.out.println("List size: " + usersBack.size());
 
         // =========================
@@ -45,20 +45,20 @@ public class JsonDemoRunner {
         // =========================
         Path path = Path.of("storage/build/demo-user.json");
 
-        JsonUtil.writeToFile(mapper, path, user);
+        JsonUtils.writeToFile(mapper, path, user);
         System.out.println("Written to file: " + path);
 
-        User fileUser = JsonUtil.readFromFile(mapper, path, User.class);
+        User fileUser = JsonUtils.readFromFile(mapper, path, User.class);
         System.out.println("Read from file: " + fileUser);
 
         // =========================
         // 4. Streaming
         // =========================
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        JsonUtil.writeToStream(mapper, os, user);
+        JsonUtils.writeToStream(mapper, os, user);
 
         ByteArrayInputStream is = new ByteArrayInputStream(os.toByteArray());
-        User streamUser = JsonUtil.readFromStream(mapper, is, User.class);
+        User streamUser = JsonUtils.readFromStream(mapper, is, User.class);
 
         System.out.println("Stream user: " + streamUser);
 
@@ -66,7 +66,7 @@ public class JsonDemoRunner {
         // 5. Exception case
         // =========================
         try {
-            JsonUtil.fromJson(mapper, "{invalid-json}", User.class);
+            JsonUtils.fromJson(mapper, "{invalid-json}", User.class);
         } catch (JsonException e) {
             System.out.println("Expected error: " + e.getMessage());
         }

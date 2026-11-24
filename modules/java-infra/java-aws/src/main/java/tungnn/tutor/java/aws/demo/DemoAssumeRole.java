@@ -5,8 +5,8 @@ import software.amazon.awssdk.services.iam.IamClient;
 import software.amazon.awssdk.services.sts.StsClient;
 import tungnn.tutor.java.aws.client.AwsDefaultClientFactory;
 import tungnn.tutor.java.aws.client.profile.AwsProfileRegistry;
-import tungnn.tutor.java.aws.client.support.AwsCredentialsUtil;
-import tungnn.tutor.java.aws.service.iam.IamRoleUtil;
+import tungnn.tutor.java.aws.client.support.AwsCredentialsUtils;
+import tungnn.tutor.java.aws.service.iam.IamRoleUtils;
 
 public class DemoAssumeRole {
     static void main() {
@@ -20,11 +20,11 @@ public class DemoAssumeRole {
                 token = scanner.next();
                 scanner.nextLine();
             }
-            AwsCredentialsUtil.assumeRoleWithMfa(stsClient, profileRegistry.profile("dev"), token);
+            AwsCredentialsUtils.assumeRoleWithMfa(stsClient, profileRegistry.profile("dev"), token);
             profileRegistry.reloadCredentials(clientFactory);
             var profileDev = profileRegistry.profile("dev");
             var iamClient = clientFactory.getClient(IamClient.class, IamClient.builder(), profileDev);
-            var roles = IamRoleUtil.listAllRoles(iamClient);
+            var roles = IamRoleUtils.listAllRoles(iamClient);
             roles.forEach(System.out::println);
         }
     }

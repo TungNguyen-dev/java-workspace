@@ -3,7 +3,7 @@ package tungnn.tutor.java.tool.doctrans.core.service;
 import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tungnn.tutor.java.infra.document.ingestion.TikaFormatDetectorUtil;
+import tungnn.tutor.java.infra.document.ingestion.TikaFormatDetectorUtils;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslationResult;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
@@ -38,8 +38,8 @@ public class DocumentTranslationServiceImpl implements DocumentTranslationServic
     @Override
     public DocumentTranslationResult translateDocument(Path documentPath, String targetLang) {
         validateInputs(documentPath, targetLang);
-        var mediaType = TikaFormatDetectorUtil.detectMediaType(documentPath);
-        var mimeType = TikaFormatDetectorUtil.findExtensionByMediaType(mediaType)
+        var mediaType = TikaFormatDetectorUtils.detectMediaType(documentPath);
+        var mimeType = TikaFormatDetectorUtils.findExtensionByMediaType(mediaType)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Unsupported or unknown file format for path: " + documentPath));
         var request = new DocumentTranslationRequest.Standard(

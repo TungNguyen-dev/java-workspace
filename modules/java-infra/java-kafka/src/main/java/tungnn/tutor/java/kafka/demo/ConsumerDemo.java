@@ -6,7 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import tungnn.tutor.java.kafka.KafkaConfig;
-import tungnn.tutor.java.kafka.KafkaUtil;
+import tungnn.tutor.java.kafka.KafkaUtils;
 
 public class ConsumerDemo {
 
@@ -19,7 +19,7 @@ public class ConsumerDemo {
         var props = KafkaConfig.consumerProps(BOOTSTRAP_SERVER, GROUP_ID);
 
         try (KafkaConsumer<String, String> consumer =
-                KafkaUtil.newConsumer(StringDeserializer.class, StringDeserializer.class, props)) {
+                KafkaUtils.newConsumer(StringDeserializer.class, StringDeserializer.class, props)) {
 
             // Subscribe ONCE
             consumer.subscribe(Collections.singletonList(TOPIC));

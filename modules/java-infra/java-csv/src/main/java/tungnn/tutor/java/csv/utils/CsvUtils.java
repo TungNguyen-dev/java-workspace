@@ -17,8 +17,8 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
-import tungnn.tutor.java.core.lib.reflection.PropertyReflectionUtil;
-import tungnn.tutor.java.core.lib.reflection.ReflectionUtil;
+import tungnn.tutor.java.core.lib.reflection.PropertyReflectionUtils;
+import tungnn.tutor.java.core.lib.reflection.ReflectionUtils;
 
 public final class CsvUtils {
 
@@ -51,7 +51,7 @@ public final class CsvUtils {
             throw new IllegalArgumentException("Class is not record: " + clazz);
         }
 
-        var clazzProperties = PropertyReflectionUtil.resolveProperties(clazz);
+        var clazzProperties = PropertyReflectionUtils.resolveProperties(clazz);
 
         BufferedReader bufferedReader = null;
         CSVParser csvParser = null;
@@ -97,7 +97,7 @@ public final class CsvUtils {
             throw new IllegalArgumentException("Class is not record: " + clazz);
         }
 
-        var clazzProperties = PropertyReflectionUtil.resolveProperties(clazz);
+        var clazzProperties = PropertyReflectionUtils.resolveProperties(clazz);
         var clazzPropertiesSize = clazzProperties.size();
         var clazzAccessors = resolveAccessors(clazzProperties);
 
@@ -238,19 +238,19 @@ public final class CsvUtils {
     // ==========================================
 
     private static <E> E mapRecordToEntity(
-            CSVRecord csvRecord, Class<E> clazz, List<PropertyReflectionUtil.PropertyMetadata> clazzProperties) {
+            CSVRecord csvRecord, Class<E> clazz, List<PropertyReflectionUtils.PropertyMetadata> clazzProperties) {
 
         Object[] args = new Object[clazzProperties.size()];
         for (int i = 0; i < clazzProperties.size(); i++) {
             var prop = clazzProperties.get(i);
             args[i] = readValue(csvRecord, prop.field().getName(), prop.field().getType());
         }
-        return ReflectionUtil.newInstance(clazz, args);
+        return ReflectionUtils.newInstance(clazz, args);
     }
 
     @SuppressWarnings("unchecked")
     private static <E> Function<E, Object>[] resolveAccessors(
-            List<PropertyReflectionUtil.PropertyMetadata> properties) {
+            List<PropertyReflectionUtils.PropertyMetadata> properties) {
         Function<E, Object>[] accessors = new Function[properties.size()];
 
         for (int i = 0; i < properties.size(); i++) {

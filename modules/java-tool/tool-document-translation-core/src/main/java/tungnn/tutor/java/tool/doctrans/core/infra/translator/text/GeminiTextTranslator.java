@@ -2,8 +2,8 @@ package tungnn.tutor.java.tool.doctrans.core.infra.translator.text;
 
 import java.util.List;
 import tools.jackson.databind.ObjectMapper;
-import tungnn.tutor.java.core.lib.io.resource.ResourceUtil;
-import tungnn.tutor.java.jackson.v3.JsonUtil;
+import tungnn.tutor.java.core.lib.io.resource.ResourceUtils;
+import tungnn.tutor.java.jackson.v3.JsonUtils;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.AbstractTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
@@ -12,9 +12,9 @@ import tungnn.tutor.java.tool.doctrans.core.infra.pool.WebDriverPool;
 
 public class GeminiTextTranslator extends AbstractTextTranslator {
 
-    private static final ObjectMapper OBJECT_MAPPER = JsonUtil.createJsonMapper();
+    private static final ObjectMapper OBJECT_MAPPER = JsonUtils.createJsonMapper();
     private static final String PROMPT_TEMPLATE_RESOURCE = "prompt-trans-v3.md";
-    private static final String PROMPT_TEMPLATE = ResourceUtil.getResourceAsString(PROMPT_TEMPLATE_RESOURCE);
+    private static final String PROMPT_TEMPLATE = ResourceUtils.getResourceAsString(PROMPT_TEMPLATE_RESOURCE);
     private final WebDriverPool webDriverPool;
 
     public GeminiTextTranslator(WebDriverPool webDriverPool) {

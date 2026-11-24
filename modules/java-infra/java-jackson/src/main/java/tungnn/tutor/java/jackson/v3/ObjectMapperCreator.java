@@ -11,11 +11,11 @@ public final class ObjectMapperCreator {
     private ObjectMapperCreator() {}
 
     public static ObjectMapper createDefault() {
-        return JsonUtil.defaultBuilder().build();
+        return JsonUtils.defaultBuilder().build();
     }
 
     public static ObjectMapper createPretty() {
-        return JsonUtil.defaultBuilder()
+        return JsonUtils.defaultBuilder()
                 .enable(SerializationFeature.INDENT_OUTPUT)
                 .build();
     }
@@ -27,7 +27,7 @@ public final class ObjectMapperCreator {
     }
 
     public static ObjectMapper createSnakeCase() {
-        return JsonUtil.defaultBuilder()
+        return JsonUtils.defaultBuilder()
                 .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
                 .build();
     }

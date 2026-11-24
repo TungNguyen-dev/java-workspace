@@ -22,12 +22,12 @@ import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.text.PDFTextStripper;
-import tungnn.tutor.java.core.lib.io.resource.ResourceUtil;
+import tungnn.tutor.java.core.lib.io.resource.ResourceUtils;
 import tungnn.tutor.java.infra.document.adapter.pdf.stripper.PositionAwareStripper;
 
 public class PdfDocumentUtilBak {
     static void main() throws IOException {
-        var pdDocument = readDocument(ResourceUtil.getResourceAsStream("sample-pdf-letter-size.pdf"));
+        var pdDocument = readDocument(ResourceUtils.getResourceAsStream("sample-pdf-letter-size.pdf"));
         var stripper = new PositionAwareStripper();
         InputStream fontStream =
                 PDFont.class.getResourceAsStream("/org/apache/pdfbox/resources/ttf/LiberationSans-Regular.ttf");

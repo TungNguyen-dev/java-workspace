@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tungnn.tutor.java.core.lib.io.filesystem.FileNameUtil;
+import tungnn.tutor.java.core.lib.io.filesystem.FileNameUtils;
 import tungnn.tutor.java.core.lib.multithread.ConcurrentUtils;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
@@ -185,7 +185,7 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
     protected Path buildTranslationPath(DocumentTranslationRequest request) {
         var documentPath = request.documentSource().path();
         var targetCountryCode = request.targetLanguage().countryCode().toUpperCase();
-        var fileNameNew = FileNameUtil.appendFilenameSuffix(
+        var fileNameNew = FileNameUtils.appendFilenameSuffix(
                 documentPath.getFileName().toString(),
                 "_" + targetCountryCode + "_" + Instant.now().getEpochSecond());
         var parentDir = documentPath.getParent();

@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 import software.amazon.awssdk.profiles.Profile;
 import software.amazon.awssdk.profiles.ProfileFile;
 import tungnn.tutor.java.aws.client.AwsClientFactory;
-import tungnn.tutor.java.aws.client.support.AwsProfileUtil;
+import tungnn.tutor.java.aws.client.support.AwsProfileUtils;
 
 public final class AwsProfileRegistry {
     private final Supplier<ProfileFile> profileFileSupplier;
@@ -45,11 +45,11 @@ public final class AwsProfileRegistry {
     }
 
     public Profile profile(String profileName) {
-        return AwsProfileUtil.findProfile(profiles, profileName);
+        return AwsProfileUtils.findProfile(profiles, profileName);
     }
 
     public Profile defaultProfile() {
-        return profile(AwsProfileUtil.defaultProfileName());
+        return profile(AwsProfileUtils.defaultProfileName());
     }
 
     public Map<String, Profile> allProfiles() {
@@ -57,6 +57,6 @@ public final class AwsProfileRegistry {
     }
 
     private Map<String, Profile> loadProfiles() {
-        return AwsProfileUtil.loadProfiles(profileFileSupplier.get());
+        return AwsProfileUtils.loadProfiles(profileFileSupplier.get());
     }
 }

@@ -9,7 +9,7 @@ public class ReadMailExample {
     static void main(String[] args) {
         try {
             var mailPath = Path.of(args[0]);
-            var mail = MailUtil.readMail(mailPath);
+            var mail = MailUtils.readMail(mailPath);
 
             System.out.println("From: " + Arrays.toString(mail.getFrom()));
             System.out.println("To  : " + Arrays.toString(mail.getRecipients(Message.RecipientType.TO)));
@@ -21,7 +21,7 @@ public class ReadMailExample {
             System.out.println("Send Date    : " + mail.getSentDate());
             System.out.println("Receive Date : " + mail.getReceivedDate());
             System.out.println("-".repeat(80));
-            System.out.println("Mail plaintext : \n" + MailUtil.getContentAsPlainText(mail));
+            System.out.println("Mail plaintext : \n" + MailUtils.getContentAsPlainText(mail));
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }

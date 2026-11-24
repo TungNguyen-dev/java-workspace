@@ -7,8 +7,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import tungnn.tutor.java.core.lib.io.filesystem.FileNameUtil;
-import tungnn.tutor.java.core.lib.io.filesystem.FileUtil;
+import tungnn.tutor.java.core.lib.io.filesystem.FileNameUtils;
+import tungnn.tutor.java.core.lib.io.filesystem.FileUtils;
 import tungnn.tutor.java.tool.crawler.app.config.CrawlerConfig;
 import tungnn.tutor.java.tool.crawler.app.model.CrawlCourseResult;
 import tungnn.tutor.java.tool.crawler.core.domain.CrawlResult;
@@ -38,7 +38,7 @@ public class ObsidianServiceImpl implements ObsidianService {
 
     private void writeNotesForCourse(CrawlCourseResult.Course course) {
         var courseDir = crawlerConfig.outputDir().resolve(course.relativePath());
-        FileUtil.createDirectories(courseDir);
+        FileUtils.createDirectories(courseDir);
 
         var results = course.crawlResults();
         if (results == null || results.isEmpty()) {
@@ -52,7 +52,7 @@ public class ObsidianServiceImpl implements ObsidianService {
         var unitNumber = 1;
         for (var result : results) {
             if (result instanceof CrawlResult.Success success) {
-                var sanitizedTitle = FileNameUtil.sanitize(success.title());
+                var sanitizedTitle = FileNameUtils.sanitize(success.title());
                 var fileName = String.format(formatPattern, unitNumber, sanitizedTitle);
                 var destinationFile = courseDir.resolve(fileName);
 
@@ -69,7 +69,7 @@ public class ObsidianServiceImpl implements ObsidianService {
                 success.title(), success.content(), success.url(), List.of(), "TungNN", "tungnn.hn@gmail.com");
         var markdownContent = note.toMarkdown();
 
-        FileUtil.writeString(filePath, markdownContent);
+        FileUtils.writeString(filePath, markdownContent);
     }
 
     record ObsidianNote(

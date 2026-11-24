@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import org.pf4j.Extension;
-import tungnn.tutor.java.infra.document.ingestion.TikaContentExtractionUtil;
+import tungnn.tutor.java.infra.document.ingestion.TikaContentExtractionUtils;
 import tungnn.tutor.java.tool.hub.api.ParamSpec;
 import tungnn.tutor.java.tool.hub.api.ToolContext;
 import tungnn.tutor.java.tool.hub.api.ToolDescriptor;
@@ -39,7 +39,7 @@ public class ExtractTextTool implements ToolExtension {
         ToolFile file = (ToolFile) in.get("file");
         String text = ConverterSupport.withPluginClassLoader(() -> {
             try (InputStream is = new ByteArrayInputStream(file.content())) {
-                return TikaContentExtractionUtil.extractContent(is);
+                return TikaContentExtractionUtils.extractContent(is);
             }
         });
         text = text == null ? "" : text.strip();

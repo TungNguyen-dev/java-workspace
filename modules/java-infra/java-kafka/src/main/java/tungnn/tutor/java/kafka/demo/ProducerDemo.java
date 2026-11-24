@@ -3,7 +3,7 @@ package tungnn.tutor.java.kafka.demo;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import tungnn.tutor.java.kafka.KafkaConfig;
-import tungnn.tutor.java.kafka.KafkaUtil;
+import tungnn.tutor.java.kafka.KafkaUtils;
 
 public class ProducerDemo {
 
@@ -22,7 +22,7 @@ public class ProducerDemo {
 
         var props = KafkaConfig.producerProps(BOOTSTRAP_SERVER);
 
-        try (var producer = KafkaUtil.newProducer(StringSerializer.class, StringSerializer.class, props)) {
+        try (var producer = KafkaUtils.newProducer(StringSerializer.class, StringSerializer.class, props)) {
 
             var record = new ProducerRecord<>(TOPIC, key, value);
 
