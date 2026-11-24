@@ -27,7 +27,7 @@ public class ObsidianServiceImpl implements ObsidianService {
   @Override
   public void saveAllCourses(CrawlCourseResult crawlCourseResult) {
     if (crawlCourseResult == null || crawlCourseResult.courses() == null) {
-      log.warn("CrawlCourseResult hoặc danh sách khóa học rỗng, bỏ qua ghi note.");
+      log.warn("CrawlCourseResult or the course list is empty, skipping note writing.");
       return;
     }
 
@@ -58,7 +58,7 @@ public class ObsidianServiceImpl implements ObsidianService {
 
         writeLessonNote(destinationFile, success);
       } else if (result instanceof CrawlResult.Failure(Exception exception)) {
-        log.error("Bỏ qua bài học thất bại do lỗi", exception);
+        log.error("Skipping failed lesson due to error", exception);
       }
       unitNumber++;
     }
@@ -113,7 +113,7 @@ public class ObsidianServiceImpl implements ObsidianService {
       var id = now.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
       var date = now.toLocalDate().format(DateTimeFormatter.ISO_DATE);
 
-      // Tránh việc title chứa dấu ngoặc kép làm hỏng YAML frontmatter
+      // Prevent a title containing double quotes from breaking the YAML frontmatter
       var yamlTitle = title.replace("\"", "\\\"");
 
       var sb = new StringBuilder();
