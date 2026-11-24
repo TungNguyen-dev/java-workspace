@@ -10,25 +10,25 @@ import java.util.stream.Stream;
 
 void main(String[] args) {
   if (args.length == 0) {
-    System.out.println("Vui lòng truyền đường dẫn thư mục. Ví dụ: java Main.java /path/to/dir");
+    System.out.println("Please pass a directory path. Example: java Main.java /path/to/dir");
     return;
   }
 
   Path dirPath = Paths.get(args[0]);
 
   if (!Files.exists(dirPath) || !Files.isDirectory(dirPath)) {
-    System.err.println("Lỗi: Đường dẫn truyền vào không tồn tại hoặc không phải là thư mục.");
+    System.err.println("Error: the given path does not exist or is not a directory.");
     return;
   }
 
-  // Tiến hành duyệt qua tất cả các file trong thư mục
+  // Walk through all files in the directory
   try (Stream<Path> stream = Files.walk(dirPath)) {
     stream
         .filter(Files::isRegularFile)
         .filter(p -> p.toString().endsWith(".md"))
         .forEach(file -> extractUrlsFromFile(file));
   } catch (IOException e) {
-    System.err.println("Lỗi khi duyệt thư mục: " + e.getMessage());
+    System.err.println("Error while walking the directory: " + e.getMessage());
   }
 }
 
@@ -52,6 +52,6 @@ void extractUrlsFromFile(Path filePath) {
       urls.forEach(url -> System.out.println(url));
     }
   } catch (IOException e) {
-    System.err.println("Không thể đọc file " + filePath + ": " + e.getMessage());
+    System.err.println("Unable to read file " + filePath + ": " + e.getMessage());
   }
 }

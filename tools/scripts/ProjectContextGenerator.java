@@ -86,13 +86,13 @@ public final class ProjectContextGenerator {
 
     String projectName = root.getFileName() == null ? "project" : root.getFileName().toString();
 
-    // Đảm bảo thư mục đầu ra tồn tại
+    // Make sure the output directory exists
     Files.createDirectories(STORAGE_DIR);
     Path output = STORAGE_DIR.resolve(projectName + ".md");
 
     List<Path> files = collectFiles(root);
 
-    // Sử dụng BufferedWriter để tiết kiệm RAM
+    // Use a BufferedWriter to save memory
     try (BufferedWriter writer = Files.newBufferedWriter(output, StandardCharsets.UTF_8)) {
       writeHeader(writer, projectName, root, files);
       writeTree(writer, root);
@@ -182,7 +182,7 @@ public final class ProjectContextGenerator {
       }
 
       String content = readSafely(file);
-      // An toàn trước Backtick Injection bằng cách dùng 4 backticks nếu phát hiện 3 backticks
+      // Guard against backtick injection by using 4 backticks if 3 backticks are detected
       String fence = content.contains("```") ? "````" : "```";
 
       writer.write(fence + languageOf(file) + "\n");
@@ -223,7 +223,7 @@ public final class ProjectContextGenerator {
         entries.add(new FileEntry(entry, isDir, name));
       }
     }
-    // Sắp xếp không cần gọi lại I/O disk
+    // Sort without hitting the disk again
     entries.sort(
         Comparator.comparing((FileEntry e) -> !e.isDirectory())
             .thenComparing(FileEntry::name, String.CASE_INSENSITIVE_ORDER));
