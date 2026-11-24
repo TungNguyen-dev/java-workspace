@@ -54,7 +54,7 @@
     </build>
 
     <profiles>
-        <!-- Profile dev: Dùng để build executable JAR chứa tất cả benchmark runner -->
+        <!-- Dev profile: builds an executable JAR containing all benchmark runners -->
         <profile>
             <id>dev</id>
             <activation>
