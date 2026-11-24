@@ -70,7 +70,7 @@ public final class TypeUtil {
   }
 
   // ==========================================
-  // JAVADOC HELPERS (Dùng chung cho Type, Method, Field)
+  // JAVADOC HELPERS (shared by Type, Method, Field)
   // ==========================================
 
   public static Optional<JavadocComment> getJavadocComment(Node node) {

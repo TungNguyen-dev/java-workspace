@@ -28,13 +28,13 @@ public final class JavaParserUtil {
     config.setLexicalPreservationEnabled(enableLexicalPreservation);
     config.setCharacterEncoding(StandardCharsets.UTF_8);
 
-    // 1. Khởi tạo CombinedTypeSolver
+    // 1. Create the CombinedTypeSolver
     CombinedTypeSolver typeSolver = new CombinedTypeSolver();
 
-    // Hỗ trợ resolve các class thuộc JDK chuẩn (String, List, Object...)
+    // Support resolving standard JDK classes (String, List, Object...)
     typeSolver.add(new ReflectionTypeSolver());
 
-    // Hỗ trợ resolve các class nội bộ trong dự án từ các source paths
+    // Support resolving the project's own classes from the source paths
     if (sourcePaths != null) {
       for (Path srcPath : sourcePaths) {
         if (srcPath != null) {
@@ -43,7 +43,7 @@ public final class JavaParserUtil {
       }
     }
 
-    // 2. Gắn SymbolSolver vào ParserConfiguration
+    // 2. Attach the SymbolSolver to the ParserConfiguration
     JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);
     config.setSymbolResolver(symbolSolver);
 
