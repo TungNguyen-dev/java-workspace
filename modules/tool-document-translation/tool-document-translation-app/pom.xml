@@ -26,7 +26,7 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
-        <!-- Bổ sung Spring Web cho REST API -->
+        <!-- Add Spring Web for the REST API -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
