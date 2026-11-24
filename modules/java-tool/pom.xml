@@ -38,7 +38,7 @@
                 <artifactId>java-ai</artifactId>
                 <version>${java-infra.version}</version>
                 <exclusions>
-                    <!-- Nhường quyền logging implementation cho Spring Boot / app chính -->
+                    <!-- Leave the logging implementation to Spring Boot / the main app -->
                     <exclusion>
                         <groupId>org.apache.logging.log4j</groupId>
                         <artifactId>log4j-core</artifactId>
@@ -54,7 +54,7 @@
                 <artifactId>java-csv</artifactId>
                 <version>${java-infra.version}</version>
                 <exclusions>
-                    <!-- Nhường quyền logging implementation cho Spring Boot / app chính -->
+                    <!-- Leave the logging implementation to Spring Boot / the main app -->
                     <exclusion>
                         <groupId>org.apache.logging.log4j</groupId>
                         <artifactId>log4j-core</artifactId>
@@ -70,7 +70,7 @@
                 <artifactId>java-document</artifactId>
                 <version>${java-infra.version}</version>
                 <exclusions>
-                    <!-- Nhường quyền logging implementation cho Spring Boot / app chính -->
+                    <!-- Leave the logging implementation to Spring Boot / the main app -->
                     <exclusion>
                         <groupId>org.apache.logging.log4j</groupId>
                         <artifactId>log4j-core</artifactId>
@@ -86,7 +86,7 @@
                 <artifactId>java-jackson</artifactId>
                 <version>${java-infra.version}</version>
                 <exclusions>
-                    <!-- Nhường quyền logging implementation cho Spring Boot / app chính -->
+                    <!-- Leave the logging implementation to Spring Boot / the main app -->
                     <exclusion>
                         <groupId>org.apache.logging.log4j</groupId>
                         <artifactId>log4j-core</artifactId>
@@ -102,7 +102,7 @@
                 <artifactId>java-selenium</artifactId>
                 <version>${java-infra.version}</version>
                 <exclusions>
-                    <!-- Nhường quyền logging implementation cho Spring Boot / app chính -->
+                    <!-- Leave the logging implementation to Spring Boot / the main app -->
                     <exclusion>
                         <groupId>org.apache.logging.log4j</groupId>
                         <artifactId>log4j-core</artifactId>
@@ -118,7 +118,7 @@
                 <artifactId>java-lib</artifactId>
                 <version>${java-lib.version}</version>
                 <exclusions>
-                    <!-- Nhường quyền logging implementation cho Spring Boot / app chính -->
+                    <!-- Leave the logging implementation to Spring Boot / the main app -->
                     <exclusion>
                         <groupId>org.apache.logging.log4j</groupId>
                         <artifactId>log4j-core</artifactId>
