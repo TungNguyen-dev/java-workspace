@@ -4,5 +4,5 @@ import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.M
 
 @FunctionalInterface
 public interface MarkdownAction {
-  MarkdownDocument apply(MarkdownDocument doc);
+    MarkdownDocument apply(MarkdownDocument doc);
 }

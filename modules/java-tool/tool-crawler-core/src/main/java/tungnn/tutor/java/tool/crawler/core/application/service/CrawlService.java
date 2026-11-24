@@ -7,7 +7,7 @@ import tungnn.tutor.java.tool.crawler.core.application.model.CrawlResult;
 
 public interface CrawlService {
 
-  CrawlResult crawl(URI url, int unitNo, Path outputDir);
+    CrawlResult crawl(URI url, int unitNo, Path outputDir);
 
-  List<CrawlResult> crawlAll(List<URI> urls, Path outputDir);
+    List<CrawlResult> crawlAll(List<URI> urls, Path outputDir);
 }

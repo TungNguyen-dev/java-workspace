@@ -14,66 +14,66 @@ import org.openqa.selenium.WebElement;
 
 class ElementInfoTest {
 
-  private final WebElement element = mock(WebElement.class);
+    private final WebElement element = mock(WebElement.class);
 
-  @Test
-  void getTextTrimsAndHandlesNullAndStale() {
-    when(element.getText()).thenReturn("  hi  ");
-    assertThat(ElementInfo.getText(element)).isEqualTo("hi");
+    @Test
+    void getTextTrimsAndHandlesNullAndStale() {
+        when(element.getText()).thenReturn("  hi  ");
+        assertThat(ElementInfo.getText(element)).isEqualTo("hi");
 
-    assertThat(ElementInfo.getText((WebElement) null)).isEmpty();
+        assertThat(ElementInfo.getText((WebElement) null)).isEmpty();
 
-    WebElement stale = mock(WebElement.class);
-    when(stale.getText()).thenThrow(new StaleElementReferenceException("stale"));
-    assertThat(ElementInfo.getText(stale)).isEmpty();
-  }
+        WebElement stale = mock(WebElement.class);
+        when(stale.getText()).thenThrow(new StaleElementReferenceException("stale"));
+        assertThat(ElementInfo.getText(stale)).isEmpty();
+    }
 
-  @Test
-  void stateChecksReturnFalseForNullAndStaleElements() {
-    WebElement stale = mock(WebElement.class);
-    when(stale.isDisplayed()).thenThrow(new StaleElementReferenceException("stale"));
-    when(stale.isEnabled()).thenThrow(new StaleElementReferenceException("stale"));
-    when(stale.isSelected()).thenThrow(new StaleElementReferenceException("stale"));
+    @Test
+    void stateChecksReturnFalseForNullAndStaleElements() {
+        WebElement stale = mock(WebElement.class);
+        when(stale.isDisplayed()).thenThrow(new StaleElementReferenceException("stale"));
+        when(stale.isEnabled()).thenThrow(new StaleElementReferenceException("stale"));
+        when(stale.isSelected()).thenThrow(new StaleElementReferenceException("stale"));
 
-    assertThat(ElementInfo.isDisplayed(stale)).isFalse();
-    assertThat(ElementInfo.isEnabled(stale)).isFalse();
-    assertThat(ElementInfo.isSelected(stale)).isFalse();
-    assertThat(ElementInfo.isDisplayed((WebElement) null)).isFalse();
-  }
+        assertThat(ElementInfo.isDisplayed(stale)).isFalse();
+        assertThat(ElementInfo.isEnabled(stale)).isFalse();
+        assertThat(ElementInfo.isSelected(stale)).isFalse();
+        assertThat(ElementInfo.isDisplayed((WebElement) null)).isFalse();
+    }
 
-  @Test
-  void stateChecksDelegateToElement() {
-    when(element.isDisplayed()).thenReturn(true);
-    when(element.isEnabled()).thenReturn(true);
-    when(element.isSelected()).thenReturn(true);
+    @Test
+    void stateChecksDelegateToElement() {
+        when(element.isDisplayed()).thenReturn(true);
+        when(element.isEnabled()).thenReturn(true);
+        when(element.isSelected()).thenReturn(true);
 
-    assertThat(ElementInfo.isDisplayed(element)).isTrue();
-    assertThat(ElementInfo.isEnabled(element)).isTrue();
-    assertThat(ElementInfo.isSelected(element)).isTrue();
-  }
+        assertThat(ElementInfo.isDisplayed(element)).isTrue();
+        assertThat(ElementInfo.isEnabled(element)).isTrue();
+        assertThat(ElementInfo.isSelected(element)).isTrue();
+    }
 
-  @Test
-  void locatorVariantsReturnFalseWhenAbsent() {
-    SearchContext context = mock(SearchContext.class);
-    By locator = By.id("missing");
-    when(context.findElements(locator)).thenReturn(List.of());
+    @Test
+    void locatorVariantsReturnFalseWhenAbsent() {
+        SearchContext context = mock(SearchContext.class);
+        By locator = By.id("missing");
+        when(context.findElements(locator)).thenReturn(List.of());
 
-    assertThat(ElementInfo.isPresent(context, locator)).isFalse();
-    assertThat(ElementInfo.isDisplayed(context, locator)).isFalse();
-    assertThat(ElementInfo.getText(context, locator)).isEmpty();
-  }
+        assertThat(ElementInfo.isPresent(context, locator)).isFalse();
+        assertThat(ElementInfo.isDisplayed(context, locator)).isFalse();
+        assertThat(ElementInfo.getText(context, locator)).isEmpty();
+    }
 
-  @Test
-  void getValueReadsDomProperty() {
-    when(element.getDomProperty("value")).thenReturn("v");
+    @Test
+    void getValueReadsDomProperty() {
+        when(element.getDomProperty("value")).thenReturn("v");
 
-    assertThat(ElementInfo.getValue(element)).isEqualTo("v");
-  }
+        assertThat(ElementInfo.getValue(element)).isEqualTo("v");
+    }
 
-  @Test
-  void unwrapDriverRejectsPlainElement() {
-    assertThatThrownBy(() -> ElementInfo.unwrapDriver(element))
-        .isInstanceOf(UnsupportedOperationException.class)
-        .hasMessageContaining("Cannot resolve WebDriver");
-  }
+    @Test
+    void unwrapDriverRejectsPlainElement() {
+        assertThatThrownBy(() -> ElementInfo.unwrapDriver(element))
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("Cannot resolve WebDriver");
+    }
 }

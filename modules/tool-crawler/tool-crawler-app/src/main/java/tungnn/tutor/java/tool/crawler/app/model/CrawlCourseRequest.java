@@ -5,5 +5,5 @@ import java.util.Set;
 
 public record CrawlCourseRequest(Set<Course> courses) {
 
-  public record Course(Path path, Path relativePath) {}
+    public record Course(Path path, Path relativePath) {}
 }

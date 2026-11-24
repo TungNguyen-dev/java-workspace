@@ -9,11 +9,11 @@ import tungnn.tutor.java.tool.crawler.core.infra.crawler.YoutubeWebCrawler;
 
 public class WebCrawlerFactory {
 
-  public static WebCrawler create(WebCrawlerType type, WebDriver driver) {
-    return switch (type) {
-      case COURSERA -> new CourseraWebCrawler(driver);
-      case YOUTUBE -> new YoutubeWebCrawler(driver);
-      case BAELDUNG, ANTHROPIC_PARTNER, GENERIC -> new GenericWebCrawler(driver);
-    };
-  }
+    public static WebCrawler create(WebCrawlerType type, WebDriver driver) {
+        return switch (type) {
+            case COURSERA -> new CourseraWebCrawler(driver);
+            case YOUTUBE -> new YoutubeWebCrawler(driver);
+            case BAELDUNG, ANTHROPIC_PARTNER, GENERIC -> new GenericWebCrawler(driver);
+        };
+    }
 }

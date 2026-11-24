@@ -6,37 +6,33 @@ import software.amazon.awssdk.services.autoscaling.AutoScalingClient;
 import software.amazon.awssdk.services.autoscaling.model.*;
 
 public final class AutoScalingPolicyUtil {
-  private AutoScalingPolicyUtil() {}
+    private AutoScalingPolicyUtil() {}
 
-  public static DeletePolicyResponse deletePolicy(
-      AutoScalingClient client, DeletePolicyRequest request) {
-    return client.deletePolicy(request);
-  }
+    public static DeletePolicyResponse deletePolicy(AutoScalingClient client, DeletePolicyRequest request) {
+        return client.deletePolicy(request);
+    }
 
-  public static List<ScalingPolicy> describePolicies(
-      AutoScalingClient client, DescribePoliciesRequest request) {
-    return client.describePoliciesPaginator(request).stream()
-        .flatMap(r -> r.scalingPolicies().stream())
-        .collect(Collectors.toList());
-  }
+    public static List<ScalingPolicy> describePolicies(AutoScalingClient client, DescribePoliciesRequest request) {
+        return client.describePoliciesPaginator(request).stream()
+                .flatMap(r -> r.scalingPolicies().stream())
+                .collect(Collectors.toList());
+    }
 
-  public static DescribeTerminationPolicyTypesResponse describeTerminationPolicyTypes(
-      AutoScalingClient client, DescribeTerminationPolicyTypesRequest request) {
-    return client.describeTerminationPolicyTypes(request);
-  }
+    public static DescribeTerminationPolicyTypesResponse describeTerminationPolicyTypes(
+            AutoScalingClient client, DescribeTerminationPolicyTypesRequest request) {
+        return client.describeTerminationPolicyTypes(request);
+    }
 
-  public static ExecutePolicyResponse executePolicy(
-      AutoScalingClient client, ExecutePolicyRequest request) {
-    return client.executePolicy(request);
-  }
+    public static ExecutePolicyResponse executePolicy(AutoScalingClient client, ExecutePolicyRequest request) {
+        return client.executePolicy(request);
+    }
 
-  public static GetPredictiveScalingForecastResponse getPredictiveScalingForecast(
-      AutoScalingClient client, GetPredictiveScalingForecastRequest request) {
-    return client.getPredictiveScalingForecast(request);
-  }
+    public static GetPredictiveScalingForecastResponse getPredictiveScalingForecast(
+            AutoScalingClient client, GetPredictiveScalingForecastRequest request) {
+        return client.getPredictiveScalingForecast(request);
+    }
 
-  public static PutScalingPolicyResponse putScalingPolicy(
-      AutoScalingClient client, PutScalingPolicyRequest request) {
-    return client.putScalingPolicy(request);
-  }
+    public static PutScalingPolicyResponse putScalingPolicy(AutoScalingClient client, PutScalingPolicyRequest request) {
+        return client.putScalingPolicy(request);
+    }
 }

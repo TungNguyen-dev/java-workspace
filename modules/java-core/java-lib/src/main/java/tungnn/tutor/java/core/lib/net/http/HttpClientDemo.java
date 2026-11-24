@@ -8,33 +8,33 @@ import java.net.http.HttpResponse;
 
 public class HttpClientDemo {
 
-  private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
-  static void main() throws IOException, InterruptedException {
-    simpleGet();
-    asyncGet();
-  }
+    static void main() throws IOException, InterruptedException {
+        simpleGet();
+        asyncGet();
+    }
 
-  private static void simpleGet() throws IOException, InterruptedException {
-    HttpRequest request = buildGetRequest();
+    private static void simpleGet() throws IOException, InterruptedException {
+        HttpRequest request = buildGetRequest();
 
-    HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-    System.out.println(response.statusCode());
-    System.out.println(response.body());
-  }
+        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.statusCode());
+        System.out.println(response.body());
+    }
 
-  private static void asyncGet() {
-    HttpRequest request = buildGetRequest();
+    private static void asyncGet() {
+        HttpRequest request = buildGetRequest();
 
-    HTTP_CLIENT
-        .sendAsync(request, HttpResponse.BodyHandlers.ofString())
-        .thenApply(HttpResponse::body)
-        .thenAccept(System.out::println)
-        .join();
-  }
+        HTTP_CLIENT
+                .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .thenAccept(System.out::println)
+                .join();
+    }
 
-  private static HttpRequest buildGetRequest() {
-    URI uri = URI.create("https://www.google.com");
-    return HttpRequest.newBuilder().uri(uri).GET().build();
-  }
+    private static HttpRequest buildGetRequest() {
+        URI uri = URI.create("https://www.google.com");
+        return HttpRequest.newBuilder().uri(uri).GET().build();
+    }
 }

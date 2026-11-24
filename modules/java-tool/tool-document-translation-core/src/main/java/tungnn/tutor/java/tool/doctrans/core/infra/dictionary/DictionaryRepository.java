@@ -4,9 +4,9 @@ import java.util.List;
 
 public interface DictionaryRepository {
 
-  List<DictionaryItem> findAll();
+    List<DictionaryItem> findAll();
 
-  void saveAll(List<DictionaryItem> items);
+    void saveAll(List<DictionaryItem> items);
 
-  void save(DictionaryItem item);
+    void save(DictionaryItem item);
 }

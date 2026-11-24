@@ -8,59 +8,59 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import tungnn.tutor.java.selenium.driver.chrome.ChromeDriverUtils;
 
 public class PooledWebDriverPool implements WebDriverPool {
-  private final GenericObjectPool<WebDriver> pool;
+    private final GenericObjectPool<WebDriver> pool;
 
-  public PooledWebDriverPool(int maxTotal) {
-    PooledWebDriverFactory factory = new PooledWebDriverFactory(maxTotal);
-    GenericObjectPoolConfig<WebDriver> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(maxTotal);
-    config.setMaxIdle(maxTotal);
-    config.setTestOnBorrow(true);
-    config.setBlockWhenExhausted(true);
-    config.setMaxWait(Duration.ofMinutes(600));
-    this.pool = new GenericObjectPool<>(factory, config);
-  }
+    public PooledWebDriverPool(int maxTotal) {
+        PooledWebDriverFactory factory = new PooledWebDriverFactory(maxTotal);
+        GenericObjectPoolConfig<WebDriver> config = new GenericObjectPoolConfig<>();
+        config.setMaxTotal(maxTotal);
+        config.setMaxIdle(maxTotal);
+        config.setTestOnBorrow(true);
+        config.setBlockWhenExhausted(true);
+        config.setMaxWait(Duration.ofMinutes(600));
+        this.pool = new GenericObjectPool<>(factory, config);
+    }
 
-  @Override
-  public WebDriver borrowDriver() {
-    try {
-      WebDriver driver = pool.borrowObject();
-      if (driver instanceof ChromeDriver chromeDriver) {
-        ChromeDriverUtils.removeWebdriverAttribute(chromeDriver);
-      }
-      return driver;
-    } catch (Exception e) {
-      throw new RuntimeException("Unable to borrow a WebDriver from the pool", e);
+    @Override
+    public WebDriver borrowDriver() {
+        try {
+            WebDriver driver = pool.borrowObject();
+            if (driver instanceof ChromeDriver chromeDriver) {
+                ChromeDriverUtils.removeWebdriverAttribute(chromeDriver);
+            }
+            return driver;
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to borrow a WebDriver from the pool", e);
+        }
     }
-  }
 
-  @Override
-  public void returnDriver(WebDriver driver) {
-    if (driver == null) {
-      return;
+    @Override
+    public void returnDriver(WebDriver driver) {
+        if (driver == null) {
+            return;
+        }
+        try {
+            pool.returnObject(driver);
+        } catch (Exception e) {
+            try {
+                pool.invalidateObject(driver);
+            } catch (Exception ignored) {
+                safelyQuitDriver(driver);
+            }
+        }
     }
-    try {
-      pool.returnObject(driver);
-    } catch (Exception e) {
-      try {
-        pool.invalidateObject(driver);
-      } catch (Exception ignored) {
-        safelyQuitDriver(driver);
-      }
-    }
-  }
 
-  private void safelyQuitDriver(WebDriver driver) {
-    try {
-      driver.quit();
-    } catch (Exception ignored) {
+    private void safelyQuitDriver(WebDriver driver) {
+        try {
+            driver.quit();
+        } catch (Exception ignored) {
+        }
     }
-  }
 
-  @Override
-  public void close() {
-    if (!pool.isClosed()) {
-      pool.close();
+    @Override
+    public void close() {
+        if (!pool.isClosed()) {
+            pool.close();
+        }
     }
-  }
 }

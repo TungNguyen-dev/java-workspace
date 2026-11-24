@@ -5,7 +5,7 @@ import java.util.stream.Stream;
 
 public interface DictionaryTranslator {
 
-  void translate(List<DictionaryItem> dictionaryItems);
+    void translate(List<DictionaryItem> dictionaryItems);
 
-  void translate(Stream<DictionaryItem> dictionaryItems);
+    void translate(Stream<DictionaryItem> dictionaryItems);
 }

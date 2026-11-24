@@ -9,31 +9,31 @@ import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
 
 public class GenericWebCrawler extends AbstractWebCrawler {
 
-  // Locators defined as constants for code clarity and reuse
-  private static final By FIRST_HEADING_LOCATOR = By.cssSelector("h1, h2, h3, h4, h5, h6");
-  private static final By ROOT_HTML_LOCATOR = By.tagName("html");
+    // Locators defined as constants for code clarity and reuse
+    private static final By FIRST_HEADING_LOCATOR = By.cssSelector("h1, h2, h3, h4, h5, h6");
+    private static final By ROOT_HTML_LOCATOR = By.tagName("html");
 
-  public GenericWebCrawler(WebDriver driver) {
-    super(driver);
-  }
-
-  @Override
-  public boolean supports(CrawlRequest request) {
-    return true;
-  }
-
-  @Override
-  protected String getTitle() {
-    var headingElements = ElementFinder.findElements(driver, FIRST_HEADING_LOCATOR);
-    if (headingElements.isEmpty()) {
-      return "";
+    public GenericWebCrawler(WebDriver driver) {
+        super(driver);
     }
-    return headingElements.getFirst().getText();
-  }
 
-  @Override
-  protected String getContentAsHtml() {
-    var rootElement = ElementFinder.findElement(driver, ROOT_HTML_LOCATOR);
-    return ElementInfo.getAttribute(rootElement, "outerHTML");
-  }
+    @Override
+    public boolean supports(CrawlRequest request) {
+        return true;
+    }
+
+    @Override
+    protected String getTitle() {
+        var headingElements = ElementFinder.findElements(driver, FIRST_HEADING_LOCATOR);
+        if (headingElements.isEmpty()) {
+            return "";
+        }
+        return headingElements.getFirst().getText();
+    }
+
+    @Override
+    protected String getContentAsHtml() {
+        var rootElement = ElementFinder.findElement(driver, ROOT_HTML_LOCATOR);
+        return ElementInfo.getAttribute(rootElement, "outerHTML");
+    }
 }

@@ -1,7 +1,7 @@
 void main() {
-  ProductCreator productCreator = new ProductCreator();
-  Product product = productCreator.createProduct();
-  System.out.println(product.getClass().getSimpleName());
+    ProductCreator productCreator = new ProductCreator();
+    Product product = productCreator.createProduct();
+    System.out.println(product.getClass().getSimpleName());
 }
 
 // ---
@@ -9,8 +9,8 @@ void main() {
 public class Product {}
 
 public class ProductCreator {
-  // Simple factory method
-  public Product createProduct() {
-    return new Product();
-  }
+    // Simple factory method
+    public Product createProduct() {
+        return new Product();
+    }
 }

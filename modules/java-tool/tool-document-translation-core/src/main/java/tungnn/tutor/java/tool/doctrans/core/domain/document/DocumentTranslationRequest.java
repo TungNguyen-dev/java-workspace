@@ -4,20 +4,20 @@ import java.nio.file.Path;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
 
 public interface DocumentTranslationRequest {
-  DocumentSource documentSource();
+    DocumentSource documentSource();
 
-  LanguageCode targetLanguage();
+    LanguageCode targetLanguage();
 
-  record DocumentSource(Path path) {}
+    record DocumentSource(Path path) {}
 
-  record DocumentTranslationContext() {}
+    record DocumentTranslationContext() {}
 
-  record DocumentTranslationGlossary() {}
+    record DocumentTranslationGlossary() {}
 
-  record Standard(
-      DocumentSource documentSource,
-      LanguageCode targetLanguage,
-      DocumentTranslationContext translationContext,
-      DocumentTranslationGlossary translationGlossary)
-      implements DocumentTranslationRequest {}
+    record Standard(
+            DocumentSource documentSource,
+            LanguageCode targetLanguage,
+            DocumentTranslationContext translationContext,
+            DocumentTranslationGlossary translationGlossary)
+            implements DocumentTranslationRequest {}
 }

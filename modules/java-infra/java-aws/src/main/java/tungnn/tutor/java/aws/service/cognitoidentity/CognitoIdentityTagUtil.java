@@ -4,20 +4,18 @@ import software.amazon.awssdk.services.cognitoidentity.CognitoIdentityClient;
 import software.amazon.awssdk.services.cognitoidentity.model.*;
 
 public final class CognitoIdentityTagUtil {
-  private CognitoIdentityTagUtil() {}
+    private CognitoIdentityTagUtil() {}
 
-  public static ListTagsForResourceResponse listTagsForResource(
-      CognitoIdentityClient client, ListTagsForResourceRequest request) {
-    return client.listTagsForResource(request);
-  }
+    public static ListTagsForResourceResponse listTagsForResource(
+            CognitoIdentityClient client, ListTagsForResourceRequest request) {
+        return client.listTagsForResource(request);
+    }
 
-  public static TagResourceResponse tagResource(
-      CognitoIdentityClient client, TagResourceRequest request) {
-    return client.tagResource(request);
-  }
+    public static TagResourceResponse tagResource(CognitoIdentityClient client, TagResourceRequest request) {
+        return client.tagResource(request);
+    }
 
-  public static UntagResourceResponse untagResource(
-      CognitoIdentityClient client, UntagResourceRequest request) {
-    return client.untagResource(request);
-  }
+    public static UntagResourceResponse untagResource(CognitoIdentityClient client, UntagResourceRequest request) {
+        return client.untagResource(request);
+    }
 }

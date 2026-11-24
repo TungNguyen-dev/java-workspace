@@ -5,7 +5,7 @@ import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlerType;
 
 public interface WebCrawlerPool extends AutoCloseable {
 
-  WebCrawler borrowCrawler(WebCrawlerType type);
+    WebCrawler borrowCrawler(WebCrawlerType type);
 
-  void returnCrawler(WebCrawlerType type, WebCrawler webCrawler);
+    void returnCrawler(WebCrawlerType type, WebCrawler webCrawler);
 }

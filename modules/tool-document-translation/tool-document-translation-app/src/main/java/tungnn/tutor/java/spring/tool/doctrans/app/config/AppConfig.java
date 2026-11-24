@@ -24,72 +24,76 @@ import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationServiceIm
 
 @Configuration
 public class AppConfig {
-  private static final Logger LOGGER = LoggerFactory.getLogger(AppConfig.class);
-  @Autowired private DocTransConfig docTransConfig;
-  @Autowired private TranslatorConfig translatorConfig;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppConfig.class);
 
-  @Bean
-  public TextTranslator textTranslator() {
-    if (translatorConfig.isDummy()) {
-      return new DummyTextTranslator();
+    @Autowired
+    private DocTransConfig docTransConfig;
+
+    @Autowired
+    private TranslatorConfig translatorConfig;
+
+    @Bean
+    public TextTranslator textTranslator() {
+        if (translatorConfig.isDummy()) {
+            return new DummyTextTranslator();
+        }
+        var properties = translatorConfig.llmClientProperties();
+        LOGGER.info("Using LLM text translator: {}", properties);
+        var llmClient = LlmClientUtils.create(properties);
+        var maxConcurrency = translatorConfig.llmSettings().maxConcurrency();
+        return maxConcurrency == null
+                ? new LlmTextTranslator(llmClient)
+                : new LlmTextTranslator(llmClient, maxConcurrency);
     }
-    var properties = translatorConfig.llmClientProperties();
-    LOGGER.info("Using LLM text translator: {}", properties);
-    var llmClient = LlmClientUtils.create(properties);
-    var maxConcurrency = translatorConfig.llmSettings().maxConcurrency();
-    return maxConcurrency == null
-        ? new LlmTextTranslator(llmClient)
-        : new LlmTextTranslator(llmClient, maxConcurrency);
-  }
 
-  @Bean
-  public TextTranslationMemory textTranslationMemory() {
-    return new CsvFileTextTranslationMemory(docTransConfig.memoryDir());
-  }
+    @Bean
+    public TextTranslationMemory textTranslationMemory() {
+        return new CsvFileTextTranslationMemory(docTransConfig.memoryDir());
+    }
 
-  @Bean
-  @Qualifier("wordDocumentTranslator")
-  public DocumentTranslator wordDocumentTranslator(
-      TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-    return new WordDocumentTranslator(textTranslator, textTranslationMemory);
-  }
+    @Bean
+    @Qualifier("wordDocumentTranslator")
+    public DocumentTranslator wordDocumentTranslator(
+            TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
+        return new WordDocumentTranslator(textTranslator, textTranslationMemory);
+    }
 
-  @Bean
-  @Qualifier("excelDocumentTranslator")
-  public DocumentTranslator excelDocumentTranslator(
-      TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-    return new ExcelDocumentTranslator(textTranslator, textTranslationMemory);
-  }
+    @Bean
+    @Qualifier("excelDocumentTranslator")
+    public DocumentTranslator excelDocumentTranslator(
+            TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
+        return new ExcelDocumentTranslator(textTranslator, textTranslationMemory);
+    }
 
-  @Bean
-  @Qualifier("slideShowDocumentTranslator")
-  public DocumentTranslator slideShowDocumentTranslator(
-      TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-    return new SlideShowDocumentTranslator(textTranslator, textTranslationMemory);
-  }
+    @Bean
+    @Qualifier("slideShowDocumentTranslator")
+    public DocumentTranslator slideShowDocumentTranslator(
+            TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
+        return new SlideShowDocumentTranslator(textTranslator, textTranslationMemory);
+    }
 
-  @Bean
-  @Qualifier("markdownDocumentTranslator")
-  public DocumentTranslator markdownDocumentTranslator(
-      TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-    return new MarkdownDocumentTranslator(textTranslator, textTranslationMemory);
-  }
+    @Bean
+    @Qualifier("markdownDocumentTranslator")
+    public DocumentTranslator markdownDocumentTranslator(
+            TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
+        return new MarkdownDocumentTranslator(textTranslator, textTranslationMemory);
+    }
 
-  @Bean
-  public DocumentTranslationService documentTranslationService(
-      @Qualifier("wordDocumentTranslator") DocumentTranslator wordDocumentTranslator,
-      @Qualifier("excelDocumentTranslator") DocumentTranslator excelDocumentTranslator,
-      @Qualifier("slideShowDocumentTranslator") DocumentTranslator slideShowDocumentTranslator,
-      @Qualifier("markdownDocumentTranslator") DocumentTranslator markdownDocumentTranslator) {
-    return new DocumentTranslationServiceImpl(
-        (WordDocumentTranslator) wordDocumentTranslator,
-        (ExcelDocumentTranslator) excelDocumentTranslator,
-        (SlideShowDocumentTranslator) slideShowDocumentTranslator,
-        (MarkdownDocumentTranslator) markdownDocumentTranslator);
-  }
+    @Bean
+    public DocumentTranslationService documentTranslationService(
+            @Qualifier("wordDocumentTranslator") DocumentTranslator wordDocumentTranslator,
+            @Qualifier("excelDocumentTranslator") DocumentTranslator excelDocumentTranslator,
+            @Qualifier("slideShowDocumentTranslator") DocumentTranslator slideShowDocumentTranslator,
+            @Qualifier("markdownDocumentTranslator") DocumentTranslator markdownDocumentTranslator) {
+        return new DocumentTranslationServiceImpl(
+                (WordDocumentTranslator) wordDocumentTranslator,
+                (ExcelDocumentTranslator) excelDocumentTranslator,
+                (SlideShowDocumentTranslator) slideShowDocumentTranslator,
+                (MarkdownDocumentTranslator) markdownDocumentTranslator);
+    }
 
-  @Bean(destroyMethod = "shutdown")
-  public ExecutorService translationJobExecutor() {
-    return Executors.newFixedThreadPool(docTransConfig.workerThreads());
-  }
+    @Bean(destroyMethod = "shutdown")
+    public ExecutorService translationJobExecutor() {
+        return Executors.newFixedThreadPool(docTransConfig.workerThreads());
+    }
 }

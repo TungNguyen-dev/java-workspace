@@ -7,10 +7,10 @@ import tungnn.tutor.java.tool.crawler.core.domain.CrawlResult;
 
 public record CrawlCourseResult(Set<Course> courses) {
 
-  public record Course(Path relativePath, List<CrawlResult> crawlResults) {
+    public record Course(Path relativePath, List<CrawlResult> crawlResults) {
 
-    public boolean success() {
-      return crawlResults.stream().allMatch(r -> r instanceof CrawlResult.Success);
+        public boolean success() {
+            return crawlResults.stream().allMatch(r -> r instanceof CrawlResult.Success);
+        }
     }
-  }
 }

@@ -4,14 +4,13 @@ import software.amazon.awssdk.services.firehose.FirehoseClient;
 import software.amazon.awssdk.services.firehose.model.*;
 
 public final class FirehoseRecordUtil {
-  private FirehoseRecordUtil() {}
+    private FirehoseRecordUtil() {}
 
-  public static PutRecordResponse putRecord(FirehoseClient client, PutRecordRequest request) {
-    return client.putRecord(request);
-  }
+    public static PutRecordResponse putRecord(FirehoseClient client, PutRecordRequest request) {
+        return client.putRecord(request);
+    }
 
-  public static PutRecordBatchResponse putRecordBatch(
-      FirehoseClient client, PutRecordBatchRequest request) {
-    return client.putRecordBatch(request);
-  }
+    public static PutRecordBatchResponse putRecordBatch(FirehoseClient client, PutRecordBatchRequest request) {
+        return client.putRecordBatch(request);
+    }
 }

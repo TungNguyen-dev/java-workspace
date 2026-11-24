@@ -5,13 +5,13 @@ import java.util.Map;
 import org.pf4j.ExtensionPoint;
 
 public interface ToolExtension extends ExtensionPoint {
-  ToolDescriptor descriptor();
+    ToolDescriptor descriptor();
 
-  List<ParamSpec> params();
+    List<ParamSpec> params();
 
-  ToolResult execute(ToolContext ctx, Map<String, Object> input) throws ToolException;
+    ToolResult execute(ToolContext ctx, Map<String, Object> input) throws ToolException;
 
-  default void init(ToolContext ctx) {}
+    default void init(ToolContext ctx) {}
 
-  default void destroy() {}
+    default void destroy() {}
 }

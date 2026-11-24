@@ -1,13 +1,11 @@
 package tungnn.tutor.java.tool.doctrans.core.domain.text;
 
-public sealed interface TextTranslationResult
-    permits TextTranslationResult.Success, TextTranslationResult.Failure {
-  record TextTranslation(
-      String id, String original, String translation, LanguageCode languageCode) {}
+public sealed interface TextTranslationResult permits TextTranslationResult.Success, TextTranslationResult.Failure {
+    record TextTranslation(String id, String original, String translation, LanguageCode languageCode) {}
 
-  record Success(TextTranslation translation) implements TextTranslationResult {}
+    record Success(TextTranslation translation) implements TextTranslationResult {}
 
-  record Failure(Error error) implements TextTranslationResult {}
+    record Failure(Error error) implements TextTranslationResult {}
 
-  record Error(String code, String message) {}
+    record Error(String code, String message) {}
 }

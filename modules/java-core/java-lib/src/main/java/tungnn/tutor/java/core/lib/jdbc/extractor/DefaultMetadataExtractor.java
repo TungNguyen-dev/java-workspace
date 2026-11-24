@@ -14,57 +14,54 @@ import tungnn.tutor.java.core.lib.jdbc.extractor.strategy.PostgresMetadataExtrac
 
 public class DefaultMetadataExtractor implements MetadataExtractor {
 
-  private final List<MetadataExtractStrategy> strategies = new CopyOnWriteArrayList<>();
+    private final List<MetadataExtractStrategy> strategies = new CopyOnWriteArrayList<>();
 
-  public DefaultMetadataExtractor() {
-    this.strategies.add(new PostgresMetadataExtractStrategy());
-    this.strategies.add(new OracleMetadataExtractStrategy());
-  }
-
-  public DefaultMetadataExtractor(List<MetadataExtractStrategy> customStrategies) {
-    if (customStrategies != null && !customStrategies.isEmpty()) {
-      this.strategies.addAll(customStrategies);
+    public DefaultMetadataExtractor() {
+        this.strategies.add(new PostgresMetadataExtractStrategy());
+        this.strategies.add(new OracleMetadataExtractStrategy());
     }
-  }
 
-  public void registerStrategy(MetadataExtractStrategy strategy) {
-    if (strategy != null) {
-      // Put the new strategy at the head of the list so it overrides the default one
-      this.strategies.addFirst(strategy);
+    public DefaultMetadataExtractor(List<MetadataExtractStrategy> customStrategies) {
+        if (customStrategies != null && !customStrategies.isEmpty()) {
+            this.strategies.addAll(customStrategies);
+        }
     }
-  }
 
-  @Override
-  public DatabaseSchema extract(Connection connection, String catalog, String schema) {
-    return extract(connection, catalog, schema, ExtractionOptions.defaultOptions());
-  }
-
-  @Override
-  public DatabaseSchema extract(
-      Connection connection, String catalog, String schema, ExtractionOptions options) {
-    Objects.requireNonNull(connection, "Connection must not be null");
-    ExtractionOptions effectiveOptions =
-        options != null ? options : ExtractionOptions.defaultOptions();
-
-    try {
-      DatabaseMetaData metaData = connection.getMetaData();
-      String dbProductName = metaData.getDatabaseProductName();
-
-      MetadataExtractStrategy strategy = resolveStrategy(dbProductName);
-
-      return strategy.extract(connection, catalog, schema, effectiveOptions);
-
-    } catch (SQLException e) {
-      throw new RuntimeException("Failed to extract database metadata: " + e.getMessage(), e);
+    public void registerStrategy(MetadataExtractStrategy strategy) {
+        if (strategy != null) {
+            // Put the new strategy at the head of the list so it overrides the default one
+            this.strategies.addFirst(strategy);
+        }
     }
-  }
 
-  private MetadataExtractStrategy resolveStrategy(String dbProductName) {
-    return strategies.stream()
-        .filter(s -> s.supports(dbProductName))
-        .findFirst()
-        .orElseThrow(() ->
-            new UnsupportedOperationException(
-                "No MetadataExtractStrategy found for database engine: " + dbProductName));
-  }
+    @Override
+    public DatabaseSchema extract(Connection connection, String catalog, String schema) {
+        return extract(connection, catalog, schema, ExtractionOptions.defaultOptions());
+    }
+
+    @Override
+    public DatabaseSchema extract(Connection connection, String catalog, String schema, ExtractionOptions options) {
+        Objects.requireNonNull(connection, "Connection must not be null");
+        ExtractionOptions effectiveOptions = options != null ? options : ExtractionOptions.defaultOptions();
+
+        try {
+            DatabaseMetaData metaData = connection.getMetaData();
+            String dbProductName = metaData.getDatabaseProductName();
+
+            MetadataExtractStrategy strategy = resolveStrategy(dbProductName);
+
+            return strategy.extract(connection, catalog, schema, effectiveOptions);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to extract database metadata: " + e.getMessage(), e);
+        }
+    }
+
+    private MetadataExtractStrategy resolveStrategy(String dbProductName) {
+        return strategies.stream()
+                .filter(s -> s.supports(dbProductName))
+                .findFirst()
+                .orElseThrow(() -> new UnsupportedOperationException(
+                        "No MetadataExtractStrategy found for database engine: " + dbProductName));
+    }
 }

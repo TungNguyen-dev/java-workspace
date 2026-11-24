@@ -39,151 +39,147 @@ import tungnn.tutor.java.tool.hub.core.ToolRegistry;
 
 @Controller
 public class ToolController {
-  private static final Logger log = LoggerFactory.getLogger(ToolController.class);
-  private static final String DOWNLOADS_ATTR = "hub.downloads";
-  private static final int MAX_DOWNLOADS_PER_SESSION = 10;
-  private final ToolCatalog catalog;
-  private final ToolRegistry registry;
-  private final ResultViewFactory resultViews;
+    private static final Logger log = LoggerFactory.getLogger(ToolController.class);
+    private static final String DOWNLOADS_ATTR = "hub.downloads";
+    private static final int MAX_DOWNLOADS_PER_SESSION = 10;
+    private final ToolCatalog catalog;
+    private final ToolRegistry registry;
+    private final ResultViewFactory resultViews;
 
-  public ToolController(ToolCatalog catalog, ToolRegistry registry, ResultViewFactory resultViews) {
-    this.catalog = catalog;
-    this.registry = registry;
-    this.resultViews = resultViews;
-  }
-
-  private static String notFound(String id, RedirectAttributes ra) {
-    ra.addFlashAttribute("flash", "Tool '" + id + "' does not exist or the plugin has been removed.");
-    return "redirect:/";
-  }
-
-  private static String storeDownload(HttpSession session, ToolFile file) {
-    String token = UUID.randomUUID().toString();
-    Map<String, ToolFile> store = downloads(session);
-    synchronized (store) {
-      store.put(token, file);
+    public ToolController(ToolCatalog catalog, ToolRegistry registry, ResultViewFactory resultViews) {
+        this.catalog = catalog;
+        this.registry = registry;
+        this.resultViews = resultViews;
     }
-    return token;
-  }
 
-  @SuppressWarnings("unchecked")
-  private static Map<String, ToolFile> downloads(HttpSession session) {
-    synchronized (session) {
-      Object existing = session.getAttribute(DOWNLOADS_ATTR);
-      if (existing != null) return (Map<String, ToolFile>) existing;
-      Map<String, ToolFile> store =
-          new LinkedHashMap<>() {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<String, ToolFile> eldest) {
-              return size() > MAX_DOWNLOADS_PER_SESSION;
+    private static String notFound(String id, RedirectAttributes ra) {
+        ra.addFlashAttribute("flash", "Tool '" + id + "' does not exist or the plugin has been removed.");
+        return "redirect:/";
+    }
+
+    private static String storeDownload(HttpSession session, ToolFile file) {
+        String token = UUID.randomUUID().toString();
+        Map<String, ToolFile> store = downloads(session);
+        synchronized (store) {
+            store.put(token, file);
+        }
+        return token;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, ToolFile> downloads(HttpSession session) {
+        synchronized (session) {
+            Object existing = session.getAttribute(DOWNLOADS_ATTR);
+            if (existing != null) return (Map<String, ToolFile>) existing;
+            Map<String, ToolFile> store = new LinkedHashMap<>() {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, ToolFile> eldest) {
+                    return size() > MAX_DOWNLOADS_PER_SESSION;
+                }
+            };
+            session.setAttribute(DOWNLOADS_ATTR, store);
+            return store;
+        }
+    }
+
+    private static MediaType safeMediaType(String type) {
+        try {
+            return MediaType.parseMediaType(type);
+        } catch (RuntimeException e) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
+    }
+
+    @ModelAttribute
+    void common(Model model) {
+        model.addAttribute("catalog", catalog.grouped());
+        model.addAttribute("toolCount", catalog.count());
+    }
+
+    @GetMapping("/")
+    public String index() {
+        return "index";
+    }
+
+    @GetMapping("/tools/{id}")
+    public String show(@PathVariable String id, Model model, RedirectAttributes ra) {
+        Optional<ToolView> tool = catalog.find(id);
+        if (tool.isEmpty()) return notFound(id, ra);
+        Map<String, String> defaults = new LinkedHashMap<>();
+        for (FieldView f : tool.get().fields()) {
+            if (f.defaultValue() != null) defaults.put(f.name(), f.defaultValue());
+        }
+        return render(model, tool.get(), defaults, Map.of(), null, null);
+    }
+
+    @PostMapping("/tools/{id}")
+    public String run(
+            @PathVariable String id,
+            @RequestParam Map<String, String> params,
+            HttpServletRequest request,
+            Model model,
+            RedirectAttributes ra) {
+        Optional<ToolView> found = catalog.find(id);
+        Optional<ToolExtension> ext = registry.get(id);
+        if (found.isEmpty() || ext.isEmpty()) return notFound(id, ra);
+        ToolView tool = found.get();
+        Map<String, MultipartFile> files =
+                request instanceof MultipartHttpServletRequest mr ? mr.getFileMap() : Map.of();
+        BindResult bound = ParamBinder.bind(tool.fields(), params, files);
+        if (bound.hasErrors()) {
+            return render(model, tool, params, bound.errors(), null, "Invalid input");
+        }
+        ToolContext ctx = registry.context(id).orElse(null);
+        long start = System.nanoTime();
+        try {
+            ToolResult result = ext.get().execute(ctx, bound.input());
+            long ms = (System.nanoTime() - start) / 1_000_000;
+            if (result == null) return render(model, tool, params, Map.of(), null, "The tool returned no result");
+            if (!result.success()) {
+                String msg = result.message() == null ? "Tool reported an error" : result.message();
+                return render(model, tool, params, Map.of(), null, msg);
             }
-          };
-      session.setAttribute(DOWNLOADS_ATTR, store);
-      return store;
+            ResultView view = resultViews.create(result, ms, file -> storeDownload(request.getSession(), file));
+            return render(model, tool, params, Map.of(), view, null);
+        } catch (ToolException e) {
+            return render(model, tool, params, Map.of(), null, e.getMessage());
+        } catch (RuntimeException e) {
+            log.error("Tool {} failed while running", id, e);
+            return render(model, tool, params, Map.of(), null, "Unexpected error: " + e);
+        } catch (LinkageError e) {
+            log.error("Tool {} has a library compatibility error", id, e);
+            return render(model, tool, params, Map.of(), null, "Plugin library compatibility error: " + e);
+        }
     }
-  }
 
-  private static MediaType safeMediaType(String type) {
-    try {
-      return MediaType.parseMediaType(type);
-    } catch (RuntimeException e) {
-      return MediaType.APPLICATION_OCTET_STREAM;
+    @GetMapping("/tools/{id}/download/{token}")
+    public ResponseEntity<byte[]> download(@PathVariable String id, @PathVariable String token, HttpSession session) {
+        ToolFile file = downloads(session).get(token);
+        if (file == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(file.filename(), StandardCharsets.UTF_8)
+                                .build()
+                                .toString())
+                .contentType(safeMediaType(file.contentType()))
+                .contentLength(file.size())
+                .body(file.content());
     }
-  }
 
-  @ModelAttribute
-  void common(Model model) {
-    model.addAttribute("catalog", catalog.grouped());
-    model.addAttribute("toolCount", catalog.count());
-  }
-
-  @GetMapping("/")
-  public String index() {
-    return "index";
-  }
-
-  @GetMapping("/tools/{id}")
-  public String show(@PathVariable String id, Model model, RedirectAttributes ra) {
-    Optional<ToolView> tool = catalog.find(id);
-    if (tool.isEmpty()) return notFound(id, ra);
-    Map<String, String> defaults = new LinkedHashMap<>();
-    for (FieldView f : tool.get().fields()) {
-      if (f.defaultValue() != null) defaults.put(f.name(), f.defaultValue());
+    private String render(
+            Model model,
+            ToolView tool,
+            Map<String, String> values,
+            Map<String, String> errors,
+            ResultView result,
+            String error) {
+        model.addAttribute("tool", tool);
+        model.addAttribute("values", values);
+        model.addAttribute("errors", errors);
+        model.addAttribute("result", result);
+        model.addAttribute("error", error);
+        return tool.template();
     }
-    return render(model, tool.get(), defaults, Map.of(), null, null);
-  }
-
-  @PostMapping("/tools/{id}")
-  public String run(
-      @PathVariable String id,
-      @RequestParam Map<String, String> params,
-      HttpServletRequest request,
-      Model model,
-      RedirectAttributes ra) {
-    Optional<ToolView> found = catalog.find(id);
-    Optional<ToolExtension> ext = registry.get(id);
-    if (found.isEmpty() || ext.isEmpty()) return notFound(id, ra);
-    ToolView tool = found.get();
-    Map<String, MultipartFile> files =
-        request instanceof MultipartHttpServletRequest mr ? mr.getFileMap() : Map.of();
-    BindResult bound = ParamBinder.bind(tool.fields(), params, files);
-    if (bound.hasErrors()) {
-      return render(model, tool, params, bound.errors(), null, "Invalid input");
-    }
-    ToolContext ctx = registry.context(id).orElse(null);
-    long start = System.nanoTime();
-    try {
-      ToolResult result = ext.get().execute(ctx, bound.input());
-      long ms = (System.nanoTime() - start) / 1_000_000;
-      if (result == null)
-        return render(model, tool, params, Map.of(), null, "The tool returned no result");
-      if (!result.success()) {
-        String msg = result.message() == null ? "Tool reported an error" : result.message();
-        return render(model, tool, params, Map.of(), null, msg);
-      }
-      ResultView view =
-          resultViews.create(result, ms, file -> storeDownload(request.getSession(), file));
-      return render(model, tool, params, Map.of(), view, null);
-    } catch (ToolException e) {
-      return render(model, tool, params, Map.of(), null, e.getMessage());
-    } catch (RuntimeException e) {
-      log.error("Tool {} failed while running", id, e);
-      return render(model, tool, params, Map.of(), null, "Unexpected error: " + e);
-    } catch (LinkageError e) {
-      log.error("Tool {} has a library compatibility error", id, e);
-      return render(model, tool, params, Map.of(), null, "Plugin library compatibility error: " + e);
-    }
-  }
-
-  @GetMapping("/tools/{id}/download/{token}")
-  public ResponseEntity<byte[]> download(
-      @PathVariable String id, @PathVariable String token, HttpSession session) {
-    ToolFile file = downloads(session).get(token);
-    if (file == null) return ResponseEntity.notFound().build();
-    return ResponseEntity.ok()
-        .header(
-            HttpHeaders.CONTENT_DISPOSITION,
-            ContentDisposition.attachment()
-                .filename(file.filename(), StandardCharsets.UTF_8)
-                .build()
-                .toString())
-        .contentType(safeMediaType(file.contentType()))
-        .contentLength(file.size())
-        .body(file.content());
-  }
-
-  private String render(
-      Model model,
-      ToolView tool,
-      Map<String, String> values,
-      Map<String, String> errors,
-      ResultView result,
-      String error) {
-    model.addAttribute("tool", tool);
-    model.addAttribute("values", values);
-    model.addAttribute("errors", errors);
-    model.addAttribute("result", result);
-    model.addAttribute("error", error);
-    return tool.template();
-  }
 }

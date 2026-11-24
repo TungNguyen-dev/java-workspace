@@ -12,26 +12,26 @@ import tungnn.tutor.java.tool.crawler.core.infra.webpage.SpringDocPage;
 
 public class CrawlApplicationSpringDocUseCase {
 
-  static void main() throws IOException {
-    new CrawlApplicationSpringDocUseCase().run();
-  }
-
-  private void run() throws IOException {
-    var driver = ChromeDriverUtils.createDriver("profile_0");
-    try {
-      var page = new SpringDocPage(driver);
-      var results = page.crawlAll();
-      var storageDir = Path.of("storage", "spring-docs");
-      FileUtil.createDirectories(storageDir);
-      var counter = new AtomicInteger(0);
-      results.forEach(result -> {
-        var count = counter.incrementAndGet();
-        var filename = FileNameUtil.sanitize("%03d - %s.md".formatted(count, result.title()));
-        var note = new ObsidianNote(result.title(), result.content(), List.of(result.url()));
-        FileUtil.writeString(storageDir.resolve(filename), note.toMarkdown());
-      });
-    } finally {
-      driver.quit();
+    static void main() throws IOException {
+        new CrawlApplicationSpringDocUseCase().run();
     }
-  }
+
+    private void run() throws IOException {
+        var driver = ChromeDriverUtils.createDriver("profile_0");
+        try {
+            var page = new SpringDocPage(driver);
+            var results = page.crawlAll();
+            var storageDir = Path.of("storage", "spring-docs");
+            FileUtil.createDirectories(storageDir);
+            var counter = new AtomicInteger(0);
+            results.forEach(result -> {
+                var count = counter.incrementAndGet();
+                var filename = FileNameUtil.sanitize("%03d - %s.md".formatted(count, result.title()));
+                var note = new ObsidianNote(result.title(), result.content(), List.of(result.url()));
+                FileUtil.writeString(storageDir.resolve(filename), note.toMarkdown());
+            });
+        } finally {
+            driver.quit();
+        }
+    }
 }

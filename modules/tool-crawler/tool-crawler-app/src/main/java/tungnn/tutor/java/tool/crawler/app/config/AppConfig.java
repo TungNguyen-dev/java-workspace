@@ -8,19 +8,19 @@ import tungnn.tutor.java.tool.crawler.core.infra.pool.*;
 @Configuration
 public class AppConfig {
 
-  @Bean
-  public WebDriverPool driverPool() {
-    return new PooledWebDriverPool(10);
-  }
+    @Bean
+    public WebDriverPool driverPool() {
+        return new PooledWebDriverPool(10);
+    }
 
-  @Bean
-  public WebCrawlerPool webCrawlerPool(WebDriverPool driverPool) {
-    var factory = new KeyedPooledWebCrawlerFactory(driverPool);
-    return new KeyedPooledWebCrawlerPool(factory);
-  }
+    @Bean
+    public WebCrawlerPool webCrawlerPool(WebDriverPool driverPool) {
+        var factory = new KeyedPooledWebCrawlerFactory(driverPool);
+        return new KeyedPooledWebCrawlerPool(factory);
+    }
 
-  @Bean
-  public BatchCrawlExecutor batchCrawlExecutor(WebCrawlerPool webCrawlerPool) {
-    return new BatchCrawlExecutor(webCrawlerPool);
-  }
+    @Bean
+    public BatchCrawlExecutor batchCrawlExecutor(WebCrawlerPool webCrawlerPool) {
+        return new BatchCrawlExecutor(webCrawlerPool);
+    }
 }

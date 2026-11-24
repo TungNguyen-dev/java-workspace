@@ -9,52 +9,50 @@ import tungnn.tutor.java.core.lib.net.socket.utils.SocketUtils;
 
 public class SimpleUdpClient {
 
-  static void main() {
-    String serverHost = "localhost";
-    int serverPort = 9876;
-    int bufferSize = 1024;
+    static void main() {
+        String serverHost = "localhost";
+        int serverPort = 9876;
+        int bufferSize = 1024;
 
-    System.out.println("Starting UDP Client targeting " + serverHost + ":" + serverPort);
+        System.out.println("Starting UDP Client targeting " + serverHost + ":" + serverPort);
 
-    // Create a UDP socket on a local ephemeral port assigned by the OS
-    try (DatagramSocket clientSocket = SocketUtils.createUdpSocketOnEphemeralPort();
-        BufferedReader consoleInput = new BufferedReader(new InputStreamReader(System.in))) {
+        // Create a UDP socket on a local ephemeral port assigned by the OS
+        try (DatagramSocket clientSocket = SocketUtils.createUdpSocketOnEphemeralPort();
+                BufferedReader consoleInput = new BufferedReader(new InputStreamReader(System.in))) {
 
-      System.out.println("Ready! Type messages to send. Type 'exit' to quit.");
+            System.out.println("Ready! Type messages to send. Type 'exit' to quit.");
 
-      while (true) {
-        System.out.print("> ");
-        String userInput = consoleInput.readLine();
+            while (true) {
+                System.out.print("> ");
+                String userInput = consoleInput.readLine();
 
-        if (userInput == null) {
-          break;
+                if (userInput == null) {
+                    break;
+                }
+
+                byte[] sendData = userInput.getBytes(StandardCharsets.UTF_8);
+
+                // 1. Send the UDP packet to the server
+                DatagramPacket sendPacket = SocketUtils.createUdpSendPacket(sendData, serverHost, serverPort);
+                clientSocket.send(sendPacket);
+
+                // 2. If the user types 'exit', stop the client without waiting for a reply
+                if ("exit".equalsIgnoreCase(userInput.trim())) {
+                    System.out.println("Closing client connection...");
+                    break;
+                }
+
+                // 3. Receive the reply from the server
+                DatagramPacket receivePacket = SocketUtils.createUdpReceivePacket(bufferSize);
+                SocketUtils.receiveUdpBytes(clientSocket, receivePacket);
+
+                String response =
+                        new String(receivePacket.getData(), 0, receivePacket.getLength(), StandardCharsets.UTF_8);
+
+                System.out.println("Server response: " + response);
+            }
+        } catch (Exception e) {
+            System.err.println("UDP Client error: " + e.getMessage());
         }
-
-        byte[] sendData = userInput.getBytes(StandardCharsets.UTF_8);
-
-        // 1. Send the UDP packet to the server
-        DatagramPacket sendPacket =
-            SocketUtils.createUdpSendPacket(sendData, serverHost, serverPort);
-        clientSocket.send(sendPacket);
-
-        // 2. If the user types 'exit', stop the client without waiting for a reply
-        if ("exit".equalsIgnoreCase(userInput.trim())) {
-          System.out.println("Closing client connection...");
-          break;
-        }
-
-        // 3. Receive the reply from the server
-        DatagramPacket receivePacket = SocketUtils.createUdpReceivePacket(bufferSize);
-        SocketUtils.receiveUdpBytes(clientSocket, receivePacket);
-
-        String response =
-            new String(
-                receivePacket.getData(), 0, receivePacket.getLength(), StandardCharsets.UTF_8);
-
-        System.out.println("Server response: " + response);
-      }
-    } catch (Exception e) {
-      System.err.println("UDP Client error: " + e.getMessage());
     }
-  }
 }

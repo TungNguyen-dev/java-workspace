@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class CrawlerToolAppApplication {
 
-  static void main(String[] args) {
-    SpringApplication.run(CrawlerToolAppApplication.class, args);
-  }
+    static void main(String[] args) {
+        SpringApplication.run(CrawlerToolAppApplication.class, args);
+    }
 }

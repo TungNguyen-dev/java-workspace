@@ -8,13 +8,13 @@ import tungnn.tutor.java.ast.java.JavaParsingException;
 
 public final class CompilationUtil {
 
-  private CompilationUtil() {}
+    private CompilationUtil() {}
 
-  public static CompilationUnit parseCompilationUnit(JavaParser parser, Path path) {
-    try {
-      return parser.parse(path).getResult().orElseThrow();
-    } catch (IOException e) {
-      throw new JavaParsingException("Failed to parse file: " + path.toString());
+    public static CompilationUnit parseCompilationUnit(JavaParser parser, Path path) {
+        try {
+            return parser.parse(path).getResult().orElseThrow();
+        } catch (IOException e) {
+            throw new JavaParsingException("Failed to parse file: " + path.toString());
+        }
     }
-  }
 }

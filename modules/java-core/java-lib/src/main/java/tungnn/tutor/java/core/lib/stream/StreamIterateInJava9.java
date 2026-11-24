@@ -4,7 +4,7 @@ import java.util.stream.Stream;
 
 public class StreamIterateInJava9 {
 
-  static void main() {
-    Stream.iterate(0, n -> n <= 10, n -> n + 1).forEach(System.out::println);
-  }
+    static void main() {
+        Stream.iterate(0, n -> n <= 10, n -> n + 1).forEach(System.out::println);
+    }
 }

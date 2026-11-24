@@ -5,5 +5,5 @@ import tungnn.tutor.java.tool.crawler.app.model.CrawlCourseResult;
 
 public interface CrawlerService {
 
-  CrawlCourseResult crawlCourse(CrawlCourseRequest request);
+    CrawlCourseResult crawlCourse(CrawlCourseRequest request);
 }

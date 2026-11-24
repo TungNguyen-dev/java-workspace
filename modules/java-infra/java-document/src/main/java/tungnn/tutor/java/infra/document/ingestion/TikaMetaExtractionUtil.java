@@ -13,32 +13,31 @@ import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 
 public final class TikaMetaExtractionUtil {
-  private TikaMetaExtractionUtil() {
-    throw new UnsupportedOperationException("Utility class cannot be instantiated");
-  }
-
-  public static Metadata extractMetadata(Path path) {
-    Objects.requireNonNull(path, "Path must not be null");
-    Parser parser = new AutoDetectParser();
-    BodyContentHandler handler = new BodyContentHandler(-1);
-    Metadata metadata = new Metadata();
-    ParseContext context = new ParseContext();
-    try (TikaInputStream tis = TikaInputStream.get(path, metadata)) {
-      parser.parse(tis, handler, metadata, context);
-      return metadata;
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to extract metadata from path: " + path, e);
+    private TikaMetaExtractionUtil() {
+        throw new UnsupportedOperationException("Utility class cannot be instantiated");
     }
-  }
 
-  public static Map<String, String> extractMetadataAsMap(Path path) {
-    Metadata metadata = extractMetadata(path);
-    return metadataToMap(metadata);
-  }
+    public static Metadata extractMetadata(Path path) {
+        Objects.requireNonNull(path, "Path must not be null");
+        Parser parser = new AutoDetectParser();
+        BodyContentHandler handler = new BodyContentHandler(-1);
+        Metadata metadata = new Metadata();
+        ParseContext context = new ParseContext();
+        try (TikaInputStream tis = TikaInputStream.get(path, metadata)) {
+            parser.parse(tis, handler, metadata, context);
+            return metadata;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to extract metadata from path: " + path, e);
+        }
+    }
 
-  private static Map<String, String> metadataToMap(Metadata metadata) {
-    return Arrays.stream(metadata.names())
-        .collect(
-            Collectors.toMap(name -> name, metadata::get, (existing, replacement) -> existing));
-  }
+    public static Map<String, String> extractMetadataAsMap(Path path) {
+        Metadata metadata = extractMetadata(path);
+        return metadataToMap(metadata);
+    }
+
+    private static Map<String, String> metadataToMap(Metadata metadata) {
+        return Arrays.stream(metadata.names())
+                .collect(Collectors.toMap(name -> name, metadata::get, (existing, replacement) -> existing));
+    }
 }

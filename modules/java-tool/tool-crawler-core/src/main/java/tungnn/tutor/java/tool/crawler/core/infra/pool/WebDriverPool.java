@@ -4,7 +4,7 @@ import org.openqa.selenium.WebDriver;
 
 public interface WebDriverPool extends AutoCloseable {
 
-  WebDriver borrowDriver();
+    WebDriver borrowDriver();
 
-  void returnDriver(WebDriver driver);
+    void returnDriver(WebDriver driver);
 }

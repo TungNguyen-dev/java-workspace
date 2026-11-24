@@ -17,37 +17,36 @@ import tungnn.tutor.java.tool.hub.api.ToolResult;
 
 @Extension
 public class ExtractTextTool implements ToolExtension {
-  @Override
-  public ToolDescriptor descriptor() {
-    return new ToolDescriptor(
-        "extract-text",
-        "Document → Text",
-        "Extract text content from PDF, Word, Excel, PowerPoint, HTML... (Apache Tika)",
-        "document",
-        ToolLayout.FILE);
-  }
-
-  @Override
-  public List<ParamSpec> params() {
-    return List.of(
-        new ParamSpec("file", "file", true, "Document"),
-        new ParamSpec("output", ConverterSupport.OUTPUT_TYPE, true, "Result", "preview"));
-  }
-
-  @Override
-  public ToolResult execute(ToolContext ctx, Map<String, Object> in) throws ToolException {
-    ToolFile file = (ToolFile) in.get("file");
-    String text =
-        ConverterSupport.withPluginClassLoader(() -> {
-          try (InputStream is = new ByteArrayInputStream(file.content())) {
-            return TikaContentExtractionUtil.extractContent(is);
-          }
-        });
-    text = text == null ? "" : text.strip();
-    if (text.isEmpty()) {
-      return new ToolResult(true, "", "Unable to extract any text (image/scanned file?)");
+    @Override
+    public ToolDescriptor descriptor() {
+        return new ToolDescriptor(
+                "extract-text",
+                "Document → Text",
+                "Extract text content from PDF, Word, Excel, PowerPoint, HTML... (Apache Tika)",
+                "document",
+                ToolLayout.FILE);
     }
-    return ConverterSupport.textResult(
-        text, in.get("output"), ConverterSupport.baseName(file.filename()) + ".txt", "text/plain");
-  }
+
+    @Override
+    public List<ParamSpec> params() {
+        return List.of(
+                new ParamSpec("file", "file", true, "Document"),
+                new ParamSpec("output", ConverterSupport.OUTPUT_TYPE, true, "Result", "preview"));
+    }
+
+    @Override
+    public ToolResult execute(ToolContext ctx, Map<String, Object> in) throws ToolException {
+        ToolFile file = (ToolFile) in.get("file");
+        String text = ConverterSupport.withPluginClassLoader(() -> {
+            try (InputStream is = new ByteArrayInputStream(file.content())) {
+                return TikaContentExtractionUtil.extractContent(is);
+            }
+        });
+        text = text == null ? "" : text.strip();
+        if (text.isEmpty()) {
+            return new ToolResult(true, "", "Unable to extract any text (image/scanned file?)");
+        }
+        return ConverterSupport.textResult(
+                text, in.get("output"), ConverterSupport.baseName(file.filename()) + ".txt", "text/plain");
+    }
 }

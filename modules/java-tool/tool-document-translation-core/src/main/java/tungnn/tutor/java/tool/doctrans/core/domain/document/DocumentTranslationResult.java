@@ -3,12 +3,12 @@ package tungnn.tutor.java.tool.doctrans.core.domain.document;
 import java.nio.file.Path;
 
 public sealed interface DocumentTranslationResult
-    permits DocumentTranslationResult.Success, DocumentTranslationResult.Failure {
-  record DocumentTranslation(Path path) {}
+        permits DocumentTranslationResult.Success, DocumentTranslationResult.Failure {
+    record DocumentTranslation(Path path) {}
 
-  record Success(DocumentTranslation translation) implements DocumentTranslationResult {}
+    record Success(DocumentTranslation translation) implements DocumentTranslationResult {}
 
-  record Failure(Error error) implements DocumentTranslationResult {}
+    record Failure(Error error) implements DocumentTranslationResult {}
 
-  record Error(String code, String message) {}
+    record Error(String code, String message) {}
 }

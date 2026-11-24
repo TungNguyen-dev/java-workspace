@@ -4,25 +4,25 @@ import software.amazon.awssdk.services.rds.RdsClient;
 import software.amazon.awssdk.services.rds.model.*;
 
 public final class RdsSubnetGroupUtil {
-  private RdsSubnetGroupUtil() {}
+    private RdsSubnetGroupUtil() {}
 
-  public static CreateDbSubnetGroupResponse createDBSubnetGroup(
-      RdsClient client, CreateDbSubnetGroupRequest request) {
-    return client.createDBSubnetGroup(request);
-  }
+    public static CreateDbSubnetGroupResponse createDBSubnetGroup(
+            RdsClient client, CreateDbSubnetGroupRequest request) {
+        return client.createDBSubnetGroup(request);
+    }
 
-  public static DeleteDbSubnetGroupResponse deleteDBSubnetGroup(
-      RdsClient client, DeleteDbSubnetGroupRequest request) {
-    return client.deleteDBSubnetGroup(request);
-  }
+    public static DeleteDbSubnetGroupResponse deleteDBSubnetGroup(
+            RdsClient client, DeleteDbSubnetGroupRequest request) {
+        return client.deleteDBSubnetGroup(request);
+    }
 
-  public static DescribeDbSubnetGroupsResponse describeDBSubnetGroups(
-      RdsClient client, DescribeDbSubnetGroupsRequest request) {
-    return client.describeDBSubnetGroups(request);
-  }
+    public static DescribeDbSubnetGroupsResponse describeDBSubnetGroups(
+            RdsClient client, DescribeDbSubnetGroupsRequest request) {
+        return client.describeDBSubnetGroups(request);
+    }
 
-  public static ModifyDbSubnetGroupResponse modifyDBSubnetGroup(
-      RdsClient client, ModifyDbSubnetGroupRequest request) {
-    return client.modifyDBSubnetGroup(request);
-  }
+    public static ModifyDbSubnetGroupResponse modifyDBSubnetGroup(
+            RdsClient client, ModifyDbSubnetGroupRequest request) {
+        return client.modifyDBSubnetGroup(request);
+    }
 }

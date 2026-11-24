@@ -8,37 +8,37 @@ import org.apache.kafka.common.serialization.Serializer;
 
 public final class KafkaUtil {
 
-  private KafkaUtil() {
-    throw new UnsupportedOperationException("Utility class");
-  }
+    private KafkaUtil() {
+        throw new UnsupportedOperationException("Utility class");
+    }
 
-  // ===== CONSUMER =====
-  public static <K, V> KafkaConsumer<K, V> newConsumer(
-      Class<? extends Deserializer<K>> keyDeserializer,
-      Class<? extends Deserializer<V>> valueDeserializer,
-      Properties baseProps) {
+    // ===== CONSUMER =====
+    public static <K, V> KafkaConsumer<K, V> newConsumer(
+            Class<? extends Deserializer<K>> keyDeserializer,
+            Class<? extends Deserializer<V>> valueDeserializer,
+            Properties baseProps) {
 
-    var props = new Properties();
-    props.putAll(baseProps);
+        var props = new Properties();
+        props.putAll(baseProps);
 
-    props.put("key.deserializer", keyDeserializer.getName());
-    props.put("value.deserializer", valueDeserializer.getName());
+        props.put("key.deserializer", keyDeserializer.getName());
+        props.put("value.deserializer", valueDeserializer.getName());
 
-    return new KafkaConsumer<>(props);
-  }
+        return new KafkaConsumer<>(props);
+    }
 
-  // ===== PRODUCER =====
-  public static <K, V> KafkaProducer<K, V> newProducer(
-      Class<? extends Serializer<K>> keySerializer,
-      Class<? extends Serializer<V>> valueSerializer,
-      Properties baseProps) {
+    // ===== PRODUCER =====
+    public static <K, V> KafkaProducer<K, V> newProducer(
+            Class<? extends Serializer<K>> keySerializer,
+            Class<? extends Serializer<V>> valueSerializer,
+            Properties baseProps) {
 
-    var props = new Properties();
-    props.putAll(baseProps);
+        var props = new Properties();
+        props.putAll(baseProps);
 
-    props.put("key.serializer", keySerializer.getName());
-    props.put("value.serializer", valueSerializer.getName());
+        props.put("key.serializer", keySerializer.getName());
+        props.put("value.serializer", valueSerializer.getName());
 
-    return new KafkaProducer<>(props);
-  }
+        return new KafkaProducer<>(props);
+    }
 }

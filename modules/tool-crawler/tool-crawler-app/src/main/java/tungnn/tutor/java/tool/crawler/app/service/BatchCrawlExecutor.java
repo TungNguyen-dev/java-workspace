@@ -12,41 +12,40 @@ import tungnn.tutor.java.tool.crawler.core.infra.pool.WebCrawlerPool;
 
 public class BatchCrawlExecutor {
 
-  private final WebCrawlerPool webCrawlerPool;
+    private final WebCrawlerPool webCrawlerPool;
 
-  public BatchCrawlExecutor(WebCrawlerPool webCrawlerPool) {
-    this.webCrawlerPool = webCrawlerPool;
-  }
-
-  public Map<CrawlRequest, CrawlResult> submitBatch(List<CrawlRequest.WebPage> batchWebRequests) {
-    if (batchWebRequests == null || batchWebRequests.isEmpty()) {
-      return Map.of();
+    public BatchCrawlExecutor(WebCrawlerPool webCrawlerPool) {
+        this.webCrawlerPool = webCrawlerPool;
     }
 
-    List<CrawlResult> results =
-        ConcurrentUtils.executeConcurrently(batchWebRequests, this::executeCrawl);
+    public Map<CrawlRequest, CrawlResult> submitBatch(List<CrawlRequest.WebPage> batchWebRequests) {
+        if (batchWebRequests == null || batchWebRequests.isEmpty()) {
+            return Map.of();
+        }
 
-    Map<CrawlRequest, CrawlResult> crawlResults = new HashMap<>(batchWebRequests.size());
+        List<CrawlResult> results = ConcurrentUtils.executeConcurrently(batchWebRequests, this::executeCrawl);
 
-    for (int i = 0; i < batchWebRequests.size(); i++) {
-      crawlResults.putIfAbsent(batchWebRequests.get(i), results.get(i));
+        Map<CrawlRequest, CrawlResult> crawlResults = new HashMap<>(batchWebRequests.size());
+
+        for (int i = 0; i < batchWebRequests.size(); i++) {
+            crawlResults.putIfAbsent(batchWebRequests.get(i), results.get(i));
+        }
+
+        return crawlResults;
     }
 
-    return crawlResults;
-  }
-
-  private CrawlResult executeCrawl(CrawlRequest.WebPage request) {
-    var crawlerType = WebCrawlerType.resolveType(request);
-    WebCrawler crawler = null;
-    try {
-      crawler = webCrawlerPool.borrowCrawler(crawlerType);
-      return crawler.crawl(request);
-    } catch (Exception e) {
-      return new CrawlResult.Failure(e);
-    } finally {
-      if (crawler != null) {
-        webCrawlerPool.returnCrawler(crawlerType, crawler);
-      }
+    private CrawlResult executeCrawl(CrawlRequest.WebPage request) {
+        var crawlerType = WebCrawlerType.resolveType(request);
+        WebCrawler crawler = null;
+        try {
+            crawler = webCrawlerPool.borrowCrawler(crawlerType);
+            return crawler.crawl(request);
+        } catch (Exception e) {
+            return new CrawlResult.Failure(e);
+        } finally {
+            if (crawler != null) {
+                webCrawlerPool.returnCrawler(crawlerType, crawler);
+            }
+        }
     }
-  }
 }

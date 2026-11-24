@@ -16,41 +16,37 @@ import tungnn.tutor.java.tool.hub.api.ToolResult;
 
 @Extension
 public class DocxToMarkdownTool implements ToolExtension {
-  @Override
-  public ToolDescriptor descriptor() {
-    return new ToolDescriptor(
-        "docx-to-markdown",
-        "DOCX → Markdown",
-        "Convert a Word (.docx) document to Markdown: headings, bold/italic, code, lists, tables",
-        "document",
-        ToolLayout.FILE);
-  }
+    @Override
+    public ToolDescriptor descriptor() {
+        return new ToolDescriptor(
+                "docx-to-markdown",
+                "DOCX → Markdown",
+                "Convert a Word (.docx) document to Markdown: headings, bold/italic, code, lists, tables",
+                "document",
+                ToolLayout.FILE);
+    }
 
-  @Override
-  public List<ParamSpec> params() {
-    return List.of(
-        new ParamSpec("file", "file", true, "File Word (.docx)"),
-        new ParamSpec("output", ConverterSupport.OUTPUT_TYPE, true, "Result", "preview"));
-  }
+    @Override
+    public List<ParamSpec> params() {
+        return List.of(
+                new ParamSpec("file", "file", true, "File Word (.docx)"),
+                new ParamSpec("output", ConverterSupport.OUTPUT_TYPE, true, "Result", "preview"));
+    }
 
-  @Override
-  public ToolResult execute(ToolContext ctx, Map<String, Object> in) throws ToolException {
-    ToolFile file = (ToolFile) in.get("file");
-    ConverterSupport.requireExtension(file, ".docx");
-    String markdown =
-        ConverterSupport.withPluginClassLoader(() -> {
-          Path tmp = ConverterSupport.toTempFile(ctx, file, ".docx");
-          try {
-            return DocxMarkdownConverterUtils.toMarkdown(tmp);
-          } finally {
-            ConverterSupport.deleteQuietly(tmp);
-          }
+    @Override
+    public ToolResult execute(ToolContext ctx, Map<String, Object> in) throws ToolException {
+        ToolFile file = (ToolFile) in.get("file");
+        ConverterSupport.requireExtension(file, ".docx");
+        String markdown = ConverterSupport.withPluginClassLoader(() -> {
+            Path tmp = ConverterSupport.toTempFile(ctx, file, ".docx");
+            try {
+                return DocxMarkdownConverterUtils.toMarkdown(tmp);
+            } finally {
+                ConverterSupport.deleteQuietly(tmp);
+            }
         });
-    if (ctx != null) ctx.logger().info("docx→md {} ({} bytes)", file.filename(), file.size());
-    return ConverterSupport.textResult(
-        markdown,
-        in.get("output"),
-        ConverterSupport.baseName(file.filename()) + ".md",
-        "text/markdown");
-  }
+        if (ctx != null) ctx.logger().info("docx→md {} ({} bytes)", file.filename(), file.size());
+        return ConverterSupport.textResult(
+                markdown, in.get("output"), ConverterSupport.baseName(file.filename()) + ".md", "text/markdown");
+    }
 }

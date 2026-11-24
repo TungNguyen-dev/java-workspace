@@ -7,68 +7,66 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Workbook;
 
 public class CellStyleRegistry {
-  private final Map<String, CellStyle> cellStyleMap = new HashMap<>();
-  private final Workbook workbook;
+    private final Map<String, CellStyle> cellStyleMap = new HashMap<>();
+    private final Workbook workbook;
 
-  public CellStyleRegistry(Workbook workbook) {
-    if (workbook == null) {
-      throw new IllegalArgumentException("Workbook cannot be null");
+    public CellStyleRegistry(Workbook workbook) {
+        if (workbook == null) {
+            throw new IllegalArgumentException("Workbook cannot be null");
+        }
+        this.workbook = workbook;
     }
-    this.workbook = workbook;
-  }
 
-  public CellStyle getOrCreate(CellStyleEnum styleEnum, Supplier<CellStyle> styleSupplier) {
-    return getOrCreate(styleEnum.name(), styleSupplier);
-  }
+    public CellStyle getOrCreate(CellStyleEnum styleEnum, Supplier<CellStyle> styleSupplier) {
+        return getOrCreate(styleEnum.name(), styleSupplier);
+    }
 
-  public boolean contains(CellStyleEnum styleEnum) {
-    return contains(styleEnum.name());
-  }
+    public boolean contains(CellStyleEnum styleEnum) {
+        return contains(styleEnum.name());
+    }
 
-  public CellStyle get(CellStyleEnum styleEnum) {
-    return get(styleEnum.name());
-  }
+    public CellStyle get(CellStyleEnum styleEnum) {
+        return get(styleEnum.name());
+    }
 
-  public CellStyle getOrCreate(String key, Supplier<CellStyle> styleSupplier) {
-    return cellStyleMap.computeIfAbsent(
-        key,
-        k -> {
-          CellStyle newStyle = styleSupplier.get();
-          if (newStyle == null) {
-            throw new IllegalStateException("Supplier returned a null CellStyle for key: " + key);
-          }
-          return newStyle;
+    public CellStyle getOrCreate(String key, Supplier<CellStyle> styleSupplier) {
+        return cellStyleMap.computeIfAbsent(key, k -> {
+            CellStyle newStyle = styleSupplier.get();
+            if (newStyle == null) {
+                throw new IllegalStateException("Supplier returned a null CellStyle for key: " + key);
+            }
+            return newStyle;
         });
-  }
+    }
 
-  public boolean contains(String key) {
-    return cellStyleMap.containsKey(key);
-  }
+    public boolean contains(String key) {
+        return cellStyleMap.containsKey(key);
+    }
 
-  public CellStyle get(String key) {
-    return cellStyleMap.get(key);
-  }
+    public CellStyle get(String key) {
+        return cellStyleMap.get(key);
+    }
 
-  public Workbook getWorkbook() {
-    return this.workbook;
-  }
+    public Workbook getWorkbook() {
+        return this.workbook;
+    }
 
-  public void clear() {
-    cellStyleMap.clear();
-  }
+    public void clear() {
+        cellStyleMap.clear();
+    }
 
-  public enum CellStyleEnum {
-    HEADER_MAIN,
-    HEADER_SUB,
-    TEXT_LEFT,
-    TEXT_CENTER,
-    TEXT_RIGHT,
-    NUMBER_INTEGER,
-    NUMBER_DECIMAL,
-    NUMBER_CURRENCY,
-    NUMBER_PERCENTAGE,
-    DATE_DEFAULT,
-    DATETIME_DEFAULT,
-    TOTAL_ROW
-  }
+    public enum CellStyleEnum {
+        HEADER_MAIN,
+        HEADER_SUB,
+        TEXT_LEFT,
+        TEXT_CENTER,
+        TEXT_RIGHT,
+        NUMBER_INTEGER,
+        NUMBER_DECIMAL,
+        NUMBER_CURRENCY,
+        NUMBER_PERCENTAGE,
+        DATE_DEFAULT,
+        DATETIME_DEFAULT,
+        TOTAL_ROW
+    }
 }

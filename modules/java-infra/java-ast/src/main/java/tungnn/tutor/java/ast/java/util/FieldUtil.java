@@ -12,26 +12,26 @@ import java.util.List;
 
 public final class FieldUtil {
 
-  private FieldUtil() {}
+    private FieldUtil() {}
 
-  public static List<FieldDeclaration> getDeclaredFields(ClassOrInterfaceDeclaration typeDecl) {
-    if (typeDecl == null) return Collections.emptyList();
-    return typeDecl.getFields();
-  }
+    public static List<FieldDeclaration> getDeclaredFields(ClassOrInterfaceDeclaration typeDecl) {
+        if (typeDecl == null) return Collections.emptyList();
+        return typeDecl.getFields();
+    }
 
-  public static List<FieldDeclaration> getDeclaredFields(
-      ClassOrInterfaceDeclaration typeDecl, Modifier... modifiers) {
-    if (typeDecl == null) return Collections.emptyList();
-    List<Modifier> modifierList = Arrays.asList(modifiers);
-    return typeDecl.getFields().stream()
-        .filter(field -> new HashSet<>(field.getModifiers()).containsAll(modifierList))
-        .toList();
-  }
+    public static List<FieldDeclaration> getDeclaredFields(
+            ClassOrInterfaceDeclaration typeDecl, Modifier... modifiers) {
+        if (typeDecl == null) return Collections.emptyList();
+        List<Modifier> modifierList = Arrays.asList(modifiers);
+        return typeDecl.getFields().stream()
+                .filter(field -> new HashSet<>(field.getModifiers()).containsAll(modifierList))
+                .toList();
+    }
 
-  public static List<ResolvedFieldDeclaration> getAllFields(ClassOrInterfaceDeclaration typeDecl) {
-    if (typeDecl == null) return Collections.emptyList();
+    public static List<ResolvedFieldDeclaration> getAllFields(ClassOrInterfaceDeclaration typeDecl) {
+        if (typeDecl == null) return Collections.emptyList();
 
-    ResolvedReferenceTypeDeclaration resolved = typeDecl.resolve();
-    return resolved.getAllFields();
-  }
+        ResolvedReferenceTypeDeclaration resolved = typeDecl.resolve();
+        return resolved.getAllFields();
+    }
 }

@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import org.slf4j.Logger;
 
 public interface ToolContext {
-  Logger logger();
+    Logger logger();
 
-  Path dataDir();
+    Path dataDir();
 }

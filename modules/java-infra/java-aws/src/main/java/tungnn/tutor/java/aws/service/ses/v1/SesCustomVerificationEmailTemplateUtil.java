@@ -6,32 +6,32 @@ import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
 
 public final class SesCustomVerificationEmailTemplateUtil {
-  private SesCustomVerificationEmailTemplateUtil() {}
+    private SesCustomVerificationEmailTemplateUtil() {}
 
-  public static CreateCustomVerificationEmailTemplateResponse createCustomVerificationEmailTemplate(
-      SesClient client, CreateCustomVerificationEmailTemplateRequest request) {
-    return client.createCustomVerificationEmailTemplate(request);
-  }
+    public static CreateCustomVerificationEmailTemplateResponse createCustomVerificationEmailTemplate(
+            SesClient client, CreateCustomVerificationEmailTemplateRequest request) {
+        return client.createCustomVerificationEmailTemplate(request);
+    }
 
-  public static DeleteCustomVerificationEmailTemplateResponse deleteCustomVerificationEmailTemplate(
-      SesClient client, DeleteCustomVerificationEmailTemplateRequest request) {
-    return client.deleteCustomVerificationEmailTemplate(request);
-  }
+    public static DeleteCustomVerificationEmailTemplateResponse deleteCustomVerificationEmailTemplate(
+            SesClient client, DeleteCustomVerificationEmailTemplateRequest request) {
+        return client.deleteCustomVerificationEmailTemplate(request);
+    }
 
-  public static GetCustomVerificationEmailTemplateResponse getCustomVerificationEmailTemplate(
-      SesClient client, GetCustomVerificationEmailTemplateRequest request) {
-    return client.getCustomVerificationEmailTemplate(request);
-  }
+    public static GetCustomVerificationEmailTemplateResponse getCustomVerificationEmailTemplate(
+            SesClient client, GetCustomVerificationEmailTemplateRequest request) {
+        return client.getCustomVerificationEmailTemplate(request);
+    }
 
-  public static List<CustomVerificationEmailTemplate> listCustomVerificationEmailTemplates(
-      SesClient client, ListCustomVerificationEmailTemplatesRequest request) {
-    return client.listCustomVerificationEmailTemplatesPaginator(request).stream()
-        .flatMap(r -> r.customVerificationEmailTemplates().stream())
-        .collect(Collectors.toList());
-  }
+    public static List<CustomVerificationEmailTemplate> listCustomVerificationEmailTemplates(
+            SesClient client, ListCustomVerificationEmailTemplatesRequest request) {
+        return client.listCustomVerificationEmailTemplatesPaginator(request).stream()
+                .flatMap(r -> r.customVerificationEmailTemplates().stream())
+                .collect(Collectors.toList());
+    }
 
-  public static UpdateCustomVerificationEmailTemplateResponse updateCustomVerificationEmailTemplate(
-      SesClient client, UpdateCustomVerificationEmailTemplateRequest request) {
-    return client.updateCustomVerificationEmailTemplate(request);
-  }
+    public static UpdateCustomVerificationEmailTemplateResponse updateCustomVerificationEmailTemplate(
+            SesClient client, UpdateCustomVerificationEmailTemplateRequest request) {
+        return client.updateCustomVerificationEmailTemplate(request);
+    }
 }

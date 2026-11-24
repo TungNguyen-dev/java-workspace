@@ -9,86 +9,84 @@ import tungnn.tutor.java.selenium.wait.Waits;
 
 public abstract class BasePage {
 
-  protected WebDriver driver;
+    protected WebDriver driver;
 
-  public BasePage(WebDriver driver) {
-    this.driver = driver;
-  }
+    public BasePage(WebDriver driver) {
+        this.driver = driver;
+    }
 
-  protected abstract Duration timeout();
+    protected abstract Duration timeout();
 
-  protected abstract String homeUrl();
+    protected abstract String homeUrl();
 
-  // =========================================================
-  // ================= NAVIGATION HELPERS ====================
-  // =========================================================
+    // =========================================================
+    // ================= NAVIGATION HELPERS ====================
+    // =========================================================
 
-  protected void navigateTo(String url) {
-    driver.get(url);
-    ThreadUtils.sleep(1000);
-  }
+    protected void navigateTo(String url) {
+        driver.get(url);
+        ThreadUtils.sleep(1000);
+    }
 
-  protected void refreshPage() {
-    driver.navigate().refresh();
-  }
+    protected void refreshPage() {
+        driver.navigate().refresh();
+    }
 
-  protected void back() {
-    driver.navigate().back();
-  }
+    protected void back() {
+        driver.navigate().back();
+    }
 
-  protected void forward() {
-    driver.navigate().forward();
-  }
+    protected void forward() {
+        driver.navigate().forward();
+    }
 
-  protected String getPageTitle() {
-    return driver.getTitle();
-  }
+    protected String getPageTitle() {
+        return driver.getTitle();
+    }
 
-  protected String getCurrentUrl() {
-    return driver.getCurrentUrl();
-  }
+    protected String getCurrentUrl() {
+        return driver.getCurrentUrl();
+    }
 
-  // =========================================================
-  // ==================== WAITS HELPERS ======================
-  // =========================================================
+    // =========================================================
+    // ==================== WAITS HELPERS ======================
+    // =========================================================
 
-  protected void waitTitleContains() {
-    Waits.waitUntil(
-        driver, ExpectedConditions.titleContains("YouTube Video Summarizer"), timeout());
-  }
+    protected void waitTitleContains() {
+        Waits.waitUntil(driver, ExpectedConditions.titleContains("YouTube Video Summarizer"), timeout());
+    }
 
-  protected boolean waitUrlContains(String urlPart) {
-    return Waits.waitUntil(driver, ExpectedConditions.urlContains(urlPart), timeout());
-  }
+    protected boolean waitUrlContains(String urlPart) {
+        return Waits.waitUntil(driver, ExpectedConditions.urlContains(urlPart), timeout());
+    }
 
-  // =========================================================
-  // ================== JAVASCRIPT HELPERS ===================
-  // =========================================================
+    // =========================================================
+    // ================== JAVASCRIPT HELPERS ===================
+    // =========================================================
 
-  protected Object executeJs(String script, Object... args) {
-    return ((JavascriptExecutor) driver).executeScript(script, args);
-  }
+    protected Object executeJs(String script, Object... args) {
+        return ((JavascriptExecutor) driver).executeScript(script, args);
+    }
 
-  protected void waitPageLoadComplete() {
-    Waits.waitUntil(
-        driver, ExpectedConditions.jsReturnsValue("return document.readyState"), timeout());
-  }
+    protected void waitPageLoadComplete() {
+        Waits.waitUntil(driver, ExpectedConditions.jsReturnsValue("return document.readyState"), timeout());
+    }
 
-  // =========================================================
-  // ================= WINDOWS & ALERTS ======================
-  // =========================================================
+    // =========================================================
+    // ================= WINDOWS & ALERTS ======================
+    // =========================================================
 
-  protected void acceptAlert() {
-    Waits.waitUntil(driver, ExpectedConditions.alertIsPresent(), timeout());
-    driver.switchTo().alert().accept();
-  }
+    protected void acceptAlert() {
+        Waits.waitUntil(driver, ExpectedConditions.alertIsPresent(), timeout());
+        driver.switchTo().alert().accept();
+    }
 
-  protected void dismissAlert() {
-    Waits.waitUntil(driver, ExpectedConditions.alertIsPresent(), timeout());
-    driver.switchTo().alert().dismiss();
-  }
+    protected void dismissAlert() {
+        Waits.waitUntil(driver, ExpectedConditions.alertIsPresent(), timeout());
+        driver.switchTo().alert().dismiss();
+    }
 
-  public WebDriver webDriver() {
-    return driver;
-  }
+    public WebDriver webDriver() {
+        return driver;
+    }
 }

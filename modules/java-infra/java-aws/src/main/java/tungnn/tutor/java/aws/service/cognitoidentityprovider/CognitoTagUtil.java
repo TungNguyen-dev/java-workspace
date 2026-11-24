@@ -4,15 +4,15 @@ import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityPr
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 
 public final class CognitoTagUtil {
-  private CognitoTagUtil() {}
+    private CognitoTagUtil() {}
 
-  public static ListTagsForResourceResponse listTagsForResource(
-      CognitoIdentityProviderClient client, ListTagsForResourceRequest request) {
-    return client.listTagsForResource(request);
-  }
+    public static ListTagsForResourceResponse listTagsForResource(
+            CognitoIdentityProviderClient client, ListTagsForResourceRequest request) {
+        return client.listTagsForResource(request);
+    }
 
-  public static UntagResourceResponse untagResource(
-      CognitoIdentityProviderClient client, UntagResourceRequest request) {
-    return client.untagResource(request);
-  }
+    public static UntagResourceResponse untagResource(
+            CognitoIdentityProviderClient client, UntagResourceRequest request) {
+        return client.untagResource(request);
+    }
 }

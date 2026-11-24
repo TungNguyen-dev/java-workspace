@@ -9,19 +9,19 @@ import tungnn.tutor.java.tool.hub.core.ToolRegistry;
 
 @Configuration(proxyBeanMethods = false)
 public class HubConfig {
-  @Bean
-  ToolRegistry toolRegistry() {
-    return new ToolRegistry();
-  }
+    @Bean
+    ToolRegistry toolRegistry() {
+        return new ToolRegistry();
+    }
 
-  @Bean(initMethod = "loadAll", destroyMethod = "shutdown")
-  PluginService pluginService(HubProperties props, ToolRegistry registry) throws IOException {
-    Files.createDirectories(props.pluginsDir());
-    return new PluginService(props.pluginsDir(), props.dataDir(), registry);
-  }
+    @Bean(initMethod = "loadAll", destroyMethod = "shutdown")
+    PluginService pluginService(HubProperties props, ToolRegistry registry) throws IOException {
+        Files.createDirectories(props.pluginsDir());
+        return new PluginService(props.pluginsDir(), props.dataDir(), registry);
+    }
 
-  @Bean
-  PluginWatcherLifecycle pluginWatcherLifecycle(HubProperties props, PluginService service) {
-    return new PluginWatcherLifecycle(props, service);
-  }
+    @Bean
+    PluginWatcherLifecycle pluginWatcherLifecycle(HubProperties props, PluginService service) {
+        return new PluginWatcherLifecycle(props, service);
+    }
 }

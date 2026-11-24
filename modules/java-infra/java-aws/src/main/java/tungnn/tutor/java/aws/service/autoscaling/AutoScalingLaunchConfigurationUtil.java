@@ -6,22 +6,22 @@ import software.amazon.awssdk.services.autoscaling.AutoScalingClient;
 import software.amazon.awssdk.services.autoscaling.model.*;
 
 public final class AutoScalingLaunchConfigurationUtil {
-  private AutoScalingLaunchConfigurationUtil() {}
+    private AutoScalingLaunchConfigurationUtil() {}
 
-  public static CreateLaunchConfigurationResponse createLaunchConfiguration(
-      AutoScalingClient client, CreateLaunchConfigurationRequest request) {
-    return client.createLaunchConfiguration(request);
-  }
+    public static CreateLaunchConfigurationResponse createLaunchConfiguration(
+            AutoScalingClient client, CreateLaunchConfigurationRequest request) {
+        return client.createLaunchConfiguration(request);
+    }
 
-  public static DeleteLaunchConfigurationResponse deleteLaunchConfiguration(
-      AutoScalingClient client, DeleteLaunchConfigurationRequest request) {
-    return client.deleteLaunchConfiguration(request);
-  }
+    public static DeleteLaunchConfigurationResponse deleteLaunchConfiguration(
+            AutoScalingClient client, DeleteLaunchConfigurationRequest request) {
+        return client.deleteLaunchConfiguration(request);
+    }
 
-  public static List<LaunchConfiguration> describeLaunchConfigurations(
-      AutoScalingClient client, DescribeLaunchConfigurationsRequest request) {
-    return client.describeLaunchConfigurationsPaginator(request).stream()
-        .flatMap(r -> r.launchConfigurations().stream())
-        .collect(Collectors.toList());
-  }
+    public static List<LaunchConfiguration> describeLaunchConfigurations(
+            AutoScalingClient client, DescribeLaunchConfigurationsRequest request) {
+        return client.describeLaunchConfigurationsPaginator(request).stream()
+                .flatMap(r -> r.launchConfigurations().stream())
+                .collect(Collectors.toList());
+    }
 }

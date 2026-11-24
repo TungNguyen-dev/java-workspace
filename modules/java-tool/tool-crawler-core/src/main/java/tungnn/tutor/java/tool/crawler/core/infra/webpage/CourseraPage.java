@@ -15,59 +15,55 @@ import tungnn.tutor.java.tool.crawler.core.infra.webpage.crawler.PageCrawler;
 
 public class CourseraPage extends BasePage implements PageCrawler {
 
-  public CourseraPage(WebDriver driver) {
-    super(driver);
-  }
-
-  @Override
-  protected Duration timeout() {
-    return Duration.ofSeconds(30);
-  }
-
-  @Override
-  protected String homeUrl() {
-    return "https://www.coursera.org";
-  }
-
-  @Override
-  public PageCrawlResult crawl(String url) {
-    navigateTo(url);
-    ThreadUtils.sleep(1000);
-
-    var buttonTranscriptLocator =
-        By.cssSelector("[data-testid='item-tool-panel-button-transcript']");
-
-    var buttonTranscript =
-        Waits.waitUntil(
-            driver, ExpectedConditions.elementToBeClickable(buttonTranscriptLocator), timeout());
-
-    var attr = ElementInfo.getAttribute(buttonTranscript, "aria-pressed");
-    if (!"true".equalsIgnoreCase(attr)) {
-      buttonTranscript.click();
-      ThreadUtils.sleep(1000);
+    public CourseraPage(WebDriver driver) {
+        super(driver);
     }
 
-    return new PageCrawlResult(url, getLessonTitle(), getLessonContent());
-  }
+    @Override
+    protected Duration timeout() {
+        return Duration.ofSeconds(30);
+    }
 
-  private String getLessonTitle() {
-    return Waits.waitUntil(
-            driver,
-            ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1.video-name")),
-            timeout())
-        .getText();
-  }
+    @Override
+    protected String homeUrl() {
+        return "https://www.coursera.org";
+    }
 
-  private String getLessonContent() {
-    Waits.waitUntil(
-        driver,
-        ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.phrases")),
-        timeout());
+    @Override
+    public PageCrawlResult crawl(String url) {
+        navigateTo(url);
+        ThreadUtils.sleep(1000);
 
-    return ElementFinder.findElements(driver, By.cssSelector("div.phrases span[data-cue]")).stream()
-        .map(WebElement::getText)
-        .map(String::trim)
-        .filter(text -> !text.isEmpty())
-        .collect(Collectors.joining(" "));
-  }
+        var buttonTranscriptLocator = By.cssSelector("[data-testid='item-tool-panel-button-transcript']");
+
+        var buttonTranscript =
+                Waits.waitUntil(driver, ExpectedConditions.elementToBeClickable(buttonTranscriptLocator), timeout());
+
+        var attr = ElementInfo.getAttribute(buttonTranscript, "aria-pressed");
+        if (!"true".equalsIgnoreCase(attr)) {
+            buttonTranscript.click();
+            ThreadUtils.sleep(1000);
+        }
+
+        return new PageCrawlResult(url, getLessonTitle(), getLessonContent());
+    }
+
+    private String getLessonTitle() {
+        return Waits.waitUntil(
+                        driver,
+                        ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1.video-name")),
+                        timeout())
+                .getText();
+    }
+
+    private String getLessonContent() {
+        Waits.waitUntil(
+                driver, ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.phrases")), timeout());
+
+        return ElementFinder.findElements(driver, By.cssSelector("div.phrases span[data-cue]")).stream()
+                .map(WebElement::getText)
+                .map(String::trim)
+                .filter(text -> !text.isEmpty())
+                .collect(Collectors.joining(" "));
+    }
 }

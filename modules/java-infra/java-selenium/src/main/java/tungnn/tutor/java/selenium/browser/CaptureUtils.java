@@ -14,48 +14,47 @@ import org.openqa.selenium.print.PrintOptions;
 
 public final class CaptureUtils {
 
-  private CaptureUtils() {}
+    private CaptureUtils() {}
 
-  public static File takeScreenshot(WebDriver driver, String destinationPath) throws IOException {
-    TakesScreenshot ts = (TakesScreenshot) driver;
-    File source = ts.getScreenshotAs(OutputType.FILE);
-    File destination = new File(destinationPath);
+    public static File takeScreenshot(WebDriver driver, String destinationPath) throws IOException {
+        TakesScreenshot ts = (TakesScreenshot) driver;
+        File source = ts.getScreenshotAs(OutputType.FILE);
+        File destination = new File(destinationPath);
 
-    // Create the parent directory if it does not exist
-    if (destination.getParentFile() != null) {
-      destination.getParentFile().mkdirs();
+        // Create the parent directory if it does not exist
+        if (destination.getParentFile() != null) {
+            destination.getParentFile().mkdirs();
+        }
+
+        Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        return destination;
     }
 
-    Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
-    return destination;
-  }
+    public static File takeElementScreenshot(WebElement element, String destinationPath) throws IOException {
+        File source = element.getScreenshotAs(OutputType.FILE);
+        File destination = new File(destinationPath);
 
-  public static File takeElementScreenshot(WebElement element, String destinationPath)
-      throws IOException {
-    File source = element.getScreenshotAs(OutputType.FILE);
-    File destination = new File(destinationPath);
+        if (destination.getParentFile() != null) {
+            destination.getParentFile().mkdirs();
+        }
 
-    if (destination.getParentFile() != null) {
-      destination.getParentFile().mkdirs();
+        Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        return destination;
     }
 
-    Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
-    return destination;
-  }
+    public static File printPage(WebDriver driver, String destinationPdfPath) throws IOException {
+        PrintsPage printer = (PrintsPage) driver;
+        PrintOptions printOptions = new PrintOptions();
 
-  public static File printPage(WebDriver driver, String destinationPdfPath) throws IOException {
-    PrintsPage printer = (PrintsPage) driver;
-    PrintOptions printOptions = new PrintOptions();
+        Pdf pdf = printer.print(printOptions);
+        byte[] pdfBytes = java.util.Base64.getDecoder().decode(pdf.getContent());
 
-    Pdf pdf = printer.print(printOptions);
-    byte[] pdfBytes = java.util.Base64.getDecoder().decode(pdf.getContent());
+        File destination = new File(destinationPdfPath);
+        if (destination.getParentFile() != null) {
+            destination.getParentFile().mkdirs();
+        }
 
-    File destination = new File(destinationPdfPath);
-    if (destination.getParentFile() != null) {
-      destination.getParentFile().mkdirs();
+        Files.write(destination.toPath(), pdfBytes);
+        return destination;
     }
-
-    Files.write(destination.toPath(), pdfBytes);
-    return destination;
-  }
 }

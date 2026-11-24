@@ -4,10 +4,10 @@ import software.amazon.awssdk.services.firehose.FirehoseClient;
 import software.amazon.awssdk.services.firehose.model.*;
 
 public final class FirehoseTagUtil {
-  private FirehoseTagUtil() {}
+    private FirehoseTagUtil() {}
 
-  public static ListTagsForDeliveryStreamResponse listTagsForDeliveryStream(
-      FirehoseClient client, ListTagsForDeliveryStreamRequest request) {
-    return client.listTagsForDeliveryStream(request);
-  }
+    public static ListTagsForDeliveryStreamResponse listTagsForDeliveryStream(
+            FirehoseClient client, ListTagsForDeliveryStreamRequest request) {
+        return client.listTagsForDeliveryStream(request);
+    }
 }

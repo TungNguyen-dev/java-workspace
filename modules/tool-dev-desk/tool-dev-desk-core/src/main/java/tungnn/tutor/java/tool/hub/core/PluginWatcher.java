@@ -21,128 +21,125 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PluginWatcher implements Runnable, AutoCloseable {
-  private static final Logger log = LoggerFactory.getLogger(PluginWatcher.class);
-  private static final long DEBOUNCE_MS = 700;
-  private static final long STABLE_CHECK_MS = 300;
-  private static final int STABLE_MAX_RETRY = 20;
-  private final Path dir;
-  private final PluginService service;
-  private final ScheduledExecutorService worker =
-      Executors.newSingleThreadScheduledExecutor(r -> {
+    private static final Logger log = LoggerFactory.getLogger(PluginWatcher.class);
+    private static final long DEBOUNCE_MS = 700;
+    private static final long STABLE_CHECK_MS = 300;
+    private static final int STABLE_MAX_RETRY = 20;
+    private final Path dir;
+    private final PluginService service;
+    private final ScheduledExecutorService worker = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "plugin-watcher-worker");
         t.setDaemon(true);
         return t;
-      });
-  private final Map<Path, ScheduledFuture<?>> pending = new ConcurrentHashMap<>();
-  private volatile boolean running = true;
+    });
+    private final Map<Path, ScheduledFuture<?>> pending = new ConcurrentHashMap<>();
+    private volatile boolean running = true;
 
-  public PluginWatcher(Path dir, PluginService service) {
-    this.dir = dir.toAbsolutePath().normalize();
-    this.service = service;
-  }
-
-  private static boolean isPluginZip(Path file) {
-    String name = file.getFileName().toString().toLowerCase();
-    return name.endsWith(".zip") && !name.startsWith(".");
-  }
-
-  @Override
-  public void run() {
-    try (WatchService ws = dir.getFileSystem().newWatchService()) {
-      dir.register(ws, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
-      log.info("Watching plugins directory: {}", dir);
-      while (running && !Thread.currentThread().isInterrupted()) {
-        WatchKey key = ws.take();
-        for (WatchEvent<?> ev : key.pollEvents()) {
-          if (ev.kind() == OVERFLOW) {
-            log.warn("WatchService overflowed, events may have been missed");
-            continue;
-          }
-          Path file = dir.resolve((Path) ev.context());
-          if (!isPluginZip(file)) continue;
-          schedule(file, ev.kind());
-        }
-        if (!key.reset()) {
-          log.warn("Plugins directory is no longer valid, stopping watcher: {}", dir);
-          break;
-        }
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } catch (IOException e) {
-      log.error("Unable to create a WatchService for {}", dir, e);
-    } finally {
-      worker.shutdownNow();
+    public PluginWatcher(Path dir, PluginService service) {
+        this.dir = dir.toAbsolutePath().normalize();
+        this.service = service;
     }
-  }
 
-  private void schedule(Path file, WatchEvent.Kind<?> kind) {
-    pending.compute(
-        file,
-        (f, old) -> {
-          if (old != null) old.cancel(false);
-          return worker.schedule(() -> handle(file, kind), DEBOUNCE_MS, TimeUnit.MILLISECONDS);
+    private static boolean isPluginZip(Path file) {
+        String name = file.getFileName().toString().toLowerCase();
+        return name.endsWith(".zip") && !name.startsWith(".");
+    }
+
+    @Override
+    public void run() {
+        try (WatchService ws = dir.getFileSystem().newWatchService()) {
+            dir.register(ws, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
+            log.info("Watching plugins directory: {}", dir);
+            while (running && !Thread.currentThread().isInterrupted()) {
+                WatchKey key = ws.take();
+                for (WatchEvent<?> ev : key.pollEvents()) {
+                    if (ev.kind() == OVERFLOW) {
+                        log.warn("WatchService overflowed, events may have been missed");
+                        continue;
+                    }
+                    Path file = dir.resolve((Path) ev.context());
+                    if (!isPluginZip(file)) continue;
+                    schedule(file, ev.kind());
+                }
+                if (!key.reset()) {
+                    log.warn("Plugins directory is no longer valid, stopping watcher: {}", dir);
+                    break;
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (IOException e) {
+            log.error("Unable to create a WatchService for {}", dir, e);
+        } finally {
+            worker.shutdownNow();
+        }
+    }
+
+    private void schedule(Path file, WatchEvent.Kind<?> kind) {
+        pending.compute(file, (f, old) -> {
+            if (old != null) old.cancel(false);
+            return worker.schedule(() -> handle(file, kind), DEBOUNCE_MS, TimeUnit.MILLISECONDS);
         });
-  }
-
-  private void handle(Path file, WatchEvent.Kind<?> kind) {
-    try {
-      if (kind == ENTRY_DELETE || !Files.exists(file)) {
-        onDeleted(file);
-      } else {
-        onCreatedOrModified(file);
-      }
-    } catch (Throwable t) {
-      log.error("Error handling plugin {} ({})", file.getFileName(), kind.name(), t);
-    } finally {
-      pending.remove(file);
     }
-  }
 
-  private void onDeleted(Path file) {
-    String id = service.pluginIdOf(file);
-    if (id == null) {
-      log.debug("Skipping removal, no plugin matches {}", file.getFileName());
-      return;
+    private void handle(Path file, WatchEvent.Kind<?> kind) {
+        try {
+            if (kind == ENTRY_DELETE || !Files.exists(file)) {
+                onDeleted(file);
+            } else {
+                onCreatedOrModified(file);
+            }
+        } catch (Throwable t) {
+            log.error("Error handling plugin {} ({})", file.getFileName(), kind.name(), t);
+        } finally {
+            pending.remove(file);
+        }
     }
-    log.info("Removing plugin '{}' ({} was deleted)", id, file.getFileName());
-    service.unloadOne(id);
-  }
 
-  private void onCreatedOrModified(Path file) throws InterruptedException {
-    if (!waitUntilStable(file)) {
-      log.warn("File {} is still not stable after waiting, skipping this time", file.getFileName());
-      return;
+    private void onDeleted(Path file) {
+        String id = service.pluginIdOf(file);
+        if (id == null) {
+            log.debug("Skipping removal, no plugin matches {}", file.getFileName());
+            return;
+        }
+        log.info("Removing plugin '{}' ({} was deleted)", id, file.getFileName());
+        service.unloadOne(id);
     }
-    String id = service.pluginIdOf(file);
-    if (id != null) {
-      log.info("Reloading plugin '{}' ({} changed)", id, file.getFileName());
-      service.unloadOne(id);
-    } else {
-      log.info("Loading new plugin from {}", file.getFileName());
-    }
-    service.loadOne(file);
-  }
 
-  private boolean waitUntilStable(Path file) throws InterruptedException {
-    try {
-      long last = -1;
-      for (int i = 0; i < STABLE_MAX_RETRY; i++) {
-        if (!Files.exists(file)) return false;
-        long size = Files.size(file);
-        if (size > 0 && size == last) return true;
-        last = size;
-        Thread.sleep(STABLE_CHECK_MS);
-      }
-    } catch (IOException e) {
-      log.warn("Unable to read the size of {}", file, e);
+    private void onCreatedOrModified(Path file) throws InterruptedException {
+        if (!waitUntilStable(file)) {
+            log.warn("File {} is still not stable after waiting, skipping this time", file.getFileName());
+            return;
+        }
+        String id = service.pluginIdOf(file);
+        if (id != null) {
+            log.info("Reloading plugin '{}' ({} changed)", id, file.getFileName());
+            service.unloadOne(id);
+        } else {
+            log.info("Loading new plugin from {}", file.getFileName());
+        }
+        service.loadOne(file);
     }
-    return false;
-  }
 
-  @Override
-  public void close() {
-    running = false;
-    worker.shutdownNow();
-  }
+    private boolean waitUntilStable(Path file) throws InterruptedException {
+        try {
+            long last = -1;
+            for (int i = 0; i < STABLE_MAX_RETRY; i++) {
+                if (!Files.exists(file)) return false;
+                long size = Files.size(file);
+                if (size > 0 && size == last) return true;
+                last = size;
+                Thread.sleep(STABLE_CHECK_MS);
+            }
+        } catch (IOException e) {
+            log.warn("Unable to read the size of {}", file, e);
+        }
+        return false;
+    }
+
+    @Override
+    public void close() {
+        running = false;
+        worker.shutdownNow();
+    }
 }

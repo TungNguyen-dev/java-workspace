@@ -13,83 +13,80 @@ import java.util.Optional;
 
 public final class TypeUtil {
 
-  private TypeUtil() {}
+    private TypeUtil() {}
 
-  public static List<ClassOrInterfaceDeclaration> getAllClassOrInterfaceDeclarations(
-      CompilationUnit cu) {
-    if (cu == null) {
-      return Collections.emptyList();
-    }
-    return cu.findAll(ClassOrInterfaceDeclaration.class);
-  }
-
-  public static List<ClassOrInterfaceDeclaration> getAllTopLevelClassOrInterfaceDeclarations(
-      CompilationUnit cu) {
-    if (cu == null) {
-      return Collections.emptyList();
-    }
-
-    return cu.getTypes().stream()
-        .filter(TypeDeclaration::isClassOrInterfaceDeclaration)
-        .map(TypeDeclaration::asClassOrInterfaceDeclaration)
-        .toList();
-  }
-
-  public static ClassOrInterfaceDeclaration getPrimaryClassOrInterfaceDeclaration(
-      CompilationUnit cu) {
-    if (cu == null) {
-      return null;
-    }
-
-    List<ClassOrInterfaceDeclaration> topLevelClasses =
-        cu.getTypes().stream()
-            .filter(TypeDeclaration::isClassOrInterfaceDeclaration)
-            .map(TypeDeclaration::asClassOrInterfaceDeclaration)
-            .toList();
-
-    if (topLevelClasses.isEmpty()) {
-      return null;
-    }
-
-    for (ClassOrInterfaceDeclaration decl : topLevelClasses) {
-      if (decl.isPublic()) {
-        return decl;
-      }
-    }
-
-    String primaryTypeName = cu.getPrimaryTypeName().orElse(null);
-    if (primaryTypeName != null) {
-      for (ClassOrInterfaceDeclaration decl : topLevelClasses) {
-        if (decl.getNameAsString().equals(primaryTypeName)) {
-          return decl;
+    public static List<ClassOrInterfaceDeclaration> getAllClassOrInterfaceDeclarations(CompilationUnit cu) {
+        if (cu == null) {
+            return Collections.emptyList();
         }
-      }
+        return cu.findAll(ClassOrInterfaceDeclaration.class);
     }
 
-    return topLevelClasses.getFirst();
-  }
+    public static List<ClassOrInterfaceDeclaration> getAllTopLevelClassOrInterfaceDeclarations(CompilationUnit cu) {
+        if (cu == null) {
+            return Collections.emptyList();
+        }
 
-  // ==========================================
-  // JAVADOC HELPERS (shared by Type, Method, Field)
-  // ==========================================
-
-  public static Optional<JavadocComment> getJavadocComment(Node node) {
-    if (node == null) {
-      return Optional.empty();
+        return cu.getTypes().stream()
+                .filter(TypeDeclaration::isClassOrInterfaceDeclaration)
+                .map(TypeDeclaration::asClassOrInterfaceDeclaration)
+                .toList();
     }
 
-    if (node instanceof NodeWithJavadoc<?> nodeWithJavadoc) {
-      return nodeWithJavadoc.getJavadocComment();
+    public static ClassOrInterfaceDeclaration getPrimaryClassOrInterfaceDeclaration(CompilationUnit cu) {
+        if (cu == null) {
+            return null;
+        }
+
+        List<ClassOrInterfaceDeclaration> topLevelClasses = cu.getTypes().stream()
+                .filter(TypeDeclaration::isClassOrInterfaceDeclaration)
+                .map(TypeDeclaration::asClassOrInterfaceDeclaration)
+                .toList();
+
+        if (topLevelClasses.isEmpty()) {
+            return null;
+        }
+
+        for (ClassOrInterfaceDeclaration decl : topLevelClasses) {
+            if (decl.isPublic()) {
+                return decl;
+            }
+        }
+
+        String primaryTypeName = cu.getPrimaryTypeName().orElse(null);
+        if (primaryTypeName != null) {
+            for (ClassOrInterfaceDeclaration decl : topLevelClasses) {
+                if (decl.getNameAsString().equals(primaryTypeName)) {
+                    return decl;
+                }
+            }
+        }
+
+        return topLevelClasses.getFirst();
     }
 
-    return node.getComment().filter(Comment::isJavadocComment).map(Comment::asJavadocComment);
-  }
+    // ==========================================
+    // JAVADOC HELPERS (shared by Type, Method, Field)
+    // ==========================================
 
-  public static Optional<String> getJavadocText(Node node) {
-    return getJavadocComment(node).map(javadocComment -> javadocComment.parse().toText().trim());
-  }
+    public static Optional<JavadocComment> getJavadocComment(Node node) {
+        if (node == null) {
+            return Optional.empty();
+        }
 
-  public static Optional<String> getRawJavadocText(Node node) {
-    return getJavadocComment(node).map(JavadocComment::getContent);
-  }
+        if (node instanceof NodeWithJavadoc<?> nodeWithJavadoc) {
+            return nodeWithJavadoc.getJavadocComment();
+        }
+
+        return node.getComment().filter(Comment::isJavadocComment).map(Comment::asJavadocComment);
+    }
+
+    public static Optional<String> getJavadocText(Node node) {
+        return getJavadocComment(node)
+                .map(javadocComment -> javadocComment.parse().toText().trim());
+    }
+
+    public static Optional<String> getRawJavadocText(Node node) {
+        return getJavadocComment(node).map(JavadocComment::getContent);
+    }
 }

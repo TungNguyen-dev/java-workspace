@@ -18,100 +18,92 @@ import java.util.stream.Collectors;
 
 public final class MethodUtil {
 
-  private MethodUtil() {}
+    private MethodUtil() {}
 
-  public static List<MethodDeclaration> getDeclaredMethods(ClassOrInterfaceDeclaration typeDecl) {
-    if (typeDecl == null) return Collections.emptyList();
-    return typeDecl.getMethods();
-  }
-
-  public static List<MethodDeclaration> getDeclaredMethods(
-      ClassOrInterfaceDeclaration typeDecl, Modifier... modifiers) {
-    if (typeDecl == null) return Collections.emptyList();
-    List<Modifier> modifierList = Arrays.asList(modifiers);
-    return typeDecl.getMethods().stream()
-        .filter(method -> new HashSet<>(method.getModifiers()).containsAll(modifierList))
-        .toList();
-  }
-
-  public static List<ResolvedMethodDeclaration> getAllMethods(
-      ClassOrInterfaceDeclaration typeDecl) {
-    if (typeDecl == null) return Collections.emptyList();
-
-    ResolvedReferenceTypeDeclaration resolved = typeDecl.resolve();
-    return resolved.getAllMethods().stream().map(MethodUsage::getDeclaration).toList();
-  }
-
-  public static String parseMethodSignature(MethodDeclaration md) {
-    if (md == null) {
-      return "";
+    public static List<MethodDeclaration> getDeclaredMethods(ClassOrInterfaceDeclaration typeDecl) {
+        if (typeDecl == null) return Collections.emptyList();
+        return typeDecl.getMethods();
     }
 
-    StringBuilder builder = new StringBuilder();
-
-    // 1. Modifiers
-    if (!md.getModifiers().isEmpty()) {
-      builder
-          .append(
-              md.getModifiers().stream()
-                  .map(modifier -> modifier.getKeyword().asString())
-                  .collect(Collectors.joining(" ")))
-          .append(" ");
+    public static List<MethodDeclaration> getDeclaredMethods(
+            ClassOrInterfaceDeclaration typeDecl, Modifier... modifiers) {
+        if (typeDecl == null) return Collections.emptyList();
+        List<Modifier> modifierList = Arrays.asList(modifiers);
+        return typeDecl.getMethods().stream()
+                .filter(method -> new HashSet<>(method.getModifiers()).containsAll(modifierList))
+                .toList();
     }
 
-    // 2. Type Parameters / Generics
-    if (!md.getTypeParameters().isEmpty()) {
-      builder
-          .append("<")
-          .append(
-              md.getTypeParameters().stream()
-                  .map(TypeParameter::asString)
-                  .collect(Collectors.joining(", ")))
-          .append("> ");
+    public static List<ResolvedMethodDeclaration> getAllMethods(ClassOrInterfaceDeclaration typeDecl) {
+        if (typeDecl == null) return Collections.emptyList();
+
+        ResolvedReferenceTypeDeclaration resolved = typeDecl.resolve();
+        return resolved.getAllMethods().stream()
+                .map(MethodUsage::getDeclaration)
+                .toList();
     }
 
-    // 3. Return Type & Method Name
-    builder.append(md.getTypeAsString()).append(" ").append(md.getNameAsString());
+    public static String parseMethodSignature(MethodDeclaration md) {
+        if (md == null) {
+            return "";
+        }
 
-    // 4. Parameters
-    String params =
-        md.getParameters().stream()
-            .map(Parameter::getNameAsString)
-            .collect(Collectors.joining(", "));
+        StringBuilder builder = new StringBuilder();
 
-    builder.append("(").append(params).append(")");
+        // 1. Modifiers
+        if (!md.getModifiers().isEmpty()) {
+            builder.append(md.getModifiers().stream()
+                            .map(modifier -> modifier.getKeyword().asString())
+                            .collect(Collectors.joining(" ")))
+                    .append(" ");
+        }
 
-    // 5. Throws exceptions
-    if (!md.getThrownExceptions().isEmpty()) {
-      builder
-          .append(" throws ")
-          .append(
-              md.getThrownExceptions().stream()
-                  .map(Type::asString)
-                  .collect(Collectors.joining(", ")));
+        // 2. Type Parameters / Generics
+        if (!md.getTypeParameters().isEmpty()) {
+            builder.append("<")
+                    .append(md.getTypeParameters().stream()
+                            .map(TypeParameter::asString)
+                            .collect(Collectors.joining(", ")))
+                    .append("> ");
+        }
+
+        // 3. Return Type & Method Name
+        builder.append(md.getTypeAsString()).append(" ").append(md.getNameAsString());
+
+        // 4. Parameters
+        String params =
+                md.getParameters().stream().map(Parameter::getNameAsString).collect(Collectors.joining(", "));
+
+        builder.append("(").append(params).append(")");
+
+        // 5. Throws exceptions
+        if (!md.getThrownExceptions().isEmpty()) {
+            builder.append(" throws ")
+                    .append(md.getThrownExceptions().stream()
+                            .map(Type::asString)
+                            .collect(Collectors.joining(", ")));
+        }
+
+        return builder.toString();
     }
 
-    return builder.toString();
-  }
+    public static String parseMethodInvocation(MethodDeclaration md) {
+        if (md == null) {
+            return "";
+        }
 
-  public static String parseMethodInvocation(MethodDeclaration md) {
-    if (md == null) {
-      return "";
+        String args = md.getParameters().stream()
+                .map(NodeWithSimpleName::getNameAsString)
+                .collect(Collectors.joining(", "));
+
+        return md.getNameAsString() + "(" + args + ")";
     }
 
-    String args =
-        md.getParameters().stream()
-            .map(NodeWithSimpleName::getNameAsString)
-            .collect(Collectors.joining(", "));
+    public static List<Parameter> getAllMethodParameters(MethodDeclaration md) {
+        if (md == null) {
+            return Collections.emptyList();
+        }
 
-    return md.getNameAsString() + "(" + args + ")";
-  }
-
-  public static List<Parameter> getAllMethodParameters(MethodDeclaration md) {
-    if (md == null) {
-      return Collections.emptyList();
+        return md.getParameters();
     }
-
-    return md.getParameters();
-  }
 }

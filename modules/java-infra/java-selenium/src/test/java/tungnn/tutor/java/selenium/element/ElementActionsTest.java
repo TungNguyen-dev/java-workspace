@@ -20,78 +20,78 @@ import org.openqa.selenium.WebElement;
 
 class ElementActionsTest {
 
-  private final WebElement element = mock(WebElement.class);
+    private final WebElement element = mock(WebElement.class);
 
-  @Test
-  void typeClearsBeforeSendingKeys() {
-    ElementActions.type(element, "text");
+    @Test
+    void typeClearsBeforeSendingKeys() {
+        ElementActions.type(element, "text");
 
-    InOrder order = inOrder(element);
-    order.verify(element).clear();
-    order.verify(element).sendKeys("text");
-  }
+        InOrder order = inOrder(element);
+        order.verify(element).clear();
+        order.verify(element).sendKeys("text");
+    }
 
-  @Test
-  void clickDelegatesToElement() {
-    ElementActions.click(element);
+    @Test
+    void clickDelegatesToElement() {
+        ElementActions.click(element);
 
-    verify(element).click();
-  }
+        verify(element).click();
+    }
 
-  @Test
-  void submitClicksDefaultSubmitButton() {
-    WebElement button = mock(WebElement.class);
-    when(element.findElement(any(By.class))).thenReturn(button);
+    @Test
+    void submitClicksDefaultSubmitButton() {
+        WebElement button = mock(WebElement.class);
+        when(element.findElement(any(By.class))).thenReturn(button);
 
-    ElementActions.submit(element);
+        ElementActions.submit(element);
 
-    verify(button).click();
-  }
+        verify(button).click();
+    }
 
-  @Test
-  void uploadFileRejectsMissingFile(@TempDir Path dir) {
-    assertThatThrownBy(() -> ElementActions.uploadFile(element, dir.resolve("none.txt")))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("File does not exist");
-  }
+    @Test
+    void uploadFileRejectsMissingFile(@TempDir Path dir) {
+        assertThatThrownBy(() -> ElementActions.uploadFile(element, dir.resolve("none.txt")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("File does not exist");
+    }
 
-  @Test
-  void uploadFileRejectsNonFileInput(@TempDir Path dir) throws IOException {
-    Path file = Files.writeString(dir.resolve("a.txt"), "x");
-    when(element.getTagName()).thenReturn("div");
+    @Test
+    void uploadFileRejectsNonFileInput(@TempDir Path dir) throws IOException {
+        Path file = Files.writeString(dir.resolve("a.txt"), "x");
+        when(element.getTagName()).thenReturn("div");
 
-    assertThatThrownBy(() -> ElementActions.uploadFile(element, file))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("<input type=\"file\">");
-  }
+        assertThatThrownBy(() -> ElementActions.uploadFile(element, file))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("<input type=\"file\">");
+    }
 
-  @Test
-  void uploadFileSendsAbsolutePath(@TempDir Path dir) throws IOException {
-    Path file = Files.writeString(dir.resolve("a.txt"), "x");
-    when(element.getTagName()).thenReturn("input");
-    when(element.getDomAttribute("type")).thenReturn("file");
+    @Test
+    void uploadFileSendsAbsolutePath(@TempDir Path dir) throws IOException {
+        Path file = Files.writeString(dir.resolve("a.txt"), "x");
+        when(element.getTagName()).thenReturn("input");
+        when(element.getDomAttribute("type")).thenReturn("file");
 
-    ElementActions.uploadFile(element, file);
+        ElementActions.uploadFile(element, file);
 
-    verify(element).sendKeys(file.toAbsolutePath().normalize().toString());
-  }
+        verify(element).sendKeys(file.toAbsolutePath().normalize().toString());
+    }
 
-  @Test
-  void uploadFilesJoinsPathsWithNewline(@TempDir Path dir) {
-    Path a = dir.resolve("a");
-    Path b = dir.resolve("b");
+    @Test
+    void uploadFilesJoinsPathsWithNewline(@TempDir Path dir) {
+        Path a = dir.resolve("a");
+        Path b = dir.resolve("b");
 
-    ElementActions.uploadFiles(element, List.of(a, b));
+        ElementActions.uploadFiles(element, List.of(a, b));
 
-    verify(element).sendKeys(a.toAbsolutePath() + "\n" + b.toAbsolutePath());
-  }
+        verify(element).sendKeys(a.toAbsolutePath() + "\n" + b.toAbsolutePath());
+    }
 
-  @Test
-  void jsClickRequiresJavascriptExecutor() {
-    WebDriver plain = mock(WebDriver.class);
+    @Test
+    void jsClickRequiresJavascriptExecutor() {
+        WebDriver plain = mock(WebDriver.class);
 
-    assertThatThrownBy(() -> ElementActions.jsClick(plain, element))
-        .isInstanceOf(UnsupportedOperationException.class)
-        .hasMessageContaining("JavascriptExecutor");
-  }
+        assertThatThrownBy(() -> ElementActions.jsClick(plain, element))
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("JavascriptExecutor");
+    }
 }

@@ -7,40 +7,37 @@ import org.pf4j.Plugin;
 import tungnn.tutor.java.tool.hub.api.*;
 
 public class Base64Plugin extends Plugin {
-  @Extension
-  public static class Base64Tool implements ToolExtension {
-    @Override
-    public ToolDescriptor descriptor() {
-      return new ToolDescriptor(
-          "base64", "Base64", "Encode/decode Base64", "encoding", ToolLayout.TRANSFORM);
-    }
+    @Extension
+    public static class Base64Tool implements ToolExtension {
+        @Override
+        public ToolDescriptor descriptor() {
+            return new ToolDescriptor("base64", "Base64", "Encode/decode Base64", "encoding", ToolLayout.TRANSFORM);
+        }
 
-    @Override
-    public List<ParamSpec> params() {
-      return List.of(
-          new ParamSpec("mode", "enum:encode|decode", true, "Mode", "encode"),
-          new ParamSpec("text", "text", true, "Content"));
-    }
+        @Override
+        public List<ParamSpec> params() {
+            return List.of(
+                    new ParamSpec("mode", "enum:encode|decode", true, "Mode", "encode"),
+                    new ParamSpec("text", "text", true, "Content"));
+        }
 
-    @Override
-    public ToolResult execute(ToolContext ctx, Map<String, Object> in) throws ToolException {
-      Object text = in.get("text");
-      Object mode = in.get("mode");
-      if (text == null || mode == null) return ToolResult.fail("Missing mode/text parameter");
-      try {
-        return switch (mode.toString()) {
-          case "encode" ->
-              ToolResult.ok(
-                  Base64.getEncoder()
-                      .encodeToString(text.toString().getBytes(StandardCharsets.UTF_8)));
-          case "decode" ->
-              ToolResult.ok(
-                  new String(Base64.getDecoder().decode(text.toString()), StandardCharsets.UTF_8));
-          default -> ToolResult.fail("Invalid mode");
-        };
-      } catch (IllegalArgumentException e) {
-        return ToolResult.fail("Invalid Base64 string");
-      }
+        @Override
+        public ToolResult execute(ToolContext ctx, Map<String, Object> in) throws ToolException {
+            Object text = in.get("text");
+            Object mode = in.get("mode");
+            if (text == null || mode == null) return ToolResult.fail("Missing mode/text parameter");
+            try {
+                return switch (mode.toString()) {
+                    case "encode" ->
+                        ToolResult.ok(Base64.getEncoder()
+                                .encodeToString(text.toString().getBytes(StandardCharsets.UTF_8)));
+                    case "decode" ->
+                        ToolResult.ok(new String(Base64.getDecoder().decode(text.toString()), StandardCharsets.UTF_8));
+                    default -> ToolResult.fail("Invalid mode");
+                };
+            } catch (IllegalArgumentException e) {
+                return ToolResult.fail("Invalid Base64 string");
+            }
+        }
     }
-  }
 }

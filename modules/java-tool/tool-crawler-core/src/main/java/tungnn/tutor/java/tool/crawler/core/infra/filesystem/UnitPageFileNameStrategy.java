@@ -5,31 +5,30 @@ import tungnn.tutor.java.tool.crawler.core.infra.webpage.crawler.PageCrawlResult
 
 public class UnitPageFileNameStrategy implements FileNameStrategy<PageCrawlResult> {
 
-  public static final String UNIT_PREFIX = "%03d-";
+    public static final String UNIT_PREFIX = "%03d-";
 
-  private static final int MAX_LENGTH = 100;
-  private static final String FALLBACK = "untitled";
+    private static final int MAX_LENGTH = 100;
+    private static final String FALLBACK = "untitled";
 
-  @Override
-  public String buildFileName(int index, PageCrawlResult source) {
-    String title = source == null ? null : source.title();
-    String slug = slugify(title);
-    return UNIT_PREFIX.formatted(index) + slug;
-  }
-
-  private String slugify(String raw) {
-    if (raw == null || raw.isBlank()) {
-      return FALLBACK;
+    @Override
+    public String buildFileName(int index, PageCrawlResult source) {
+        String title = source == null ? null : source.title();
+        String slug = slugify(title);
+        return UNIT_PREFIX.formatted(index) + slug;
     }
-    String slug =
-        raw.trim()
-            .toLowerCase(Locale.ROOT)
-            .replaceAll("[^\\p{Alnum}]+", "-") // invalid characters -> '-'
-            .replaceAll("(^-+|-+$)", ""); // strip leading/trailing '-'
 
-    if (slug.length() > MAX_LENGTH) {
-      slug = slug.substring(0, MAX_LENGTH).replaceAll("-+$", "");
+    private String slugify(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return FALLBACK;
+        }
+        String slug = raw.trim()
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^\\p{Alnum}]+", "-") // invalid characters -> '-'
+                .replaceAll("(^-+|-+$)", ""); // strip leading/trailing '-'
+
+        if (slug.length() > MAX_LENGTH) {
+            slug = slug.substring(0, MAX_LENGTH).replaceAll("-+$", "");
+        }
+        return slug.isBlank() ? FALLBACK : slug;
     }
-    return slug.isBlank() ? FALLBACK : slug;
-  }
 }

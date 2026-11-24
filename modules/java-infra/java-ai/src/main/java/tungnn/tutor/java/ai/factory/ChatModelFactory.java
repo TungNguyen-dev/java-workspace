@@ -5,5 +5,5 @@ import tungnn.tutor.java.ai.config.LlmClientProperties;
 
 @FunctionalInterface
 public interface ChatModelFactory {
-  ChatModel create(LlmClientProperties properties);
+    ChatModel create(LlmClientProperties properties);
 }

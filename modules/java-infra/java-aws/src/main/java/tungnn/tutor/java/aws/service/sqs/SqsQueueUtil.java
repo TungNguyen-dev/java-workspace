@@ -6,54 +6,49 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;
 
 public final class SqsQueueUtil {
-  private SqsQueueUtil() {}
+    private SqsQueueUtil() {}
 
-  public static CreateQueueResponse createQueue(SqsClient client, CreateQueueRequest request) {
-    return client.createQueue(request);
-  }
+    public static CreateQueueResponse createQueue(SqsClient client, CreateQueueRequest request) {
+        return client.createQueue(request);
+    }
 
-  public static DeleteQueueResponse deleteQueue(SqsClient client, DeleteQueueRequest request) {
-    return client.deleteQueue(request);
-  }
+    public static DeleteQueueResponse deleteQueue(SqsClient client, DeleteQueueRequest request) {
+        return client.deleteQueue(request);
+    }
 
-  public static GetQueueAttributesResponse getQueueAttributes(
-      SqsClient client, GetQueueAttributesRequest request) {
-    return client.getQueueAttributes(request);
-  }
+    public static GetQueueAttributesResponse getQueueAttributes(SqsClient client, GetQueueAttributesRequest request) {
+        return client.getQueueAttributes(request);
+    }
 
-  public static GetQueueUrlResponse getQueueUrl(SqsClient client, GetQueueUrlRequest request) {
-    return client.getQueueUrl(request);
-  }
+    public static GetQueueUrlResponse getQueueUrl(SqsClient client, GetQueueUrlRequest request) {
+        return client.getQueueUrl(request);
+    }
 
-  public static List<String> listDeadLetterSourceQueues(
-      SqsClient client, ListDeadLetterSourceQueuesRequest request) {
-    return client.listDeadLetterSourceQueuesPaginator(request).stream()
-        .flatMap(r -> r.queueUrls().stream())
-        .collect(Collectors.toList());
-  }
+    public static List<String> listDeadLetterSourceQueues(SqsClient client, ListDeadLetterSourceQueuesRequest request) {
+        return client.listDeadLetterSourceQueuesPaginator(request).stream()
+                .flatMap(r -> r.queueUrls().stream())
+                .collect(Collectors.toList());
+    }
 
-  public static List<String> listQueues(SqsClient client, ListQueuesRequest request) {
-    return client.listQueuesPaginator(request).stream()
-        .flatMap(r -> r.queueUrls().stream())
-        .collect(Collectors.toList());
-  }
+    public static List<String> listQueues(SqsClient client, ListQueuesRequest request) {
+        return client.listQueuesPaginator(request).stream()
+                .flatMap(r -> r.queueUrls().stream())
+                .collect(Collectors.toList());
+    }
 
-  public static PurgeQueueResponse purgeQueue(SqsClient client, PurgeQueueRequest request) {
-    return client.purgeQueue(request);
-  }
+    public static PurgeQueueResponse purgeQueue(SqsClient client, PurgeQueueRequest request) {
+        return client.purgeQueue(request);
+    }
 
-  public static SetQueueAttributesResponse setQueueAttributes(
-      SqsClient client, SetQueueAttributesRequest request) {
-    return client.setQueueAttributes(request);
-  }
+    public static SetQueueAttributesResponse setQueueAttributes(SqsClient client, SetQueueAttributesRequest request) {
+        return client.setQueueAttributes(request);
+    }
 
-  public static AddPermissionResponse addPermission(
-      SqsClient client, AddPermissionRequest request) {
-    return client.addPermission(request);
-  }
+    public static AddPermissionResponse addPermission(SqsClient client, AddPermissionRequest request) {
+        return client.addPermission(request);
+    }
 
-  public static RemovePermissionResponse removePermission(
-      SqsClient client, RemovePermissionRequest request) {
-    return client.removePermission(request);
-  }
+    public static RemovePermissionResponse removePermission(SqsClient client, RemovePermissionRequest request) {
+        return client.removePermission(request);
+    }
 }

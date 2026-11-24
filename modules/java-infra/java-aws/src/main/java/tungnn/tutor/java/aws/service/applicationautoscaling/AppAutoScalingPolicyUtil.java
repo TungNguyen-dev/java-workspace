@@ -6,27 +6,27 @@ import software.amazon.awssdk.services.applicationautoscaling.ApplicationAutoSca
 import software.amazon.awssdk.services.applicationautoscaling.model.*;
 
 public final class AppAutoScalingPolicyUtil {
-  private AppAutoScalingPolicyUtil() {}
+    private AppAutoScalingPolicyUtil() {}
 
-  public static DeleteScalingPolicyResponse deleteScalingPolicy(
-      ApplicationAutoScalingClient client, DeleteScalingPolicyRequest request) {
-    return client.deleteScalingPolicy(request);
-  }
+    public static DeleteScalingPolicyResponse deleteScalingPolicy(
+            ApplicationAutoScalingClient client, DeleteScalingPolicyRequest request) {
+        return client.deleteScalingPolicy(request);
+    }
 
-  public static List<ScalingPolicy> describeScalingPolicies(
-      ApplicationAutoScalingClient client, DescribeScalingPoliciesRequest request) {
-    return client.describeScalingPoliciesPaginator(request).stream()
-        .flatMap(r -> r.scalingPolicies().stream())
-        .collect(Collectors.toList());
-  }
+    public static List<ScalingPolicy> describeScalingPolicies(
+            ApplicationAutoScalingClient client, DescribeScalingPoliciesRequest request) {
+        return client.describeScalingPoliciesPaginator(request).stream()
+                .flatMap(r -> r.scalingPolicies().stream())
+                .collect(Collectors.toList());
+    }
 
-  public static GetPredictiveScalingForecastResponse getPredictiveScalingForecast(
-      ApplicationAutoScalingClient client, GetPredictiveScalingForecastRequest request) {
-    return client.getPredictiveScalingForecast(request);
-  }
+    public static GetPredictiveScalingForecastResponse getPredictiveScalingForecast(
+            ApplicationAutoScalingClient client, GetPredictiveScalingForecastRequest request) {
+        return client.getPredictiveScalingForecast(request);
+    }
 
-  public static PutScalingPolicyResponse putScalingPolicy(
-      ApplicationAutoScalingClient client, PutScalingPolicyRequest request) {
-    return client.putScalingPolicy(request);
-  }
+    public static PutScalingPolicyResponse putScalingPolicy(
+            ApplicationAutoScalingClient client, PutScalingPolicyRequest request) {
+        return client.putScalingPolicy(request);
+    }
 }

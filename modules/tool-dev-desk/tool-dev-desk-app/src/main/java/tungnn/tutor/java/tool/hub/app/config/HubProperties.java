@@ -6,6 +6,6 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties("hub")
 public record HubProperties(
-    @DefaultValue("plugins") Path pluginsDir,
-    @DefaultValue("data") Path dataDir,
-    @DefaultValue("true") boolean watch) {}
+        @DefaultValue("plugins") Path pluginsDir,
+        @DefaultValue("data") Path dataDir,
+        @DefaultValue("true") boolean watch) {}

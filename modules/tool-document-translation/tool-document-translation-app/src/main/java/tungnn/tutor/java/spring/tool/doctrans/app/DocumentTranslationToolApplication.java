@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class DocumentTranslationToolApplication {
 
-  static void main(String[] args) {
-    SpringApplication.run(DocumentTranslationToolApplication.class, args);
-  }
+    static void main(String[] args) {
+        SpringApplication.run(DocumentTranslationToolApplication.class, args);
+    }
 }

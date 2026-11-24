@@ -14,43 +14,26 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 
 class HttpUtilsTest {
-  @Test
-  void shouldRetryTransientFailures() {
-    assertThat(HttpUtils.isTransient(new TransientAiException("x"))).isTrue();
-    assertThat(HttpUtils.isTransient(new ResourceAccessException("x", new IOException()))).isTrue();
-    assertThat(HttpUtils.isTransient(new IOException("x"))).isTrue();
-    assertThat(
-            HttpUtils.isTransient(
-                HttpServerErrorException.create(
-                    HttpStatus.BAD_GATEWAY,
-                    "x",
-                    new HttpHeaders(),
-                    new byte[0],
-                    StandardCharsets.UTF_8)))
-        .isTrue();
-    assertThat(
-            HttpUtils.isTransient(
-                HttpClientErrorException.create(
-                    HttpStatus.TOO_MANY_REQUESTS,
-                    "x",
-                    new HttpHeaders(),
-                    new byte[0],
-                    StandardCharsets.UTF_8)))
-        .isTrue();
-  }
+    @Test
+    void shouldRetryTransientFailures() {
+        assertThat(HttpUtils.isTransient(new TransientAiException("x"))).isTrue();
+        assertThat(HttpUtils.isTransient(new ResourceAccessException("x", new IOException())))
+                .isTrue();
+        assertThat(HttpUtils.isTransient(new IOException("x"))).isTrue();
+        assertThat(HttpUtils.isTransient(HttpServerErrorException.create(
+                        HttpStatus.BAD_GATEWAY, "x", new HttpHeaders(), new byte[0], StandardCharsets.UTF_8)))
+                .isTrue();
+        assertThat(HttpUtils.isTransient(HttpClientErrorException.create(
+                        HttpStatus.TOO_MANY_REQUESTS, "x", new HttpHeaders(), new byte[0], StandardCharsets.UTF_8)))
+                .isTrue();
+    }
 
-  @Test
-  void shouldNotRetryPermanentFailures() {
-    assertThat(HttpUtils.isTransient(new NonTransientAiException("x"))).isFalse();
-    assertThat(
-            HttpUtils.isTransient(
-                HttpClientErrorException.create(
-                    HttpStatus.UNAUTHORIZED,
-                    "x",
-                    new HttpHeaders(),
-                    new byte[0],
-                    StandardCharsets.UTF_8)))
-        .isFalse();
-    assertThat(HttpUtils.isTransient(new IllegalStateException("x"))).isFalse();
-  }
+    @Test
+    void shouldNotRetryPermanentFailures() {
+        assertThat(HttpUtils.isTransient(new NonTransientAiException("x"))).isFalse();
+        assertThat(HttpUtils.isTransient(HttpClientErrorException.create(
+                        HttpStatus.UNAUTHORIZED, "x", new HttpHeaders(), new byte[0], StandardCharsets.UTF_8)))
+                .isFalse();
+        assertThat(HttpUtils.isTransient(new IllegalStateException("x"))).isFalse();
+    }
 }

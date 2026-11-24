@@ -9,24 +9,24 @@ import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
 
 class DummyTextTranslatorTest {
 
-  private final DummyTextTranslator translator = new DummyTextTranslator();
+    private final DummyTextTranslator translator = new DummyTextTranslator();
 
-  @Test
-  void shouldTranslateTextSuccessfully() {
-    // Given
-    var textUnit = new TextTranslationRequest.TextUnit("unit-1", "Hello World");
-    var request = new TextTranslationRequest.Standard(textUnit, LanguageCode.EN, null, null);
+    @Test
+    void shouldTranslateTextSuccessfully() {
+        // Given
+        var textUnit = new TextTranslationRequest.TextUnit("unit-1", "Hello World");
+        var request = new TextTranslationRequest.Standard(textUnit, LanguageCode.EN, null, null);
 
-    // When
-    var result = translator.translate(request);
+        // When
+        var result = translator.translate(request);
 
-    // Then
-    assertThat(result).isInstanceOf(TextTranslationResult.Success.class);
-    var successResult = (TextTranslationResult.Success) result;
+        // Then
+        assertThat(result).isInstanceOf(TextTranslationResult.Success.class);
+        var successResult = (TextTranslationResult.Success) result;
 
-    assertThat(successResult.translation().id()).isEqualTo("unit-1");
-    assertThat(successResult.translation().original()).isEqualTo("Hello World");
-    assertThat(successResult.translation().translation()).isEqualTo("[DUMMY - EN] Hello World");
-    assertThat(successResult.translation().languageCode()).isEqualTo(LanguageCode.EN);
-  }
+        assertThat(successResult.translation().id()).isEqualTo("unit-1");
+        assertThat(successResult.translation().original()).isEqualTo("Hello World");
+        assertThat(successResult.translation().translation()).isEqualTo("[DUMMY - EN] Hello World");
+        assertThat(successResult.translation().languageCode()).isEqualTo(LanguageCode.EN);
+    }
 }

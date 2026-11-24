@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @SpringBootApplication
 @ConfigurationPropertiesScan
 public class ToolHubApplication {
-  static void main(String[] args) {
-    SpringApplication.run(ToolHubApplication.class, args);
-  }
+    static void main(String[] args) {
+        SpringApplication.run(ToolHubApplication.class, args);
+    }
 }

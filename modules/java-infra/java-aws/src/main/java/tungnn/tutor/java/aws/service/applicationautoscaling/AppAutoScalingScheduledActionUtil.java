@@ -6,22 +6,22 @@ import software.amazon.awssdk.services.applicationautoscaling.ApplicationAutoSca
 import software.amazon.awssdk.services.applicationautoscaling.model.*;
 
 public final class AppAutoScalingScheduledActionUtil {
-  private AppAutoScalingScheduledActionUtil() {}
+    private AppAutoScalingScheduledActionUtil() {}
 
-  public static DeleteScheduledActionResponse deleteScheduledAction(
-      ApplicationAutoScalingClient client, DeleteScheduledActionRequest request) {
-    return client.deleteScheduledAction(request);
-  }
+    public static DeleteScheduledActionResponse deleteScheduledAction(
+            ApplicationAutoScalingClient client, DeleteScheduledActionRequest request) {
+        return client.deleteScheduledAction(request);
+    }
 
-  public static List<ScheduledAction> describeScheduledActions(
-      ApplicationAutoScalingClient client, DescribeScheduledActionsRequest request) {
-    return client.describeScheduledActionsPaginator(request).stream()
-        .flatMap(r -> r.scheduledActions().stream())
-        .collect(Collectors.toList());
-  }
+    public static List<ScheduledAction> describeScheduledActions(
+            ApplicationAutoScalingClient client, DescribeScheduledActionsRequest request) {
+        return client.describeScheduledActionsPaginator(request).stream()
+                .flatMap(r -> r.scheduledActions().stream())
+                .collect(Collectors.toList());
+    }
 
-  public static PutScheduledActionResponse putScheduledAction(
-      ApplicationAutoScalingClient client, PutScheduledActionRequest request) {
-    return client.putScheduledAction(request);
-  }
+    public static PutScheduledActionResponse putScheduledAction(
+            ApplicationAutoScalingClient client, PutScheduledActionRequest request) {
+        return client.putScheduledAction(request);
+    }
 }

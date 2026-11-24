@@ -6,10 +6,9 @@ import tungnn.tutor.java.core.lib.jdbc.extractor.strategy.MetadataExtractStrateg
 
 public interface MetadataExtractor {
 
-  DatabaseSchema extract(Connection connection, String catalog, String schema);
+    DatabaseSchema extract(Connection connection, String catalog, String schema);
 
-  default DatabaseSchema extract(
-      Connection connection, String catalog, String schema, ExtractionOptions options) {
-    return extract(connection, catalog, schema);
-  }
+    default DatabaseSchema extract(Connection connection, String catalog, String schema, ExtractionOptions options) {
+        return extract(connection, catalog, schema);
+    }
 }

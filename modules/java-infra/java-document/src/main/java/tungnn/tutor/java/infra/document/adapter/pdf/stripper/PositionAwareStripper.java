@@ -11,50 +11,48 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
 
 public class PositionAwareStripper extends PDFTextStripper {
-  private final List<TextChunk> chunks = new ArrayList<>();
+    private final List<TextChunk> chunks = new ArrayList<>();
 
-  public PositionAwareStripper() {
-    super();
-  }
-
-  @Override
-  protected void startPage(PDPage page) throws IOException {
-    super.startPage(page);
-    chunks.clear();
-  }
-
-  @Override
-  protected void writeString(String text, List<TextPosition> textPositions) {
-    if (textPositions == null || textPositions.isEmpty()) {
-      return;
+    public PositionAwareStripper() {
+        super();
     }
-    for (TextPosition position : textPositions) {
-      String unicode = position.getUnicode();
-      if (unicode == null || unicode.isEmpty()) {
-        continue;
-      }
-      chunks.add(
-          new TextChunk(
-              unicode,
-              position.getX(),
-              position.getY(),
-              position.getFontSizeInPt(),
-              position.getFont(),
-              position.getWidth(),
-              position.getHeight()));
-    }
-  }
 
-  public List<TextChunk> getChunks() {
-    return Collections.unmodifiableList(chunks);
-  }
-
-  public record TextChunk(
-      String text, float x, float y, float fontSizePt, PDFont font, float width, float height) {
-    public TextChunk {
-      Objects.requireNonNull(text, "text cannot be null");
-      Objects.requireNonNull(font, "font cannot be null");
-      if (text.isEmpty()) throw new IllegalArgumentException("text cannot be empty");
+    @Override
+    protected void startPage(PDPage page) throws IOException {
+        super.startPage(page);
+        chunks.clear();
     }
-  }
+
+    @Override
+    protected void writeString(String text, List<TextPosition> textPositions) {
+        if (textPositions == null || textPositions.isEmpty()) {
+            return;
+        }
+        for (TextPosition position : textPositions) {
+            String unicode = position.getUnicode();
+            if (unicode == null || unicode.isEmpty()) {
+                continue;
+            }
+            chunks.add(new TextChunk(
+                    unicode,
+                    position.getX(),
+                    position.getY(),
+                    position.getFontSizeInPt(),
+                    position.getFont(),
+                    position.getWidth(),
+                    position.getHeight()));
+        }
+    }
+
+    public List<TextChunk> getChunks() {
+        return Collections.unmodifiableList(chunks);
+    }
+
+    public record TextChunk(String text, float x, float y, float fontSizePt, PDFont font, float width, float height) {
+        public TextChunk {
+            Objects.requireNonNull(text, "text cannot be null");
+            Objects.requireNonNull(font, "font cannot be null");
+            if (text.isEmpty()) throw new IllegalArgumentException("text cannot be empty");
+        }
+    }
 }

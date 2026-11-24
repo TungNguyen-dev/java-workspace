@@ -16,80 +16,80 @@ import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
 
 public class WordDocumentTranslator extends AbstractDocumentTranslator<XWPFDocument> {
-  public WordDocumentTranslator(
-      TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-    super(textTranslator, textTranslationMemory);
-  }
-
-  @Override
-  protected XWPFDocument openDocument(DocumentTranslationRequest request) {
-    try {
-      return new XWPFDocument(Files.newInputStream(request.documentSource().path()));
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to open Word document: " + e.getMessage(), e);
-    }
-  }
-
-  @Override
-  protected List<DocumentTextBlock> collectTextBlock(XWPFDocument document) {
-    List<DocumentTextBlock> textBlocks = new ArrayList<>();
-    // 1. Paragraphs
-    DocumentSemanticUnitCollector.collectParagraphs(document).stream()
-        .map(ParagraphDocumentTextBlock::new)
-        .forEach(textBlocks::add);
-    // 2. Table Cells
-    DocumentSemanticUnitCollector.collectTableCells(document).stream()
-        .map(TableCellDocumentTextBlock::new)
-        .forEach(textBlocks::add);
-    return textBlocks;
-  }
-
-  @Override
-  protected void saveDocument(Path translationPath, XWPFDocument document) {
-    try (var out = Files.newOutputStream(translationPath)) {
-      document.write(out);
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to save Word document: " + e.getMessage(), e);
-    }
-  }
-
-  // --- Implementations of DocumentTextBlock ---
-  private record ParagraphDocumentTextBlock(XWPFParagraph paragraph) implements DocumentTextBlock {
-    @Override
-    public String content() {
-      return paragraph.getText();
+    public WordDocumentTranslator(TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
+        super(textTranslator, textTranslationMemory);
     }
 
     @Override
-    public void setContent(String content) {
-      var runs = paragraph.getRuns();
-      if (runs != null && !runs.isEmpty()) {
-        // Keep the first run to preserve formatting styles (font, color, etc.)
-        runs.getFirst().setText(content, 0);
-        // Remove subsequent runs to prevent old content duplication
-        for (int i = runs.size() - 1; i > 0; i--) {
-          paragraph.removeRun(i);
+    protected XWPFDocument openDocument(DocumentTranslationRequest request) {
+        try {
+            return new XWPFDocument(
+                    Files.newInputStream(request.documentSource().path()));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to open Word document: " + e.getMessage(), e);
         }
-      } else {
-        // If the paragraph has no existing runs, create a new one
-        paragraph.createRun().setText(content);
-      }
-    }
-  }
-
-  private record TableCellDocumentTextBlock(XWPFTableCell tableCell) implements DocumentTextBlock {
-    @Override
-    public String content() {
-      return tableCell.getText();
     }
 
     @Override
-    public void setContent(String content) {
-      if (!tableCell.getParagraphs().isEmpty()) {
-        tableCell.removeParagraph(0);
-      }
-      XWPFParagraph paragraph = tableCell.addParagraph();
-      paragraph.createRun().setText(content);
+    protected List<DocumentTextBlock> collectTextBlock(XWPFDocument document) {
+        List<DocumentTextBlock> textBlocks = new ArrayList<>();
+        // 1. Paragraphs
+        DocumentSemanticUnitCollector.collectParagraphs(document).stream()
+                .map(ParagraphDocumentTextBlock::new)
+                .forEach(textBlocks::add);
+        // 2. Table Cells
+        DocumentSemanticUnitCollector.collectTableCells(document).stream()
+                .map(TableCellDocumentTextBlock::new)
+                .forEach(textBlocks::add);
+        return textBlocks;
     }
-  }
+
+    @Override
+    protected void saveDocument(Path translationPath, XWPFDocument document) {
+        try (var out = Files.newOutputStream(translationPath)) {
+            document.write(out);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save Word document: " + e.getMessage(), e);
+        }
+    }
+
+    // --- Implementations of DocumentTextBlock ---
+    private record ParagraphDocumentTextBlock(XWPFParagraph paragraph) implements DocumentTextBlock {
+        @Override
+        public String content() {
+            return paragraph.getText();
+        }
+
+        @Override
+        public void setContent(String content) {
+            var runs = paragraph.getRuns();
+            if (runs != null && !runs.isEmpty()) {
+                // Keep the first run to preserve formatting styles (font, color, etc.)
+                runs.getFirst().setText(content, 0);
+                // Remove subsequent runs to prevent old content duplication
+                for (int i = runs.size() - 1; i > 0; i--) {
+                    paragraph.removeRun(i);
+                }
+            } else {
+                // If the paragraph has no existing runs, create a new one
+                paragraph.createRun().setText(content);
+            }
+        }
+    }
+
+    private record TableCellDocumentTextBlock(XWPFTableCell tableCell) implements DocumentTextBlock {
+        @Override
+        public String content() {
+            return tableCell.getText();
+        }
+
+        @Override
+        public void setContent(String content) {
+            if (!tableCell.getParagraphs().isEmpty()) {
+                tableCell.removeParagraph(0);
+            }
+            XWPFParagraph paragraph = tableCell.addParagraph();
+            paragraph.createRun().setText(content);
+        }
+    }
 }

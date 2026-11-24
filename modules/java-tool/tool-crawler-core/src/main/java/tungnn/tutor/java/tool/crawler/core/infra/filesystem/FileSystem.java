@@ -10,57 +10,57 @@ import java.util.stream.Stream;
 
 public interface FileSystem {
 
-  // ---------- Existence & metadata ----------
+    // ---------- Existence & metadata ----------
 
-  boolean exists(String path);
+    boolean exists(String path);
 
-  boolean isDirectory(String path);
+    boolean isDirectory(String path);
 
-  boolean isFile(String path);
+    boolean isFile(String path);
 
-  Optional<FileMetadata> metadata(String path);
+    Optional<FileMetadata> metadata(String path);
 
-  // ---------- Read ----------
+    // ---------- Read ----------
 
-  byte[] readAllBytes(String path) throws IOException;
+    byte[] readAllBytes(String path) throws IOException;
 
-  String readString(String path) throws IOException;
+    String readString(String path) throws IOException;
 
-  InputStream newInputStream(String path) throws IOException;
+    InputStream newInputStream(String path) throws IOException;
 
-  // ---------- Write ----------
+    // ---------- Write ----------
 
-  void write(String path, byte[] content, WriteOption... options) throws IOException;
+    void write(String path, byte[] content, WriteOption... options) throws IOException;
 
-  void writeString(String path, String content, WriteOption... options) throws IOException;
+    void writeString(String path, String content, WriteOption... options) throws IOException;
 
-  OutputStream newOutputStream(String path, WriteOption... options) throws IOException;
+    OutputStream newOutputStream(String path, WriteOption... options) throws IOException;
 
-  // ---------- Mutations ----------
+    // ---------- Mutations ----------
 
-  void createDirectories(String path) throws IOException;
+    void createDirectories(String path) throws IOException;
 
-  void copy(String source, String target, WriteOption... options) throws IOException;
+    void copy(String source, String target, WriteOption... options) throws IOException;
 
-  void move(String source, String target, WriteOption... options) throws IOException;
+    void move(String source, String target, WriteOption... options) throws IOException;
 
-  boolean delete(String path) throws IOException;
+    boolean delete(String path) throws IOException;
 
-  long deleteRecursively(String path) throws IOException;
+    long deleteRecursively(String path) throws IOException;
 
-  // ---------- Listing ----------
+    // ---------- Listing ----------
 
-  List<String> list(String directory) throws IOException;
+    List<String> list(String directory) throws IOException;
 
-  Stream<String> walk(String directory) throws IOException;
+    Stream<String> walk(String directory) throws IOException;
 
-  // ---------- Supporting types ----------
+    // ---------- Supporting types ----------
 
-  enum WriteOption {
-    CREATE_PARENTS, // auto-create missing parent directories
-    OVERWRITE, // replace if target exists
-    APPEND // append instead of truncate
-  }
+    enum WriteOption {
+        CREATE_PARENTS, // auto-create missing parent directories
+        OVERWRITE, // replace if target exists
+        APPEND // append instead of truncate
+    }
 
-  record FileMetadata(String path, boolean directory, long size, Instant lastModified) {}
+    record FileMetadata(String path, boolean directory, long size, Instant lastModified) {}
 }

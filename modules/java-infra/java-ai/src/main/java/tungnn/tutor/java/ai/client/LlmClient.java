@@ -8,21 +8,21 @@ import reactor.core.publisher.Flux;
 import tungnn.tutor.java.ai.config.LlmProvider;
 
 public interface LlmClient {
-  LlmProvider provider();
+    LlmProvider provider();
 
-  Optional<String> model();
+    Optional<String> model();
 
-  default String chat(String user) {
-    return chat(null, user);
-  }
+    default String chat(String user) {
+        return chat(null, user);
+    }
 
-  String chat(String system, String user);
+    String chat(String system, String user);
 
-  ChatResponse chat(Prompt prompt);
+    ChatResponse chat(Prompt prompt);
 
-  <T> T chat(String system, String user, Class<T> type);
+    <T> T chat(String system, String user, Class<T> type);
 
-  Flux<String> stream(String system, String user);
+    Flux<String> stream(String system, String user);
 
-  ChatClient chatClient();
+    ChatClient chatClient();
 }

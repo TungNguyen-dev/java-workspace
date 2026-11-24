@@ -8,15 +8,15 @@ import tungnn.tutor.java.tool.crawler.core.application.model.OcrResult;
 
 public interface OcrService {
 
-  OcrResult recognize(Path imageOrPdf, OcrResult.OcrOptions options);
+    OcrResult recognize(Path imageOrPdf, OcrResult.OcrOptions options);
 
-  OcrResult recognize(BufferedImage image, OcrResult.OcrOptions options);
+    OcrResult recognize(BufferedImage image, OcrResult.OcrOptions options);
 
-  OcrResult recognize(InputStream stream, OcrResult.OcrOptions options);
+    OcrResult recognize(InputStream stream, OcrResult.OcrOptions options);
 
-  List<OcrResult> recognizePdf(Path pdf, OcrResult.OcrOptions options);
+    List<OcrResult> recognizePdf(Path pdf, OcrResult.OcrOptions options);
 
-  default OcrResult recognize(Path imageOrPdf) {
-    return recognize(imageOrPdf, OcrResult.OcrOptions.defaults());
-  }
+    default OcrResult recognize(Path imageOrPdf) {
+        return recognize(imageOrPdf, OcrResult.OcrOptions.defaults());
+    }
 }

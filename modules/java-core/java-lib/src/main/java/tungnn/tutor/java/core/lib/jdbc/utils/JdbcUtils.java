@@ -12,67 +12,65 @@ import java.util.List;
 
 public final class JdbcUtils {
 
-  private JdbcUtils() {}
+    private JdbcUtils() {}
 
-  public static Connection getConnection(String url, String username, String password) {
-    try {
-      return DriverManager.getConnection(url, username, password);
-    } catch (SQLException e) {
-      throw new RuntimeException("Database connection error: " + e.getMessage(), e);
-    }
-  }
-
-  public static ResultSet executeQuery(Connection conn, String sql) {
-    try {
-      Statement stmt = conn.createStatement();
-      return stmt.executeQuery(sql);
-    } catch (SQLException e) {
-      throw new RuntimeException("Query execution error: " + e.getMessage(), e);
-    }
-  }
-
-  public static int executeDMLQuery(Connection conn, String sql, Parameters parameters) {
-    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-      setParameters(stmt, parameters);
-      return stmt.executeUpdate();
-    } catch (SQLException e) {
-      throw new RuntimeException("DML query execution error: " + e.getMessage(), e);
-    }
-  }
-
-  public static int[] executeBulkDMLQuery(
-      Connection conn, String sql, List<Parameters> batchParameters) {
-
-    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-      if (batchParameters != null) {
-        for (Parameters parameters : batchParameters) {
-          setParameters(stmt, parameters);
-          stmt.addBatch(); // Add to the batch
+    public static Connection getConnection(String url, String username, String password) {
+        try {
+            return DriverManager.getConnection(url, username, password);
+        } catch (SQLException e) {
+            throw new RuntimeException("Database connection error: " + e.getMessage(), e);
         }
-      }
-      return stmt.executeBatch(); // Execute the whole batch
-    } catch (SQLException e) {
-      throw new RuntimeException("Bulk DML query execution error: " + e.getMessage(), e);
-    }
-  }
-
-  private static void setParameters(PreparedStatement stmt, Parameters parameters)
-      throws SQLException {
-    if (parameters == null || parameters.parameters() == null) {
-      return;
     }
 
-    // Copy into an ArrayList before sorting to avoid UnsupportedOperationException if the list is
-    // Immutable
-    List<Parameters.Parameter> params = new ArrayList<>(parameters.parameters());
-    params.sort(Comparator.comparing(Parameters.Parameter::pos));
-
-    for (var param : params) {
-      if (param.type() != null) {
-        stmt.setObject(param.pos(), param.value(), param.type());
-      } else {
-        stmt.setObject(param.pos(), param.value());
-      }
+    public static ResultSet executeQuery(Connection conn, String sql) {
+        try {
+            Statement stmt = conn.createStatement();
+            return stmt.executeQuery(sql);
+        } catch (SQLException e) {
+            throw new RuntimeException("Query execution error: " + e.getMessage(), e);
+        }
     }
-  }
+
+    public static int executeDMLQuery(Connection conn, String sql, Parameters parameters) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            setParameters(stmt, parameters);
+            return stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("DML query execution error: " + e.getMessage(), e);
+        }
+    }
+
+    public static int[] executeBulkDMLQuery(Connection conn, String sql, List<Parameters> batchParameters) {
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            if (batchParameters != null) {
+                for (Parameters parameters : batchParameters) {
+                    setParameters(stmt, parameters);
+                    stmt.addBatch(); // Add to the batch
+                }
+            }
+            return stmt.executeBatch(); // Execute the whole batch
+        } catch (SQLException e) {
+            throw new RuntimeException("Bulk DML query execution error: " + e.getMessage(), e);
+        }
+    }
+
+    private static void setParameters(PreparedStatement stmt, Parameters parameters) throws SQLException {
+        if (parameters == null || parameters.parameters() == null) {
+            return;
+        }
+
+        // Copy into an ArrayList before sorting to avoid UnsupportedOperationException if the list is
+        // Immutable
+        List<Parameters.Parameter> params = new ArrayList<>(parameters.parameters());
+        params.sort(Comparator.comparing(Parameters.Parameter::pos));
+
+        for (var param : params) {
+            if (param.type() != null) {
+                stmt.setObject(param.pos(), param.value(), param.type());
+            } else {
+                stmt.setObject(param.pos(), param.value());
+            }
+        }
+    }
 }
