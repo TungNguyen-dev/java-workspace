@@ -5,10 +5,10 @@ import org.springframework.context.annotation.Configuration;
 import tungnn.tutor.java.selenium.pool.GenericWebDriverPool;
 import tungnn.tutor.java.selenium.pool.WebDriverPool;
 import tungnn.tutor.java.selenium.pool.WebDriverPoolConfig;
-import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlService;
-import tungnn.tutor.java.tool.crawler.core.infra.service.DefaultWebCrawlService;
-import tungnn.tutor.java.tool.crawler.core.infra.service.WebCrawlOptions;
-import tungnn.tutor.java.tool.crawler.core.infra.service.WebCrawlerRegistry;
+import tungnn.tutor.java.tool.crawler.core.service.WebCrawlService;
+import tungnn.tutor.java.tool.crawler.core.service.DefaultWebCrawlService;
+import tungnn.tutor.java.tool.crawler.core.service.WebCrawlOptions;
+import tungnn.tutor.java.tool.crawler.core.infra.registry.WebCrawlerRegistry;
 
 @Configuration
 public class AppConfig {

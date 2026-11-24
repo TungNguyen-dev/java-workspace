@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.crawler.core.infra.service;
+package tungnn.tutor.java.tool.crawler.core.service;
 
 import java.time.Duration;
 import java.util.Objects;

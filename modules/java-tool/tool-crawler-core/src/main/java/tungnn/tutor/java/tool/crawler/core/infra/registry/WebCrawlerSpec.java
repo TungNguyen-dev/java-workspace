@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.crawler.core.infra.service;
+package tungnn.tutor.java.tool.crawler.core.infra.registry;
 
 import java.util.Objects;
 import java.util.function.Function;

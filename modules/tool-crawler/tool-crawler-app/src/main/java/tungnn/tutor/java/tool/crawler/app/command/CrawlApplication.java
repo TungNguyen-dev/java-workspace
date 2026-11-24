@@ -6,9 +6,9 @@ import tungnn.tutor.java.tool.crawler.app.CrawlerRunner;
 import tungnn.tutor.java.tool.crawler.app.config.CrawlerConfig;
 import tungnn.tutor.java.tool.crawler.app.service.CrawlerServiceImpl;
 import tungnn.tutor.java.tool.crawler.app.service.ObsidianServiceImpl;
-import tungnn.tutor.java.tool.crawler.core.infra.service.DefaultWebCrawlService;
-import tungnn.tutor.java.tool.crawler.core.infra.service.WebCrawlOptions;
-import tungnn.tutor.java.tool.crawler.core.infra.service.WebCrawlerRegistry;
+import tungnn.tutor.java.tool.crawler.core.service.DefaultWebCrawlService;
+import tungnn.tutor.java.tool.crawler.core.service.WebCrawlOptions;
+import tungnn.tutor.java.tool.crawler.core.infra.registry.WebCrawlerRegistry;
 
 public class CrawlApplication {
 
