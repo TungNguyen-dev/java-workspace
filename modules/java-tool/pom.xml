@@ -28,6 +28,8 @@
         <!-- Build Plugin Versions -->
         <maven.compiler.version>3.13.0</maven.compiler.version>
         <maven.surefire.version>3.5.2</maven.surefire.version>
+        <fmt-maven-plugin.version>2.27.0.2</fmt-maven-plugin.version>
+        <open-java-format.version>21.0.2</open-java-format.version>
     </properties>
 
     <!-- Align Jackson 2.x and 3.x artifacts pulled in by java-infra (previously managed by Spring Boot) -->
@@ -183,6 +185,18 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>dev.openjavaformat</groupId>
+                <artifactId>fmt-maven-plugin</artifactId>
+                <version>${fmt-maven-plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>dev.openjavaformat</groupId>
+                        <artifactId>open-java-format</artifactId>
+                        <version>${open-java-format.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

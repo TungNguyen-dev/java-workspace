@@ -6,7 +6,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import tungnn.tutor.java.core.lib.multithread.ThreadUtils;
-import tungnn.tutor.java.selenium.element.ElementUtils;
+import tungnn.tutor.java.selenium.wait.Waits;
 import tungnn.tutor.java.tool.crawler.core.infra.webpage.crawler.PageCrawlResult;
 import tungnn.tutor.java.tool.crawler.core.infra.webpage.crawler.PageCrawler;
 
@@ -35,7 +35,7 @@ public class YoutubePage extends BasePage implements PageCrawler {
   }
 
   private String getLessonTitle() {
-    return ElementUtils.waitUntil(
+    return Waits.waitUntil(
             driver,
             ExpectedConditions.presenceOfElementLocated(
                 By.cssSelector("#title h1 yt-formatted-string")),
@@ -60,7 +60,7 @@ public class YoutubePage extends BasePage implements PageCrawler {
 
   private void sendUrl(String videoUrl) {
     WebElement input =
-        ElementUtils.waitUntil(
+        Waits.waitUntil(
             driver,
             ExpectedConditions.visibilityOfElementLocated(
                 By.cssSelector("input[placeholder*='YouTube video link']")),
@@ -70,7 +70,7 @@ public class YoutubePage extends BasePage implements PageCrawler {
   }
 
   private void submit() {
-    ElementUtils.waitUntil(
+    Waits.waitUntil(
             driver,
             ExpectedConditions.elementToBeClickable(
                 By.xpath("//button[.//text()[contains(., 'Generate Summary')]]")),
@@ -79,7 +79,7 @@ public class YoutubePage extends BasePage implements PageCrawler {
   }
 
   private void waitForSummaryReady() {
-    ElementUtils.waitUntil(
+    Waits.waitUntil(
         driver,
         ExpectedConditions.elementToBeClickable(
             By.xpath(
@@ -90,7 +90,7 @@ public class YoutubePage extends BasePage implements PageCrawler {
   }
 
   private String extractSummary() {
-    return ElementUtils.waitUntil(
+    return Waits.waitUntil(
             driver,
             ExpectedConditions.visibilityOfElementLocated(
                 By.cssSelector(".md-editor.note-summary-container .md-editor-preview")),

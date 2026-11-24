@@ -5,7 +5,7 @@ import java.util.Objects;
 import org.openqa.selenium.WebDriver;
 import tungnn.tutor.java.infra.document.adapter.markdown.MarkdownDocumentUtils;
 import tungnn.tutor.java.selenium.browser.NavigationUtils;
-import tungnn.tutor.java.selenium.element.ElementUtils;
+import tungnn.tutor.java.selenium.wait.Waits;
 import tungnn.tutor.java.selenium.browser.ScriptUtils;
 
 public abstract class AbstractWebCrawler implements WebCrawler {
@@ -49,7 +49,7 @@ public abstract class AbstractWebCrawler implements WebCrawler {
   }
 
   private void waitForPageToLoad() {
-    ElementUtils.newWait(driver, timeout())
+    Waits.newWait(driver, timeout())
         .until(driver ->
             Objects.equals(
                 ScriptUtils.executeScript(driver, "return document.readyState"), "complete"));

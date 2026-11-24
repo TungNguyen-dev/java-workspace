@@ -7,7 +7,9 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import tungnn.tutor.java.core.lib.multithread.ThreadUtils;
-import tungnn.tutor.java.selenium.element.ElementUtils;
+import tungnn.tutor.java.selenium.element.ElementFinder;
+import tungnn.tutor.java.selenium.element.ElementInfo;
+import tungnn.tutor.java.selenium.wait.Waits;
 import tungnn.tutor.java.tool.crawler.core.infra.webpage.crawler.PageCrawlResult;
 import tungnn.tutor.java.tool.crawler.core.infra.webpage.crawler.PageCrawler;
 
@@ -36,10 +38,10 @@ public class CourseraPage extends BasePage implements PageCrawler {
         By.cssSelector("[data-testid='item-tool-panel-button-transcript']");
 
     var buttonTranscript =
-        ElementUtils.waitUntil(
+        Waits.waitUntil(
             driver, ExpectedConditions.elementToBeClickable(buttonTranscriptLocator), timeout());
 
-    var attr = ElementUtils.getAttribute(buttonTranscript, "aria-pressed");
+    var attr = ElementInfo.getAttribute(buttonTranscript, "aria-pressed");
     if (!"true".equalsIgnoreCase(attr)) {
       buttonTranscript.click();
       ThreadUtils.sleep(1000);
@@ -49,7 +51,7 @@ public class CourseraPage extends BasePage implements PageCrawler {
   }
 
   private String getLessonTitle() {
-    return ElementUtils.waitUntil(
+    return Waits.waitUntil(
             driver,
             ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1.video-name")),
             timeout())
@@ -57,12 +59,12 @@ public class CourseraPage extends BasePage implements PageCrawler {
   }
 
   private String getLessonContent() {
-    ElementUtils.waitUntil(
+    Waits.waitUntil(
         driver,
         ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.phrases")),
         timeout());
 
-    return ElementUtils.findElements(driver, By.cssSelector("div.phrases span[data-cue]")).stream()
+    return ElementFinder.findElements(driver, By.cssSelector("div.phrases span[data-cue]")).stream()
         .map(WebElement::getText)
         .map(String::trim)
         .filter(text -> !text.isEmpty())
