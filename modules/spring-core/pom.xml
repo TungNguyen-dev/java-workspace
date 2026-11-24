@@ -22,6 +22,8 @@
         <java.version>25</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <fmt-maven-plugin.version>2.27.0.2</fmt-maven-plugin.version>
+        <open-java-format.version>21.0.2</open-java-format.version>
     </properties>
 
     <dependencies>
@@ -51,6 +53,18 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>dev.openjavaformat</groupId>
+                <artifactId>fmt-maven-plugin</artifactId>
+                <version>${fmt-maven-plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>dev.openjavaformat</groupId>
+                        <artifactId>open-java-format</artifactId>
+                        <version>${open-java-format.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
