@@ -64,7 +64,7 @@ public final class MarkdownActions {
 
   public static MarkdownAction renameHeading(int level, String from, String to) {
     if (level < 1 || level > 6) {
-      throw new IllegalArgumentException("level phải 1..6");
+      throw new IllegalArgumentException("level must be 1..6");
     }
     var wanted = normalizeTitle(from);
     return edit(blocks -> {
@@ -81,7 +81,7 @@ public final class MarkdownActions {
 
   public static MarkdownAction headingToInlineLabel(int level, String headingText, String label) {
     if (level < 1 || level > 6) {
-      throw new IllegalArgumentException("level phải 1..6");
+      throw new IllegalArgumentException("level must be 1..6");
     }
     var wanted = normalizeTitle(headingText);
     return edit(blocks -> {
@@ -102,7 +102,7 @@ public final class MarkdownActions {
         }
         if (next < blocks.size() && blocks.get(next) instanceof Paragraph(String content)) {
           out.add(new Paragraph(label + content.strip()));
-          i = next; // đã gộp Paragraph nội dung
+          i = next; // content Paragraph already merged
         } else {
           out.add(new Paragraph(label.stripTrailing()));
         }
@@ -113,7 +113,7 @@ public final class MarkdownActions {
 
   public static MarkdownAction titleCaseHeading(int level) {
     if (level < 1 || level > 6) {
-      throw new IllegalArgumentException("level phải 1..6");
+      throw new IllegalArgumentException("level must be 1..6");
     }
     return edit(blocks -> {
       for (int i = 0; i < blocks.size(); i++) {
@@ -127,7 +127,7 @@ public final class MarkdownActions {
 
   public static MarkdownAction headingMainUpperParenTitle(int level) {
     if (level < 1 || level > 6) {
-      throw new IllegalArgumentException("level phải 1..6");
+      throw new IllegalArgumentException("level must be 1..6");
     }
     return edit(blocks -> {
       for (int i = 0; i < blocks.size(); i++) {
@@ -171,7 +171,7 @@ public final class MarkdownActions {
       }
     }
     out.append(outside.toString().toUpperCase(VI));
-    out.append(titleCase(inside.toString())); // ngoặc không đóng
+    out.append(titleCase(inside.toString())); // unclosed bracket
     return out.toString();
   }
 
@@ -201,7 +201,7 @@ public final class MarkdownActions {
 
   public static MarkdownAction insertHeadingAfterHeading(int afterLevel, int level, String text) {
     if (level < 1 || level > 6) {
-      throw new IllegalArgumentException("level phải 1..6");
+      throw new IllegalArgumentException("level must be 1..6");
     }
     var heading = new Heading(level, text);
     return edit(blocks -> {
@@ -295,7 +295,7 @@ public final class MarkdownActions {
 
   public static MarkdownAction headingIf(Pattern pattern, int level) {
     if (level < 1 || level > 6) {
-      throw new IllegalArgumentException("level phải 1..6");
+      throw new IllegalArgumentException("level must be 1..6");
     }
     return edit(blocks -> {
       for (int i = 0; i < blocks.size(); i++) {
@@ -312,7 +312,7 @@ public final class MarkdownActions {
 
   public static MarkdownAction muc(int level) {
     if (level < 1 || level > 6) {
-      throw new IllegalArgumentException("level phải 1..6");
+      throw new IllegalArgumentException("level must be 1..6");
     }
     return edit(blocks -> {
       for (int i = 0; i < blocks.size(); i++) {
@@ -336,7 +336,7 @@ public final class MarkdownActions {
   public static MarkdownAction transformSection(
       String headingText, int level, UnaryOperator<String> transformer) {
     if (level < 1 || level > 6) {
-      throw new IllegalArgumentException("level phải 1..6");
+      throw new IllegalArgumentException("level must be 1..6");
     }
     var wanted = normalizeTitle(headingText);
     return edit(blocks -> {
@@ -386,7 +386,7 @@ public final class MarkdownActions {
 
   public static MarkdownAction fixHeadingName(int level) {
     if (level < 1 || level > 6) {
-      throw new IllegalArgumentException("level phải 1..6");
+      throw new IllegalArgumentException("level must be 1..6");
     }
     return edit(blocks -> {
       var out = new ArrayList<MarkdownBlock>();
@@ -399,7 +399,7 @@ public final class MarkdownActions {
           out.add(block);
           continue;
         }
-        // So khớp theo tên thuần: bỏ phần nguồn trong ngoặc ở cuối header (nếu có).
+        // Match on the plain name: drop the bracketed source suffix at the end of the header (if any).
         var name = normalizeTitle(h.text().replaceAll("\\s*[(（][^)）]*[)）]\\s*$", ""));
         var m = NAME_PREFIX.matcher(Normalizer.normalize(text, Normalizer.Form.NFC));
         if (!m.find()) {
@@ -420,7 +420,7 @@ public final class MarkdownActions {
         if (!rest.isEmpty()) {
           out.add(new Paragraph(rest));
         }
-        i++; // đã xử lý Paragraph liền sau
+        i++; // the following Paragraph is already handled
       }
       return out;
     });
@@ -438,7 +438,7 @@ public final class MarkdownActions {
 
   public static MarkdownAction headingBefore(Pattern pattern, int level, boolean numbered) {
     if (level < 1 || level > 6) {
-      throw new IllegalArgumentException("level phải 1..6");
+      throw new IllegalArgumentException("level must be 1..6");
     }
     return edit(blocks -> {
       int counter = 0;
@@ -473,7 +473,7 @@ public final class MarkdownActions {
 
   public static MarkdownAction bracketHeading(int level) {
     if (level < 1 || level > 6) {
-      throw new IllegalArgumentException("level phải 1..6");
+      throw new IllegalArgumentException("level must be 1..6");
     }
     return edit(blocks -> {
       var out = new ArrayList<MarkdownBlock>();
@@ -526,7 +526,7 @@ public final class MarkdownActions {
   private static void checkRange(List<MarkdownBlock> blocks, int from, int count) {
     if (from < 0 || count < 1 || from + count > blocks.size()) {
       throw new IllegalArgumentException(
-          "Range không hợp lệ: from=%d, count=%d, size=%d".formatted(from, count, blocks.size()));
+          "Invalid range: from=%d, count=%d, size=%d".formatted(from, count, blocks.size()));
     }
   }
 }

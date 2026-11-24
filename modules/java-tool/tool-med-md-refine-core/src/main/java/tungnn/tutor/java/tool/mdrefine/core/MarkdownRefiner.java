@@ -12,7 +12,7 @@ public final class MarkdownRefiner {
 
   private static final String MARK = "\uE000";
 
-  // Vùng không được đụng vào: inline code, URL trong link, URL trần
+  // Regions that must not be touched: inline code, URLs in links, bare URLs
   private static final Pattern PROTECTED = Pattern.compile("`[^`]*`|\\]\\([^)]*\\)|https?://\\S+");
 
   private static final Pattern INVISIBLE = Pattern.compile("[\\u200B\\u200C\\u200D\\uFEFF\\u00AD]");
@@ -76,9 +76,9 @@ public final class MarkdownRefiner {
   }
 
   private String normalizeChars(String s) {
-    s = Normalizer.normalize(s, Normalizer.Form.NFC); // chuẩn hóa dấu tiếng Việt
+    s = Normalizer.normalize(s, Normalizer.Form.NFC); // normalize Vietnamese diacritics
     s = INVISIBLE.matcher(s).replaceAll("");
-    s = BOOK_BRACKETS.matcher(s).replaceAll(""); // bỏ 《 》 quanh tên sách
+    s = BOOK_BRACKETS.matcher(s).replaceAll(""); // strip 《 》 around book titles
     return s.replace('\u00A0', ' ').replace("\t", "    ").replace("\r\n", "\n");
   }
 
@@ -107,8 +107,8 @@ public final class MarkdownRefiner {
   private String refineLine(String line) {
     if (line.isBlank()) return "";
 
-    // Dòng bảng markdown (| a | b |, |---|---|): giữ nguyên cấu trúc, chỉ bỏ khoảng trắng thừa ở
-    // hai đầu.
+    // Markdown table row (| a | b |, |---|---|): keep the structure, only trim extra whitespace at
+    // both ends.
     if (TABLE_ROW.matcher(line).find()) {
       return line.strip();
     }

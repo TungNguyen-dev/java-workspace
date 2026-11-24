@@ -32,55 +32,55 @@ public class MedMarkdownRefineApplication {
     var refined =
         new MarkdownPipeline()
             .step(
-                "Gộp 2 paragraph đầu thành tên chương", MarkdownActions.mergeToParagraph(0, 2, " "))
-            .step("Chuyển tên chương thành heading", MarkdownActions.toHeading(0, 1))
+                "Merge the first 2 paragraphs into the chapter title", MarkdownActions.mergeToParagraph(0, 2, " "))
+            .step("Turn the chapter title into a heading", MarkdownActions.toHeading(0, 1))
             .step(
-                "Thêm '## Đại cương' sau header '#'",
+                "Add '## Đại cương' after the '#' header",
                 MarkdownActions.insertHeadingAfterHeading(1, 2, "Đại cương"))
             .step(
-                "Xoá OrderedList đầu tiên, chuyển các ordered list còn lại thành paragraph riêng biệt",
+                "Remove the first OrderedList and turn the remaining ordered lists into separate paragraphs",
                 doc ->
                     MarkdownActions.orderedListToParagraphs(false)
                         .apply(MarkdownActions.removeFirstOrderedList().apply(doc)))
             .step(
-                "Paragraph 'Mục N ...' / 'Tiết N ...' thành heading, bỏ prefix 'Mục N'/'Tiết N'",
+                "Turn 'Mục N ...' / 'Tiết N ...' paragraphs into headings and drop the 'Mục N'/'Tiết N' prefix",
                 MarkdownActions.muc(2))
             .step(
-                "Bỏ paragraph rỗng",
+                "Remove empty paragraphs",
                 MarkdownActions.removeIf(
                     b -> b instanceof MarkdownBlock.Paragraph(String text) && text.isBlank()))
-            .step("Paragraph trước '【Thành phần】' thành heading", MarkdownActions.thanhPhan(3))
+            .step("Turn the paragraph before '【Thành phần】' into a heading", MarkdownActions.thanhPhan(3))
             .step(
-                "Header '###': tên chính viết HOA, nội dung trong ngoặc viết hoa chữ cái đầu mỗi từ",
+                "'###' header: upper-case the main name, title-case the text in parentheses",
                 MarkdownActions.headingMainUpperParenTitle(3))
             .step(
-                "Paragraph '【...】' / '[...]' thành heading + content",
+                "Turn '【...】' / '[...]' paragraphs into heading + content",
                 MarkdownActions.bracketHeading(4))
             .step(
-                "Đổi '#### Giải phương' thành '#### Giải nghĩa bài thuốc'",
+                "Rename '#### Giải phương' to '#### Giải nghĩa bài thuốc'",
                 MarkdownActions.renameHeading(4, "Giải phương", "Giải nghĩa bài thuốc"))
             .step(
-                "Đổi '#### Vận dụng' thành '#### Vận dụng lâm sàng'",
+                "Rename '#### Vận dụng' to '#### Vận dụng lâm sàng'",
                 MarkdownActions.renameHeading(4, "Vận dụng", "Vận dụng lâm sàng"))
             .step(
-                "Biến đổi nội dung section '#### Thành phần' bằng LLM (DeepSeek)",
+                "Transform the '#### Thành phần' section content with an LLM (DeepSeek)",
                 MarkdownActions.llmSection("Thành phần", 4, llmClient, thanhPhanPrompt))
             .step(
-                "Chuẩn hoá nội dung section '#### Phụ phương' bằng LLM (DeepSeek)",
+                "Normalize the '#### Phụ phương' section content with an LLM (DeepSeek)",
                 MarkdownActions.llmSection("Phụ phương", 4, llmClient, phuPhuongPrompt))
             .step(
-                "Đổi '#### Phụ phương' thành '#### Các bài thuốc biến phương gia giảm' (sau bước LLM, vì bước đó tìm theo tên 'Phụ phương')",
+                "Rename '#### Phụ phương' to '#### Các bài thuốc biến phương gia giảm' (after the LLM step, since that step looks the section up by the name 'Phụ phương')",
                 MarkdownActions.renameHeading(
                     4, "Phụ phương", "Các bài thuốc biến phương gia giảm"))
             .step(
-                "Chuyển nội dung section '#### Cách dùng' thành hướng dẫn sử dụng hiện đại bằng LLM (DeepSeek)",
+                "Rewrite the '#### Cách dùng' section content as modern usage instructions with an LLM (DeepSeek)",
                 MarkdownActions.llmSection("Cách dùng", 4, llmClient, cachDungPrompt))
             .step(
-                "Header phụ phương: tên chỉ nằm ở header, bỏ tên lặp lại ở nội dung",
+                "Sub-formula header: keep the name only in the header and drop the repeated name from the content",
                 MarkdownActions.fixHeadingName(5))
-            .step("Chuẩn hóa văn bản", normalize(MarkdownRefiner.defaultMedical()))
+            .step("Normalize text", normalize(MarkdownRefiner.defaultMedical()))
             .step(
-                "Đổi '#### Cách dùng' + nội dung thành '* Lưu ý cách dùng: ...' (sau LLM và sau chuẩn hóa, vì heading là ranh giới section và bước chuẩn hóa đổi '* ' thành '- ')",
+                "Turn '#### Cách dùng' + content into '* Lưu ý cách dùng: ...' (after the LLM and normalize steps, since a heading is a section boundary and normalization turns '* ' into '- ')",
                 MarkdownActions.headingToInlineLabel(4, "Cách dùng", "* Lưu ý cách dùng: "))
             .run(original);
 
@@ -95,7 +95,7 @@ public class MedMarkdownRefineApplication {
     try (var in =
         MedMarkdownRefineApplication.class.getClassLoader().getResourceAsStream(resource)) {
       if (in == null) {
-        throw new IllegalStateException("Không tìm thấy prompt trên classpath: " + resource);
+        throw new IllegalStateException("Prompt not found on the classpath: " + resource);
       }
       return new String(in.readAllBytes(), StandardCharsets.UTF_8);
     }
