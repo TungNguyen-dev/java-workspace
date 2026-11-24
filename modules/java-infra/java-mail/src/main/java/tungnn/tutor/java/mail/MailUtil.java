@@ -58,7 +58,7 @@ public final class MailUtil {
       for (var i = 0; i < multipart.getCount(); i++) {
         var bodyPart = multipart.getBodyPart(i);
 
-        // Skip attachment (robust hơn)
+        // Skip attachment (more robust)
         var disposition = bodyPart.getDisposition();
         if (Part.ATTACHMENT.equalsIgnoreCase(disposition) || bodyPart.getFileName() != null) {
           continue;
