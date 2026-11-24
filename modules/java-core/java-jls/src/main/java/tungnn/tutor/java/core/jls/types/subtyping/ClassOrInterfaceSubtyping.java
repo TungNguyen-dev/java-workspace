@@ -26,7 +26,7 @@ public class ClassOrInterfaceSubtyping {
   }
 
   // 1. Non-generic subtyping (JLS §4.10.1)
-  // Sơ đồ: SubT <: T, T <: S, T <: I
+  // Diagram: SubT <: T, T <: S, T <: I
   static void nonGeneric() {
     class S {}
     interface I {}
@@ -41,11 +41,11 @@ public class ClassOrInterfaceSubtyping {
 
     s = t; // Direct Supertype: T <: S
     i = t; // Direct Supertype: T <: I
-    s = subT; // Transitive Subtyping: SubT <: T và T <: S  =>  SubT <: S
+    s = subT; // Transitive subtyping: SubT <: T and T <: S  =>  SubT <: S
   }
 
   // 2. Generic & Raw type (JLS §4.10.2)
-  // Quy tắc: C<X> là subtype của Raw Type C
+  // Rule: C<X> is a subtype of the raw type C
   static void rawType() {
     class T {}
     class C<X> {}
@@ -59,9 +59,9 @@ public class ClassOrInterfaceSubtyping {
   }
 
   // 3. Generic & Parameterized type (JLS §4.10.2)
-  // Quy tắc Subtyping khi giữ nguyên Type Argument:
-  // Nếu D<X> extends C<X> thì D<T> <: C<T>
-  // Chú ý: C<SubT> KHÔNG PHẢI là subtype của C<T> (Invariance)
+  // Subtyping rule when the type argument is kept:
+  // If D<X> extends C<X> then D<T> <: C<T>
+  // Note: C<SubT> is NOT a subtype of C<T> (invariance)
   static void parameterizedType() {
     class S<F> {}
     class T<F> extends S<F> {}
@@ -72,12 +72,12 @@ public class ClassOrInterfaceSubtyping {
     // S<X> >1 T<X>, S >1 T
     sOfT = tOfT;
 
-    // Lỗi biên dịch: T<Integer> KHÔNG PHẢI là subtype của S<Number>
+    // Compile error: T<Integer> is NOT a subtype of S<Number>
     // S<Number> invalid = new T<Integer>();
   }
 
   // 4. Generic & Parameterized type which has wildcard (JLS §4.5.1 / §4.10.2)
-  // Quy tắc Covariance (? extends T) và Contravariance (? super T)
+  // Covariance (? extends T) and contravariance (? super T) rules
   static void wildcardType() {
     class S {}
     class T extends S {}
@@ -96,7 +96,7 @@ public class ClassOrInterfaceSubtyping {
   }
 
   // 5. Intersection type (JLS §4.9)
-  // Quy tắc: Kiểu giao (I & J) là subtype của cả I và J
+  // Rule: an intersection type (I & J) is a subtype of both I and J
   static void intersectionType() {
     interface I {}
     interface J {}
@@ -105,7 +105,7 @@ public class ClassOrInterfaceSubtyping {
 
     IntersectionImpl target = new IntersectionImpl();
 
-    // Ép kiểu tạo Intersection Type: (I & J)
+    // Cast to create an intersection type: (I & J)
     Object obj = target;
 
     I i = target; // (I & J) <: I
@@ -113,7 +113,7 @@ public class ClassOrInterfaceSubtyping {
   }
 
   // 6. Type variable (JLS §4.4)
-  // Quy tắc: Biến kiểu X extends T sẽ thỏa mãn X <: T
+  // Rule: a type variable X extends T satisfies X <: T
   static void typeVariable() {
     class S {}
     interface I {}
@@ -123,8 +123,8 @@ public class ClassOrInterfaceSubtyping {
     class GenericHolder<X extends T> {
       void process(X x) {
         T t = x; // X <: T
-        S s = x; // X <: S (do bắc cầu: X <: T và T <: S)
-        I i = x; // X <: I (do bắc cầu: X <: T và T <: I)
+        S s = x; // X <: S (by transitivity: X <: T and T <: S)
+        I i = x; // X <: I (by transitivity: X <: T and T <: I)
       }
     }
 
@@ -133,8 +133,8 @@ public class ClassOrInterfaceSubtyping {
   }
 
   // 7. Lower-bound of type variable (JLS §5.1.10 / §4.5.1)
-  // Quy tắc: Thông qua Wildcard Contravariance C<? super X>,
-  // phương thức nhận giá trị kiểu X (hoặc subtype của X)
+  // Rule: through wildcard contravariance C<? super X>,
+  // a method accepts values of type X (or a subtype of X)
   static void lowerBoundOfTypeVariable() {
     class S {}
     class T extends S {}
@@ -143,9 +143,9 @@ public class ClassOrInterfaceSubtyping {
     }
 
     class Helper {
-      // Biến kiểu X đóng vai trò là Lower-bound cho Wildcard parameter C<? super X>
+      // The type variable X acts as the lower bound of the wildcard parameter C<? super X>
       <X> void accept(C<? super X> container, X value) {
-        // C<? super X> chấp nhận thao tác nạp dữ liệu kiểu X
+        // C<? super X> accepts writes of type X
       }
     }
 
@@ -153,8 +153,8 @@ public class ClassOrInterfaceSubtyping {
     C<S> cOfS = new C<S>();
     T t = new T();
 
-    // X được suy luận là T.
-    // Thỏa mãn vì cOfS có kiểu C<S> tương ứng C<? super T> (do T <: S)
+    // X is inferred as T.
+    // Valid because cOfS has type C<S>, which matches C<? super T> (since T <: S)
     helper.accept(cOfS, t);
   }
 }

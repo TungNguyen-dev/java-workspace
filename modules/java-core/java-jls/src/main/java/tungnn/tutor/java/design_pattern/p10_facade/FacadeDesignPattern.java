@@ -1,14 +1,14 @@
 void main() {
-  // Khởi tạo các thành phần subsystem
+  // Create the subsystem components
   Projector projector = new Projector();
   Amplifier amp = new Amplifier();
   Screen screen = new Screen();
   PopcornPopper popper = new PopcornPopper();
 
-  // Tạo Facade
+  // Create the Facade
   HomeTheaterFacade homeTheater = new HomeTheaterFacade(projector, amp, screen, popper);
 
-  // Sử dụng giao diện đơn giản
+  // Use the simple interface
   homeTheater.watchMovie("Inception");
 
   // Khi xem xong
@@ -30,7 +30,7 @@ static class HomeTheaterFacade {
     this.popper = popper;
   }
 
-  // Phương thức đơn giản hóa thay vì phải gọi hàng chục lệnh lẻ tẻ
+  // Simplified method instead of calling dozens of separate commands
   public void watchMovie(String movie) {
     System.out.println("--- Get ready to watch: " + movie + " ---");
     popper.on();
@@ -54,7 +54,7 @@ static class HomeTheaterFacade {
 }
 
 // Subsystem
-// Thiết bị 2: Hệ thống âm thanh (Amplifier)
+// Device 2: Sound system (Amplifier)
 static class Amplifier {
   void on() {
     System.out.println("Amplifier is ON");
@@ -69,7 +69,7 @@ static class Amplifier {
   }
 }
 
-// Thiết bị 4: Máy nổ bỏng ngô (PopcornPopper)
+// Device 4: Popcorn machine (PopcornPopper)
 static class PopcornPopper {
   void on() {
     System.out.println("Popcorn Popper is ON");
@@ -84,7 +84,7 @@ static class PopcornPopper {
   }
 }
 
-// Thiết bị 1: Máy chiếu (Projector)
+// Device 1: Projector
 static class Projector {
   void on() {
     System.out.println("Projector is ON");
@@ -99,7 +99,7 @@ static class Projector {
   }
 }
 
-// Thiết bị 3: Màn chiếu (Screen)
+// Device 3: Screen
 static class Screen {
   void down() {
     System.out.println("Screen is lowering...");

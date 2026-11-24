@@ -5,9 +5,9 @@ void main(String[] args) {
   ConcretePrototypeCircle shape2 = cache.get("Big red circle");
 
   if (shape1 != shape2 && shape1.equals(shape2)) {
-    System.out.println("Hai hình là object khác nhau nhưng nội dung giống nhau!");
+    System.out.println("The two shapes are different objects with the same content!");
   } else {
-    System.out.println("Có lỗi trong quá trình copy.");
+    System.out.println("An error occurred while copying.");
   }
 }
 

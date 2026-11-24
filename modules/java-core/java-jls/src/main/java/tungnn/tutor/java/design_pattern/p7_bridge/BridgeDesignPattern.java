@@ -1,15 +1,15 @@
 void main(String[] args) {
-  System.out.println("--- Thử nghiệm với TV và Remote cơ bản ---");
+  System.out.println("--- Trying a TV with a basic remote ---");
   Device tv = new TvDevice();
   RemoteControl basicRemote = new RemoteControl(tv);
   basicRemote.togglePower();
   basicRemote.volumeUp();
 
-  System.out.println("\n--- Thử nghiệm với Radio và Remote nâng cao ---");
+  System.out.println("\n--- Trying a radio with an advanced remote ---");
   Device radio = new RadioDevice();
   AdvancedRemoteControl advancedRemote = new AdvancedRemoteControl(radio);
   advancedRemote.togglePower();
-  advancedRemote.mute(); // Tính năng chỉ có ở AdvancedRemote
+  advancedRemote.mute(); // Feature that only AdvancedRemote has
 }
 
 // Implementation Interface
@@ -38,13 +38,13 @@ public class TvDevice implements Device {
   @Override
   public void enable() {
     on = true;
-    System.out.println("TV: Đã bật");
+    System.out.println("TV: Turned on");
   }
 
   @Override
   public void disable() {
     on = false;
-    System.out.println("TV: Đã tắt");
+    System.out.println("TV: Turned off");
   }
 
   @Override
@@ -55,7 +55,7 @@ public class TvDevice implements Device {
   @Override
   public void setVolume(int percent) {
     this.volume = percent;
-    System.out.println("TV: Âm lượng = " + volume);
+    System.out.println("TV: Volume = " + volume);
   }
 }
 
@@ -72,13 +72,13 @@ public class RadioDevice implements Device {
   @Override
   public void enable() {
     on = true;
-    System.out.println("Radio: Đã bật");
+    System.out.println("Radio: Turned on");
   }
 
   @Override
   public void disable() {
     on = false;
-    System.out.println("Radio: Đã tắt");
+    System.out.println("Radio: Turned off");
   }
 
   @Override
@@ -89,7 +89,7 @@ public class RadioDevice implements Device {
   @Override
   public void setVolume(int percent) {
     this.volume = percent;
-    System.out.println("Radio: Âm lượng = " + volume);
+    System.out.println("Radio: Volume = " + volume);
   }
 }
 
@@ -119,14 +119,14 @@ public class RemoteControl {
   }
 }
 
-// Refined Abstraction: Điều khiển nâng cao có thêm nút Mute
+// Refined Abstraction: advanced remote with an extra Mute button
 public class AdvancedRemoteControl extends RemoteControl {
   public AdvancedRemoteControl(Device device) {
     super(device);
   }
 
   public void mute() {
-    System.out.println("Remote: Đang tắt tiếng...");
+    System.out.println("Remote: Muting...");
     device.setVolume(0);
   }
 }

@@ -1,14 +1,14 @@
-// Client chỉ chấp nhận kiểu Duck
+// The client only accepts the Duck type
 static void testDuck(DuckTargetInterface duck) {
   duck.quack();
   duck.fly();
 }
 
 void main(String[] args) {
-  // Tạo một con gà tây thực thụ
+  // Create a real turkey
   WildTurkeyAdaptee turkey = new WildTurkeyAdaptee();
 
-  // Bọc con gà tây vào một cái Adapter để nó trông như một con vịt
+  // Wrap the turkey in an adapter so it looks like a duck
   DuckTargetInterface turkeyAdapter = new TurkeyAdapter(turkey);
 
   System.out.println("The Turkey says...");
@@ -36,13 +36,13 @@ public static class TurkeyAdapter implements DuckTargetInterface {
 
   @Override
   public void quack() {
-    // Chuyển đổi yêu cầu quack() thành gobble()
+    // Translate the quack() request into gobble()
     turkey.gobble();
   }
 
   @Override
   public void fly() {
-    // Gà tây bay ngắn hơn vịt, nên ta cho nó bay 5 lần để bù đắp quãng đường
+    // A turkey flies a shorter distance than a duck, so it flies 5 times to compensate
     for (int i = 0; i < 5; i++) {
       turkey.fly();
     }

@@ -1,7 +1,7 @@
 void main() {
   HouseDirector director = new HouseDirector();
 
-  // Xây nhà gỗ đơn giản
+  // Build a simple wooden house
   HouseBuilder woodBuilder = new WoodHouseBuilder();
   director.constructSimpleHouse(woodBuilder);
   House simpleWoodHouse = woodBuilder.getResult();
@@ -27,7 +27,7 @@ class House {
   private String roof;
   private boolean hasSwimmingPool;
 
-  // Các setter được Builder sử dụng
+  // Setters used by the builder
   public void setWalls(String walls) {
     this.walls = walls;
   }
@@ -63,14 +63,14 @@ class HouseDirector {
     builder.buildWalls();
     builder.buildDoors();
     builder.buildRoof();
-    builder.buildPool(); // Nhà sang trọng thì có hồ bơi
+    builder.buildPool(); // A luxury house gets a swimming pool
   }
 
   public void constructSimpleHouse(HouseBuilder builder) {
     builder.buildWalls();
     builder.buildDoors();
     builder.buildRoof();
-    // Không gọi buildPool
+    // Do not call buildPool
   }
 }
 

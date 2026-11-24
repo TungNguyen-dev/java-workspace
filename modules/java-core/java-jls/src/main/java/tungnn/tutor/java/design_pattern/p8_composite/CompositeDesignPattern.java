@@ -1,29 +1,29 @@
 void main() {
-  // Tạo các Menu cấp cao
+  // Create the top-level menus
   MenuComponent pancakeHouseMenu = new Menu("PANCAKE HOUSE MENU");
   MenuComponent dinerMenu = new Menu("DINER MENU");
   MenuComponent dessertMenu = new Menu("DESSERT MENU");
 
-  // Cấu trúc cây chính
+  // Main tree structure
   MenuComponent allMenus = new Menu("ALL MENUS");
   allMenus.add(pancakeHouseMenu);
   allMenus.add(dinerMenu);
 
-  // Thêm các Leaf (món ăn)
+  // Add the leaves (dishes)
   pancakeHouseMenu.add(new MenuItem("K&B's Pancake Breakfast", 2.99));
   dinerMenu.add(new MenuItem("Vegetarian BLT", 2.99));
   dinerMenu.add(new MenuItem("Pasta", 3.89));
 
-  // Thêm Composite vào Composite (Menu trong Menu)
+  // Add a composite to a composite (menu inside a menu)
   dinerMenu.add(dessertMenu);
   dessertMenu.add(new MenuItem("Apple Pie", 1.59));
 
-  // Client xử lý đồng nhất toàn bộ cấu trúc
+  // The client treats the whole structure uniformly
   allMenus.print();
 }
 
 public abstract static class MenuComponent {
-  // Các phương thức quản lý con (cho Composite)
+  // Child management methods (for Composite)
   public void add(MenuComponent menuComponent) {
     throw new UnsupportedOperationException();
   }
@@ -36,7 +36,7 @@ public abstract static class MenuComponent {
     throw new UnsupportedOperationException();
   }
 
-  // Các phương thức hoạt động (cho cả Leaf và Composite)
+  // Operation methods (for both Leaf and Composite)
   public String getName() {
     throw new UnsupportedOperationException();
   }
@@ -82,7 +82,7 @@ public static class Menu extends MenuComponent {
     System.out.println("\nMENU: " + getName());
     System.out.println("---------------------");
 
-    // Sử dụng đệ quy để in tất cả các thành phần con
+    // Use recursion to print all child components
     for (MenuComponent component : menuComponents) {
       component.print();
     }

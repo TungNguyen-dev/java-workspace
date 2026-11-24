@@ -1,7 +1,7 @@
 void main(String[] args) {
   FurnitureFactory factory;
 
-  // Giả sử cấu hình hệ thống yêu cầu phong cách Modern
+  // Assume the system configuration requires the Modern style
   String config = args[0];
 
   if (config.equals("MODERN")) {
@@ -10,7 +10,7 @@ void main(String[] args) {
     factory = new VictorianFurnitureFactory();
   }
 
-  // Khởi tạo Client với nhà máy đã chọn
+  // Create the client with the chosen factory
   FurnitureShop shop = new FurnitureShop(factory);
   shop.displayFurniture();
 }
@@ -36,7 +36,7 @@ public class FurnitureShop {
   private final Sofa sofa;
 
   public FurnitureShop(FurnitureFactory factory) {
-    // Client chỉ biết về interface, không biết về lớp cụ thể (Modern hay Victorian)
+    // The client only knows the interface, not the concrete class (Modern or Victorian)
     chair = factory.createChair();
     sofa = factory.createSofa();
   }
@@ -49,13 +49,13 @@ public class FurnitureShop {
 
 public class ModernChair implements Chair {
   public void sitOn() {
-    System.out.println("Đang ngồi trên ghế hiện đại.");
+    System.out.println("Sitting on a modern chair.");
   }
 }
 
 public class ModernSofa implements Sofa {
   public void lieOn() {
-    System.out.println("Đang nằm trên sofa hiện đại.");
+    System.out.println("Lying on a modern sofa.");
   }
 }
 
@@ -72,13 +72,13 @@ public class ModernFurnitureFactory implements FurnitureFactory {
 
 public class VictorianChair implements Chair {
   public void sitOn() {
-    System.out.println("Đang ngồi trên ghế cổ điển chạm trổ.");
+    System.out.println("Sitting on a carved classic chair.");
   }
 }
 
 public class VictorianSofa implements Sofa {
   public void lieOn() {
-    System.out.println("Đang nằm trên sofa cổ điển hoàng gia.");
+    System.out.println("Lying on a royal classic sofa.");
   }
 }
 

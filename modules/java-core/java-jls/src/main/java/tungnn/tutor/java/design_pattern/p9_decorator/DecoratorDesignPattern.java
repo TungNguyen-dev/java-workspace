@@ -1,16 +1,16 @@
 void main(String[] args) {
-  // 1. Order một ly Espresso đơn thuần
+  // 1. Order a plain espresso
   BeverageComponent beverage = new EspressoConcreteComponent();
   System.out.println(beverage.getDescription() + " $" + beverage.cost());
 
-  // 2. Order một ly Dark Roast, thêm Mocha, thêm Mocha (double), rồi thêm Whip
+  // 2. Order a dark roast, add mocha, add mocha again (double), then add whip
   BeverageComponent beverage2 = new DarkRoastConcreteComponent();
-  beverage2 = new MochaConcreteDecorator(beverage2); // Bọc DarkRoast trong Mocha
-  beverage2 = new MochaConcreteDecorator(beverage2); // Bọc Mocha(DarkRoast) trong Mocha thứ hai
-  beverage2 = new WhipConcreteDecorator(beverage2); // Bọc tất cả trong Whip
+  beverage2 = new MochaConcreteDecorator(beverage2); // Wrap DarkRoast in Mocha
+  beverage2 = new MochaConcreteDecorator(beverage2); // Wrap Mocha(DarkRoast) in a second Mocha
+  beverage2 = new WhipConcreteDecorator(beverage2); // Wrap everything in Whip
 
   System.out.println(beverage2.getDescription() + " $" + String.format("%.2f", beverage2.cost()));
-  // Kết quả kỳ vọng: 0.99 (DarkRoast) + 0.20 (Mocha) + 0.20 (Mocha) + 0.10 (Whip) = 1.49
+  // Expected result: 0.99 (DarkRoast) + 0.20 (Mocha) + 0.20 (Mocha) + 0.10 (Whip) = 1.49
 }
 
 // Component
@@ -48,7 +48,7 @@ public class EspressoConcreteComponent extends BeverageComponent {
 // Decorator
 public abstract class CondimentDecorator extends BeverageComponent {
 
-  protected BeverageComponent beverage; // Đối tượng được bao bọc (wrapped)
+  protected BeverageComponent beverage; // The wrapped object
 
   public abstract String getDescription();
 }
@@ -64,7 +64,7 @@ public class MochaConcreteDecorator extends CondimentDecorator {
   }
 
   public double cost() {
-    return beverage.cost() + 0.20; // Giá cafe gốc + 0.20
+    return beverage.cost() + 0.20; // Base coffee price + 0.20
   }
 }
 
@@ -78,6 +78,6 @@ public class WhipConcreteDecorator extends CondimentDecorator {
   }
 
   public double cost() {
-    return beverage.cost() + 0.10; // Giá cafe trước đó + 0.10
+    return beverage.cost() + 0.10; // Previous coffee price + 0.10
   }
 }

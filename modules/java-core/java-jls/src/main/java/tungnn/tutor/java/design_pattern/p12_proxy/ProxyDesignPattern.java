@@ -1,15 +1,15 @@
 void main() {
-  Document myDoc = new DocumentProxy("BaoCaoTaiChinh.pdf", "Doanh thu: 1 tỷ VNĐ");
+  Document myDoc = new DocumentProxy("BaoCaoTaiChinh.pdf", "Revenue: 1 billion VND");
 
-  // 1. Nhân viên bình thường xem tài liệu
-  System.out.println("--- Lượt truy cập 1 ---");
+  // 1. A regular employee views the document
+  System.out.println("--- Access round 1 ---");
   myDoc.displayContent("STAFF");
-  myDoc.editContent("STAFF", "Sửa doanh thu thành 0 VNĐ"); // Sẽ bị chặn
+  myDoc.editContent("STAFF", "Change revenue to 0 VND"); // Will be blocked
 
-  System.out.println("\n--- Lượt truy cập 2 ---");
-  // 2. Quản trị viên truy cập
+  System.out.println("\n--- Access round 2 ---");
+  // 2. An administrator accesses it
   myDoc.displayContent("ADMIN");
-  myDoc.editContent("ADMIN", "Doanh thu: 1.5 tỷ VNĐ"); // Thành công
+  myDoc.editContent("ADMIN", "Revenue: 1.5 billion VND"); // Succeeds
 }
 
 // Subject
@@ -31,13 +31,13 @@ class RealDocument implements Document {
 
   @Override
   public void displayContent(String userRole) {
-    System.out.println("Nội dung tài liệu: " + content);
+    System.out.println("Document content: " + content);
   }
 
   @Override
   public void editContent(String userRole, String newContent) {
     this.content = newContent;
-    System.out.println("Tài liệu đã được cập nhật nội dung mới.");
+    System.out.println("The document content has been updated.");
   }
 }
 
@@ -49,25 +49,25 @@ public class DocumentProxy implements Document {
 
   public DocumentProxy(String fileName, String initialContent) {
     this.fileName = fileName;
-    // Chúng ta có thể khởi tạo đối tượng thật ngay hoặc dùng Lazy Loading
+    // We can create the real object right away or use lazy loading
     this.realDocument = new RealDocument(initialContent);
   }
 
   @Override
   public void displayContent(String userRole) {
-    // Bất kỳ ai cũng có thể xem tên file, nhưng xem nội dung thì cần quyền
-    System.out.println("[Proxy] Đang truy cập file: " + fileName);
+    // Anyone can see the file name, but viewing the content requires permission
+    System.out.println("[Proxy] Accessing file: " + fileName);
     realDocument.displayContent(userRole);
   }
 
   @Override
   public void editContent(String userRole, String newContent) {
-    // CHẶN: Chỉ ADMIN mới được sửa
+    // BLOCK: only ADMIN may edit
     if ("ADMIN".equalsIgnoreCase(userRole)) {
       realDocument.editContent(userRole, newContent);
     } else {
       System.out.println(
-          "[BẢO MẬT] Từ chối: Quyền '" + userRole + "' không được phép sửa tài liệu!");
+          "[SECURITY] Denied: role '" + userRole + "' is not allowed to edit the document!");
     }
   }
 }

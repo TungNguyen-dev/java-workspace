@@ -13,32 +13,32 @@ public void draw() {
 }
 
 void main(String[] args) {
-  // Trồng hàng ngàn cây nhưng thực tế chỉ có 2 loại đối tượng TreeType được tạo ra
-  plantTree(1, 2, "Sồi", "Xanh lá", "Texture_Sồi_4K");
-  plantTree(5, 3, "Sồi", "Xanh lá", "Texture_Sồi_4K");
-  plantTree(10, 10, "Thông", "Xanh thẫm", "Texture_Thông_4K");
-  plantTree(20, 30, "Sồi", "Xanh lá", "Texture_Sồi_4K");
+  // Plant thousands of trees, yet only 2 TreeType objects are actually created
+  plantTree(1, 2, "Oak", "Green", "Texture_Oak_4K");
+  plantTree(5, 3, "Oak", "Green", "Texture_Oak_4K");
+  plantTree(10, 10, "Pine", "Dark green", "Texture_Pine_4K");
+  plantTree(20, 30, "Oak", "Green", "Texture_Oak_4K");
 
   draw();
 
   System.out.println("--------------------------------------");
-  System.out.println("Tổng số cây đã trồng: 4");
-  System.out.println("Dữ liệu nặng (TreeType) thực tế trong bộ nhớ: 2");
+  System.out.println("Total trees planted: 4");
+  System.out.println("Heavy data (TreeType) actually in memory: 2");
 }
 
-// Flyweight: Chứa trạng thái nội tại (Intrinsic State)
+// Flyweight: holds the intrinsic state
 public record TreeType(String name, String color, String otherTreeData) {
 
   public void draw(int x, int y) {
-    System.out.println("Vẽ cây " + name + " [Màu: " + color + "] tại tọa độ (" + x + "," + y + ")");
+    System.out.println("Drawing tree " + name + " [Color: " + color + "] at coordinates (" + x + "," + y + ")");
   }
 }
 
-// Context: Chứa trạng thái ngoại lai (Extrinsic State)
+// Context: holds the extrinsic state
 class Tree {
   private final int x;
   private final int y;
-  private final TreeType type; // Tham chiếu đến Flyweight
+  private final TreeType type; // Reference to the flyweight
 
   public Tree(int x, int y, TreeType type) {
     this.x = x;
@@ -62,7 +62,7 @@ class TreeFactory {
     if (result == null) {
       result = new TreeType(name, color, otherTreeData);
       treeTypes.put(key, result);
-      System.out.println("== Tạo mới loại cây: " + name + " ==");
+      System.out.println("== Creating new tree type: " + name + " ==");
     }
     return result;
   }
