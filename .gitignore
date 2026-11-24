@@ -123,3 +123,6 @@ storage
 **/dist
 # Claude Code local settings
 .claude/settings.local.json
+
+# Codex local config
+.codex/
