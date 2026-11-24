@@ -51,7 +51,7 @@ public final class ExcelDrawingUtils {
       Workbook workbook, Sheet sheet, int fromCol, int fromRow, int toCol, int toRow) {
     if (!(sheet instanceof org.apache.poi.xssf.usermodel.XSSFSheet)) {
       throw new IllegalArgumentException(
-          "Chức năng vẽ Shape hiện tại chỉ hỗ trợ định dạng .xlsx (XSSF)");
+          "Drawing shapes currently supports only the .xlsx (XSSF) format");
     }
     XSSFDrawing drawing = (XSSFDrawing) getOrCreateDrawingPatriarch(sheet);
     XSSFClientAnchor anchor = (XSSFClientAnchor) workbook.getCreationHelper().createClientAnchor();
@@ -68,7 +68,7 @@ public final class ExcelDrawingUtils {
       Workbook workbook, Sheet sheet, int fromCol, int fromRow, int toCol, int toRow) {
     if (!(sheet instanceof org.apache.poi.xssf.usermodel.XSSFSheet)) {
       throw new IllegalArgumentException(
-          "Chức năng vẽ Shape hiện tại chỉ hỗ trợ định dạng .xlsx (XSSF)");
+          "Drawing shapes currently supports only the .xlsx (XSSF) format");
     }
     XSSFDrawing drawing = (XSSFDrawing) getOrCreateDrawingPatriarch(sheet);
     XSSFClientAnchor anchor = (XSSFClientAnchor) workbook.getCreationHelper().createClientAnchor();

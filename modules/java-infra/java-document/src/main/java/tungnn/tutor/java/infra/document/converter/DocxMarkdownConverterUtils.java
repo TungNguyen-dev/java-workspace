@@ -46,7 +46,7 @@ public final class DocxMarkdownConverterUtils {
           if (listItem == null) {
             lists.reset();
           }
-          // Thêm newline cho mỗi item/paragraph (tạo dòng trống phân tách rõ ràng)
+          // Add a newline for each item/paragraph (blank line for clear separation)
           sb.append(mdText).append("\n\n");
         } else if (element instanceof XWPFTable table) {
           var mdTable = tableToMarkdown(table);
@@ -154,7 +154,7 @@ public final class DocxMarkdownConverterUtils {
     for (var segment : segments) {
       sb.append(renderSegment(segment));
     }
-    // Tab/xuống dòng ở đầu hoặc cuối paragraph không mang nghĩa (và tab đầu dòng sẽ thành code
+    // Leading/trailing tabs and line breaks in a paragraph carry no meaning (and a leading tab becomes a code
     // block).
     return sb.toString().strip();
   }
