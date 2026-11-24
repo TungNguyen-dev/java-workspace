@@ -14,7 +14,7 @@
     <artifactId>java-jackson</artifactId>
 
     <dependencies>
-        <!-- Jackson 3.x (jackson-annotations 2.21 được kéo theo bắc cầu) -->
+        <!-- Jackson 3.x (jackson-annotations 2.21 is pulled in transitively) -->
         <dependency>
             <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
