@@ -47,6 +47,7 @@
         <module>java-cron-expression</module>
         <module>java-zip</module>
         <module>java-ai</module>
+        <module>java-claude-code</module>
 
     </modules>
 
