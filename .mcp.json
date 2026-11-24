@@ -6,6 +6,15 @@
       "headers": {
         "IJ_MCP_LAUNCH_ORIGIN": "${IJ_MCP_LAUNCH_ORIGIN:-}"
       }
+    },
+    "codegraph": {
+      "type": "stdio",
+      "command": "codegraph",
+      "args": [
+        "serve",
+        "--mcp"
+      ],
+      "alwaysLoad": true
     }
   }
 }
