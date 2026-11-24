@@ -137,7 +137,7 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
     fetchConstraints(connection, targetSchema, tables);
     fetchIndexes(connection, targetSchema, tables);
 
-    // Chuyển đổi từ TableHolder sang TableModel (Tránh dùng Lambda gây unhandled exception)
+    // Convert from TableHolder to TableModel (avoid lambdas that cause unhandled exceptions)
     Map<String, DatabaseSchema.TableModel> result = new LinkedHashMap<>();
     for (Map.Entry<String, TableHolder> entry : tables.entrySet()) {
       String tableName = entry.getKey();
@@ -216,7 +216,7 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
       pstmt.setString(1, schema);
       try (ResultSet rs = pstmt.executeQuery()) {
         while (rs.next()) {
-          // QUAN TRỌNG: Phải đọc cột kiểu LONG (search_condition) ĐẦU TIÊN trước các cột khác
+          // IMPORTANT: the LONG column (search_condition) must be read FIRST, before any other column
           String condition = getStringOrNull(rs, "search_condition");
 
           String tableName = rs.getString("table_name");
@@ -486,7 +486,7 @@ public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrate
     };
   }
 
-  // Lớp tạm lưu trữ dữ liệu mutable trước khi tạo Record / Model immutable
+  // Temporary holder for mutable data before building the immutable Record / Model
   private static class ConstraintHolder {
     final String name;
     final List<String> columns = new ArrayList<>();

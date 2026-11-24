@@ -29,7 +29,7 @@ public class DefaultMetadataExtractor implements MetadataExtractor {
 
   public void registerStrategy(MetadataExtractStrategy strategy) {
     if (strategy != null) {
-      // Đưa strategy mới lên đầu danh sách để ưu tiên đè strategy mặc định
+      // Put the new strategy at the head of the list so it overrides the default one
       this.strategies.addFirst(strategy);
     }
   }

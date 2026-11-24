@@ -13,7 +13,7 @@ public class SimpleTcpClient {
     int port = 8080;
     int timeoutMs = 5000;
 
-    // 1. Kiểm tra Port trước khi kết nối bằng SocketUtils.isTcpPortOpen
+    // 1. Check the port with SocketUtils.isTcpPortOpen before connecting
     if (!SocketUtils.isTcpPortOpen(host, port, 2000)) {
       System.err.println("Server is not reachable on " + host + ":" + port);
       return;
@@ -24,7 +24,7 @@ public class SimpleTcpClient {
     Socket socket = null;
     try (BufferedReader consoleInput = new BufferedReader(new InputStreamReader(System.in))) {
 
-      // 2. Tạo TCP Socket đã kết nối bằng SocketUtils
+      // 2. Create a connected TCP socket using SocketUtils
       socket = SocketUtils.createConnectedTcpSocket(host, port, timeoutMs);
       System.out.println("Connected! Type messages to send to server. Type 'exit' to quit.");
 
@@ -38,18 +38,18 @@ public class SimpleTcpClient {
           break;
         }
 
-        // 3. Gửi chuỗi dạng Byte qua SocketUtils.sendTcpBytes
+        // 3. Send the string as bytes via SocketUtils.sendTcpBytes
         byte[] dataToSend = (userInput + "\n").getBytes(StandardCharsets.UTF_8);
         SocketUtils.sendTcpBytes(socket, dataToSend);
 
-        // 4. Nhận byte phản hồi qua SocketUtils.receiveTcpBytes
+        // 4. Receive the reply bytes via SocketUtils.receiveTcpBytes
         int bytesRead = SocketUtils.receiveTcpBytes(socket, receiveBuffer);
         if (bytesRead != -1) {
           String response = new String(receiveBuffer, 0, bytesRead, StandardCharsets.UTF_8);
           System.out.println("Server response: " + response.trim());
         }
 
-        // Ngắt kết nối nếu gửi tín hiệu exit
+        // Disconnect if the exit signal is sent
         if ("exit".equalsIgnoreCase(userInput.trim())) {
           System.out.println("Closing client connection...");
           break;
@@ -58,7 +58,7 @@ public class SimpleTcpClient {
     } catch (Exception e) {
       System.err.println("Client error: " + e.getMessage());
     } finally {
-      // 5. Đóng Socket yên lặng
+      // 5. Close the socket quietly
       SocketUtils.closeQuietly(socket);
     }
   }

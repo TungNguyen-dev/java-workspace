@@ -29,7 +29,7 @@ public abstract class AbstractMetadataExtractStrategy implements MetadataExtract
       String engineName = dbMetaData.getDatabaseProductName();
       String engineVersion = dbMetaData.getDatabaseProductVersion();
 
-      // Fallback catalog / schema từ connection nếu không truyền vào
+      // Fall back to the connection's catalog / schema if none is given
       String resolvedCatalog = resolveCatalog(connection, catalog);
       String resolvedSchema = resolveSchema(connection, schema);
 
@@ -103,7 +103,7 @@ public abstract class AbstractMetadataExtractStrategy implements MetadataExtract
   }
 
   // =========================================================================
-  // Template Methods (Cần được override bởi concrete strategy như Postgres, MySQL)
+  // Template Methods (must be overridden by concrete strategies such as Postgres, MySQL)
   // =========================================================================
 
   protected abstract Map<String, DatabaseSchema.TableModel> extractTables(

@@ -9,9 +9,9 @@ public final class ThreadUtils {
       Thread.sleep(millis);
     } catch (InterruptedException e) {
       /*
-       * Restore interrupted status: Khi InterruptedException xuất hiện, Java tự động xóa (clear) cờ "interrupted" của Thread về false.
-       * Việc gọi interrupt() ở đây nhằm thiết lập lại cờ báo hiệu ngắt (interrupted flag = true)
-       * để các đoạn code cấp cao hơn (hoặc caller của phương thức này) có thể biết luồng đã bị ngắt và xử lý đúng logic ngắt (ví dụ: dừng loop, dọn dẹp tài nguyên,...).
+       * Restore interrupted status: when InterruptedException is thrown, Java automatically clears the thread's "interrupted" flag (sets it to false).
+       * Calling interrupt() here restores the interrupted flag (interrupted flag = true)
+       * so higher-level code (or the caller of this method) can tell the thread was interrupted and handle it properly (e.g. stop a loop, release resources,...).
        */
       Thread.currentThread().interrupt();
 

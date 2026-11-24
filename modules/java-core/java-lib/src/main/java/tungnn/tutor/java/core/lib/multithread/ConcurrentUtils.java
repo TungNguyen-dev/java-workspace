@@ -75,7 +75,7 @@ public final class ConcurrentUtils {
     if (maxConcurrency <= 0) {
       throw new IllegalArgumentException("maxConcurrency must be greater than 0");
     }
-    // fair = true: các task lấy permit theo thứ tự chờ (FIFO) nên gần giống thứ tự submit
+    // fair = true: tasks acquire permits in waiting order (FIFO), so roughly in submit order
     return new Semaphore(maxConcurrency, true);
   }
 

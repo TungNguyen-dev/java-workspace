@@ -13,7 +13,7 @@ public class SimpleUdpServer {
 
     System.out.println("UDP Server starting on port " + port + "...");
 
-    // Tạo UDP Socket sử dụng SocketUtils
+    // Create the UDP socket using SocketUtils
     try (DatagramSocket serverSocket = SocketUtils.createUdpSocket(port)) {
       System.out.println("Server is running. Waiting for incoming packets...");
 

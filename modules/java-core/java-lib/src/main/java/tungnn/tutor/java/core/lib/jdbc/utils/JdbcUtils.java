@@ -18,7 +18,7 @@ public final class JdbcUtils {
     try {
       return DriverManager.getConnection(url, username, password);
     } catch (SQLException e) {
-      throw new RuntimeException("Lỗi kết nối CSDL: " + e.getMessage(), e);
+      throw new RuntimeException("Database connection error: " + e.getMessage(), e);
     }
   }
 
@@ -27,7 +27,7 @@ public final class JdbcUtils {
       Statement stmt = conn.createStatement();
       return stmt.executeQuery(sql);
     } catch (SQLException e) {
-      throw new RuntimeException("Lỗi thực thi truy vấn Query: " + e.getMessage(), e);
+      throw new RuntimeException("Query execution error: " + e.getMessage(), e);
     }
   }
 
@@ -36,7 +36,7 @@ public final class JdbcUtils {
       setParameters(stmt, parameters);
       return stmt.executeUpdate();
     } catch (SQLException e) {
-      throw new RuntimeException("Lỗi thực thi DML Query: " + e.getMessage(), e);
+      throw new RuntimeException("DML query execution error: " + e.getMessage(), e);
     }
   }
 
@@ -47,12 +47,12 @@ public final class JdbcUtils {
       if (batchParameters != null) {
         for (Parameters parameters : batchParameters) {
           setParameters(stmt, parameters);
-          stmt.addBatch(); // Thêm vào lô (batch)
+          stmt.addBatch(); // Add to the batch
         }
       }
-      return stmt.executeBatch(); // Thực thi toàn bộ lô
+      return stmt.executeBatch(); // Execute the whole batch
     } catch (SQLException e) {
-      throw new RuntimeException("Lỗi thực thi Bulk DML Query: " + e.getMessage(), e);
+      throw new RuntimeException("Bulk DML query execution error: " + e.getMessage(), e);
     }
   }
 
@@ -62,7 +62,7 @@ public final class JdbcUtils {
       return;
     }
 
-    // Tạo bản sao ArrayList để sắp xếp, tránh lỗi UnsupportedOperationException nếu list là
+    // Copy into an ArrayList before sorting to avoid UnsupportedOperationException if the list is
     // Immutable
     List<Parameters.Parameter> params = new ArrayList<>(parameters.parameters());
     params.sort(Comparator.comparing(Parameters.Parameter::pos));

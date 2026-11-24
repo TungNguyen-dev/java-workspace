@@ -15,14 +15,14 @@ public class Demo {
     String password = System.getenv("DB_PASS");
 
     if (url == null || url.isBlank()) {
-      System.err.println("Lỗi: Chưa cấu hình biến môi trường DB_URL");
-      System.err.println("Hãy thiết lập: DB_URL, DB_USER, DB_PASS trước khi chạy.");
+      System.err.println("Error: the DB_URL environment variable is not set");
+      System.err.println("Set DB_URL, DB_USER and DB_PASS before running.");
       return;
     }
 
-    // Đổi catalog/schema phù hợp với Database target
+    // Change the catalog/schema to match the target database
     // PostgreSQL: catalog = null / database_name, schema = "public"
-    // Oracle    : catalog = null, schema = "USERNAME" (viết hoa)
+    // Oracle    : catalog = null, schema = "USERNAME" (upper case)
     String catalog = null;
     String schema = "HR";
 
@@ -34,7 +34,7 @@ public class Demo {
       MetadataExtractor extractor = new DefaultMetadataExtractor();
 
       // -----------------------------------------------------------------
-      // DEMO 1: Trích xuất toàn bộ Schema (Mặc định)
+      // DEMO 1: Extract the whole schema (default)
       // -----------------------------------------------------------------
       System.out.println("\n>>> Running Full Metadata Extraction...");
       long startTime = System.currentTimeMillis();
@@ -43,7 +43,7 @@ public class Demo {
 
       System.out.printf("Extractor completed in %d ms%n%n", duration);
 
-      // In thông tin đã extract
+      // Print the extracted information
       printSchemaOverview(dbSchema);
       printDetailedSchema(dbSchema);
 
@@ -105,10 +105,10 @@ public class Demo {
                 table.engine() != null ? table.engine() : "",
                 formatComment(table.comment()));
 
-            // Gom tất cả item thuộc table vào danh sách để xác định chính xác phần tử cuối cùng
+            // Collect all items of the table into a list to identify the exact last element
             List<String> items = new ArrayList<>();
 
-            // 1.1 Columns (In trước)
+            // 1.1 Columns (printed first)
             if (table.columns() != null) {
               table
                   .columns()
@@ -156,7 +156,7 @@ public class Demo {
                   });
             }
 
-            // In các items ra console với tiền tố nhánh (├─ hoặc └─)
+            // Print the items to the console with branch prefixes (├─ or └─)
             for (int i = 0; i < items.size(); i++) {
               boolean isLast = (i == items.size() - 1);
               String prefix = isLast ? "  └─ " : "  ├─ ";

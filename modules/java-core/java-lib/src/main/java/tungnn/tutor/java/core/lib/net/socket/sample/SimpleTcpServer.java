@@ -20,12 +20,12 @@ public class SimpleTcpServer {
 
     System.out.println("Server starting on port " + port + "...");
 
-    // 1. Tạo ServerSocket sử dụng SocketUtils
+    // 1. Create the ServerSocket using SocketUtils
     ServerSocket serverSocket = null;
     try {
       serverSocket = SocketUtils.createTcpServer(port, backlog);
 
-      // Thread lắng nghe lệnh 'exit' từ console để đóng server
+      // Thread that listens for the 'exit' command from the console to shut the server down
       ServerSocket finalServerSocket = serverSocket;
       Thread consoleListener =
           new Thread(() -> {
@@ -36,7 +36,7 @@ public class SimpleTcpServer {
                 String input = consoleReader.readLine();
                 if ("exit".equalsIgnoreCase(input)) {
                   System.out.println("Stopping server...");
-                  // Đóng ServerSocket an toàn để ngắt vòng lặp accept()
+                  // Close the ServerSocket safely to break the accept() loop
                   SocketUtils.closeQuietly(finalServerSocket);
                   break;
                 }
@@ -48,13 +48,13 @@ public class SimpleTcpServer {
       consoleListener.setDaemon(true);
       consoleListener.start();
 
-      // Vòng lặp lắng nghe kết nối từ client
+      // Loop that accepts client connections
       while (!serverSocket.isClosed()) {
         try {
           Socket clientSocket = serverSocket.accept();
           System.out.println("Client connected: " + clientSocket.getRemoteSocketAddress());
 
-          // Xử lý mỗi Client kết nối trên một Thread độc lập trong ThreadPool
+          // Handle each client connection on its own thread in the thread pool
           threadPool.execute(() -> handleClient(clientSocket));
         } catch (SocketException e) {
           if (serverSocket.isClosed()) {
@@ -78,7 +78,7 @@ public class SimpleTcpServer {
       byte[] buffer = new byte[1024];
       int bytesRead;
 
-      // Đọc byte liên tục từ client bằng SocketUtils.receiveTcpBytes
+      // Keep reading bytes from the client with SocketUtils.receiveTcpBytes
       while ((bytesRead = SocketUtils.receiveTcpBytes(clientSocket, buffer)) != -1) {
         String clientMessage = new String(buffer, 0, bytesRead, StandardCharsets.UTF_8).trim();
         System.out.println("[" + clientSocket.getRemoteSocketAddress() + "]: " + clientMessage);
@@ -89,7 +89,7 @@ public class SimpleTcpServer {
           break;
         }
 
-        // Phản hồi lại client bằng SocketUtils.sendTcpBytes
+        // Reply to the client with SocketUtils.sendTcpBytes
         String response = "Echo from server: " + clientMessage + "\n";
         SocketUtils.sendTcpBytes(clientSocket, response.getBytes(StandardCharsets.UTF_8));
       }
@@ -97,7 +97,7 @@ public class SimpleTcpServer {
       System.err.println("Client handler error: " + e.getMessage());
     } finally {
       System.out.println("Client disconnected: " + clientSocket.getRemoteSocketAddress());
-      // Đóng client socket an toàn
+      // Close the client socket safely
       SocketUtils.closeQuietly(clientSocket);
     }
   }

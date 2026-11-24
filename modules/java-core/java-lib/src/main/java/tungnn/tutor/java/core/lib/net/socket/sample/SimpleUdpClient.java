@@ -16,7 +16,7 @@ public class SimpleUdpClient {
 
     System.out.println("Starting UDP Client targeting " + serverHost + ":" + serverPort);
 
-    // Tạo UDP socket với local ephemeral port do OS tự động cấp
+    // Create a UDP socket on a local ephemeral port assigned by the OS
     try (DatagramSocket clientSocket = SocketUtils.createUdpSocketOnEphemeralPort();
         BufferedReader consoleInput = new BufferedReader(new InputStreamReader(System.in))) {
 
@@ -32,18 +32,18 @@ public class SimpleUdpClient {
 
         byte[] sendData = userInput.getBytes(StandardCharsets.UTF_8);
 
-        // 1. Gửi gói tin UDP tới Server
+        // 1. Send the UDP packet to the server
         DatagramPacket sendPacket =
             SocketUtils.createUdpSendPacket(sendData, serverHost, serverPort);
         clientSocket.send(sendPacket);
 
-        // 2. Nếu người dùng nhập 'exit', ngắt client mà không chờ phản hồi thêm
+        // 2. If the user types 'exit', stop the client without waiting for a reply
         if ("exit".equalsIgnoreCase(userInput.trim())) {
           System.out.println("Closing client connection...");
           break;
         }
 
-        // 3. Nhận phản hồi từ Server
+        // 3. Receive the reply from the server
         DatagramPacket receivePacket = SocketUtils.createUdpReceivePacket(bufferSize);
         SocketUtils.receiveUdpBytes(clientSocket, receivePacket);
 
