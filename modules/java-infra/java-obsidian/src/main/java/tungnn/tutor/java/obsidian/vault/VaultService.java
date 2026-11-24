@@ -7,13 +7,13 @@ import java.util.List;
 import java.util.Map;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
-import tungnn.tutor.java.jackson.v3.JsonUtils;
+import tungnn.tutor.java.jackson.JsonMapperUtils;
 import tungnn.tutor.java.obsidian.cli.ObsidianCli;
 import tungnn.tutor.java.obsidian.cli.ObsidianCommand;
 
 public class VaultService {
 
-    private static final JsonMapper MAPPER = JsonUtils.createJsonMapper();
+    private static final JsonMapper MAPPER = JsonMapperUtils.createJsonMapper();
 
     private final ObsidianCli cli;
 

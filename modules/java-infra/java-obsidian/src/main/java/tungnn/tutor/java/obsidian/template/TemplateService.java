@@ -4,7 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Supplier;
-import tungnn.tutor.java.jackson.v3.JsonUtil;
+import tungnn.tutor.java.jackson.JsonMapperUtils;
 import tungnn.tutor.java.obsidian.cli.ObsidianCli;
 import tungnn.tutor.java.obsidian.cli.ObsidianCommand;
 import tungnn.tutor.java.obsidian.note.NoteService;
@@ -29,7 +29,7 @@ public class TemplateService {
         }
         var file = vaultRoot.get().resolve(".obsidian").resolve("templates.json");
         if (Files.isRegularFile(file)) {
-            var folder = JsonUtil.createJsonMapper()
+            var folder = JsonMapperUtils.createJsonMapper()
                     .readTree(tungnn.tutor.java.core.lib.io.filesystem.FileUtils.readString(file))
                     .path("folder")
                     .asString("");

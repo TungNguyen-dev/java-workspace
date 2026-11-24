@@ -3,12 +3,12 @@ package tungnn.tutor.java.tool.doctrans.core.infra.translator.text;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import tungnn.tutor.java.ai.client.LlmClient;
 import tungnn.tutor.java.ai.config.LlmProvider;
 import tungnn.tutor.java.ai.util.LlmOutputUtils;
 import tungnn.tutor.java.core.lib.io.resource.ResourceUtils;
-import tungnn.tutor.java.jackson.v3.JsonUtils;
+import tungnn.tutor.java.jackson.JsonMapperUtils;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.AbstractTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
@@ -16,7 +16,7 @@ import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
 public class LlmTextTranslator extends AbstractTextTranslator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LlmTextTranslator.class);
-    private static final ObjectMapper OBJECT_MAPPER = JsonUtils.createJsonMapper();
+    private static final JsonMapper OBJECT_MAPPER = JsonMapperUtils.createJsonMapper();
     private static final String SYSTEM_PROMPT_RESOURCE = "prompt-trans-dongy-v5.md";
     private static final String SYSTEM_PROMPT;
 
