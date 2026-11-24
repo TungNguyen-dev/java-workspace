@@ -1,4 +1,4 @@
-package tungnn.tutor.java.selenium.util;
+package tungnn.tutor.java.selenium.driver.chrome;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -6,7 +6,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.IntStream;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import tungnn.tutor.java.core.lib.multithread.ConcurrentUtils;
@@ -42,8 +45,9 @@ public final class ChromeDriverUtils {
           .toString();
 
   // --- Profile Configuration ---
-  public static final Path PROFILE_ROOT_DIR =
-      Path.of(System.getProperty("user.home"), ".data", "selenium", "chrome", "chrome-profiles");
+  public static final String PROFILE_ROOT_DIR_ENV = "WEBDRIVER_CHROME_PROFILE_ROOT_DIR";
+
+  public static final Path PROFILE_ROOT_DIR = resolveProfileRootDir();
 
   // MAJOR: Must specify driver property.
   static {
@@ -57,6 +61,15 @@ public final class ChromeDriverUtils {
 
   private ChromeDriverUtils() {
     throw new UnsupportedOperationException("Cannot instantiate a utility class");
+  }
+
+  private static Path resolveProfileRootDir() {
+    var configured = System.getenv(PROFILE_ROOT_DIR_ENV);
+    if (configured == null || configured.isBlank()) {
+      return Path.of(
+          System.getProperty("user.home"), ".data", "selenium", "chrome", "chrome-profiles");
+    }
+    return Path.of(configured).toAbsolutePath().normalize();
   }
 
   // =========================================================================
@@ -120,7 +133,7 @@ public final class ChromeDriverUtils {
     if (config.profileName() != null && !config.profileName().isBlank()) {
       var profilePath = PROFILE_ROOT_DIR.resolve(config.profileName()).normalize();
 
-      if (!profilePath.startsWith(PROFILE_ROOT_DIR)) {
+      if (!profilePath.startsWith(PROFILE_ROOT_DIR) || profilePath.equals(PROFILE_ROOT_DIR)) {
         throw new IllegalArgumentException("Invalid Chrome profile name: " + config.profileName());
       }
 
@@ -190,7 +203,33 @@ public final class ChromeDriverUtils {
     }
 
     // Delegate multithreaded execution to ConcurrentUtils
-    return ConcurrentUtils.executeConcurrently(validProfiles, ChromeDriverUtils::createDriver);
+    var created = new ConcurrentLinkedQueue<ChromeDriver>();
+    try {
+      return ConcurrentUtils.executeConcurrently(
+          validProfiles,
+          profile -> {
+            var driver = createDriver(profile);
+            created.add(driver);
+            return driver;
+          });
+    } catch (RuntimeException | Error e) {
+      quitQuietly(List.copyOf(created));
+      throw e;
+    }
+  }
+
+  public static List<ChromeDriver> createDrivers(int count) {
+    if (count <= 0) {
+      return List.of();
+    }
+    return createDriver(
+        IntStream.range(0, count).mapToObj(i -> "profile_" + i).toArray(String[]::new));
+  }
+
+  public static void removeWebdriverAttribute(ChromeDriver driver) {
+    driver.executeCdpCommand(
+        "Page.addScriptToEvaluateOnNewDocument",
+        Map.of("source", "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"));
   }
 
   public static void quitQuietly(List<ChromeDriver> drivers) {

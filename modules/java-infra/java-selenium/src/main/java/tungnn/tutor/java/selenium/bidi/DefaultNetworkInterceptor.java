@@ -1,9 +1,11 @@
-package tungnn.tutor.java.selenium.driver.bidi;
+package tungnn.tutor.java.selenium.bidi;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import org.openqa.selenium.UsernameAndPassword;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.bidi.BiDiException;
 import org.openqa.selenium.bidi.HasBiDi;
 import org.openqa.selenium.bidi.module.Network;
 import org.openqa.selenium.bidi.network.AddInterceptParameters;
@@ -13,14 +15,20 @@ import org.openqa.selenium.bidi.network.ResponseDetails;
 
 public class DefaultNetworkInterceptor implements NetworkInterceptor {
   private final Network network;
-  private final List<String> interceptIds;
+  private final List<String> interceptIds = new CopyOnWriteArrayList<>();
 
   public DefaultNetworkInterceptor(WebDriver driver) {
     if (!(driver instanceof HasBiDi)) {
-      throw new IllegalArgumentException("Driver được cấp không hỗ trợ giao thức WebDriver BiDi!");
+      throw new IllegalArgumentException("WebDriver does not support BiDi: " + driver);
     }
-    this.network = new Network(driver);
-    this.interceptIds = new ArrayList<>();
+    try {
+      this.network = new Network(driver);
+    } catch (BiDiException e) {
+      throw new IllegalArgumentException(
+          "WebDriver has BiDi disabled. Create it with BiDi, e.g."
+              + " ChromeDriverUtils.createDriver(profile, true)",
+          e);
+    }
   }
 
   @Override
@@ -30,9 +38,10 @@ public class DefaultNetworkInterceptor implements NetworkInterceptor {
 
   @Override
   public void addAuthenticationHandler(String username, String password) {
-    network.onAuthRequired(authRequired -> {
-      // Logic xử lý map credentials ngầm của Selenium BiDi
-    });
+    var credentials = new UsernameAndPassword(username, password);
+    addNetworkIntercept(InterceptPhase.AUTH_REQUIRED);
+    network.onAuthRequired(
+        response -> network.continueWithAuth(response.getRequest().getRequestId(), credentials));
   }
 
   @Override
@@ -47,8 +56,7 @@ public class DefaultNetworkInterceptor implements NetworkInterceptor {
 
   @Override
   public String addNetworkIntercept(InterceptPhase phase) {
-    AddInterceptParameters params = new AddInterceptParameters(phase);
-    String interceptId = network.addIntercept(params);
+    String interceptId = network.addIntercept(new AddInterceptParameters(phase));
     interceptIds.add(interceptId);
     return interceptId;
   }
@@ -63,14 +71,30 @@ public class DefaultNetworkInterceptor implements NetworkInterceptor {
 
   @Override
   public void clearAllIntercepts() {
-    List<String> targets = new ArrayList<>(interceptIds);
-    for (String id : targets) {
-      removeIntercept(id);
+    RuntimeException failure = null;
+    for (String id : List.copyOf(interceptIds)) {
+      try {
+        removeIntercept(id);
+      } catch (RuntimeException e) {
+        interceptIds.remove(id);
+        if (failure == null) {
+          failure = e;
+        } else {
+          failure.addSuppressed(e);
+        }
+      }
+    }
+    if (failure != null) {
+      throw failure;
     }
   }
 
   @Override
   public void close() {
-    clearAllIntercepts();
+    try {
+      clearAllIntercepts();
+    } finally {
+      network.close();
+    }
   }
 }

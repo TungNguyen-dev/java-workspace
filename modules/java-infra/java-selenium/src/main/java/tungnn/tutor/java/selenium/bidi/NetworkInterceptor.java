@@ -1,7 +1,7 @@
-package tungnn.tutor.java.selenium.driver.bidi;
+package tungnn.tutor.java.selenium.bidi;
 
 import java.util.function.Consumer;
-import org.openqa.selenium.bidi.module.Network; // Đảm bảo đúng module Network của BiDi
+import org.openqa.selenium.bidi.module.Network; // Make sure this is the BiDi Network module
 import org.openqa.selenium.bidi.network.BeforeRequestSent;
 import org.openqa.selenium.bidi.network.InterceptPhase;
 import org.openqa.selenium.bidi.network.ResponseDetails;
@@ -23,14 +23,14 @@ public interface NetworkInterceptor extends AutoCloseable {
         long status = response.getResponseData().getStatus();
         String mimeType = response.getResponseData().getMimeType();
 
-        // BiDi chỉ cung cấp Headers và thông tin khái quát của Content (như Size)
+        // BiDi only exposes headers and general content info (such as size)
         long headersCount = response.getResponseData().getHeaders().size();
 
         System.out.printf(
             "[Response Log] URL: %s%n" + "               Status: %d | Type: %s | Headers: %d%n",
             url, status, mimeType, headersCount);
       } catch (Exception e) {
-        System.err.println("[Response Log] Lỗi khi đọc dữ liệu response: " + e.getMessage());
+        System.err.println("[Response Log] Failed to read response data: " + e.getMessage());
       }
     });
   }

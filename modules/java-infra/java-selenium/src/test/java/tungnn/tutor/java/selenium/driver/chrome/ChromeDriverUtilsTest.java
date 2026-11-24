@@ -1,4 +1,4 @@
-package tungnn.tutor.java.selenium.util;
+package tungnn.tutor.java.selenium.driver.chrome;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

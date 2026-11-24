@@ -1,4 +1,4 @@
-package tungnn.tutor.java.selenium.util;
+package tungnn.tutor.java.selenium.element;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -14,13 +14,13 @@ import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-public final class ElementUtil {
+public final class ElementUtils {
 
   public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
 
   public static final Duration DEFAULT_POLLING = Duration.ofMillis(500);
 
-  private ElementUtil() {
+  private ElementUtils() {
     throw new UnsupportedOperationException("Utility class - khong duoc phep khoi tao");
   }
 
@@ -154,7 +154,7 @@ public final class ElementUtil {
 
   public static List<String> getTexts(SearchContext context, By locator) {
     return findElements(context, locator).stream()
-        .map(ElementUtil::getText)
+        .map(ElementUtils::getText)
         .collect(Collectors.toList());
   }
 
@@ -260,7 +260,7 @@ public final class ElementUtil {
   // =================================================================================
 
   public static boolean isDisplayed(SearchContext context, By locator) {
-    return findElementIfPresent(context, locator).map(ElementUtil::isDisplayed).orElse(false);
+    return findElementIfPresent(context, locator).map(ElementUtils::isDisplayed).orElse(false);
   }
 
   public static boolean isDisplayed(WebElement element) {
@@ -272,7 +272,7 @@ public final class ElementUtil {
   }
 
   public static boolean isEnabled(SearchContext context, By locator) {
-    return findElementIfPresent(context, locator).map(ElementUtil::isEnabled).orElse(false);
+    return findElementIfPresent(context, locator).map(ElementUtils::isEnabled).orElse(false);
   }
 
   public static boolean isEnabled(WebElement element) {
@@ -284,7 +284,7 @@ public final class ElementUtil {
   }
 
   public static boolean isSelected(SearchContext context, By locator) {
-    return findElementIfPresent(context, locator).map(ElementUtil::isSelected).orElse(false);
+    return findElementIfPresent(context, locator).map(ElementUtils::isSelected).orElse(false);
   }
 
   public static boolean isSelected(WebElement element) {
@@ -336,7 +336,7 @@ public final class ElementUtil {
   }
 
   public static String getText(SearchContext context, By locator) {
-    return findElementIfPresent(context, locator).map(ElementUtil::getText).orElse("");
+    return findElementIfPresent(context, locator).map(ElementUtils::getText).orElse("");
   }
 
   public static String getAttribute(WebElement element, String name) {
