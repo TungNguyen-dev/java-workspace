@@ -13,8 +13,8 @@ public final class AnthropicChatModelFactory implements ChatModelFactory {
     var maxTokens = properties.maxTokens() != null ? properties.maxTokens() : DEFAULT_MAX_TOKENS;
     var options =
         AnthropicChatOptions.builder()
-            .baseUrl(properties.baseUrl())
-            .apiKey(properties.apiKey())
+            .baseUrl(properties.baseUrl().orElse(null))
+            .apiKey(properties.apiKey().orElse(null))
             .model(properties.model())
             .temperature(properties.temperature())
             .maxTokens(maxTokens)

@@ -12,14 +12,14 @@ public final class LlmClientUtils {
   }
 
   public static LlmClient create(LlmClientProperties properties) {
-    return of(ChatModelUtils.create(properties), properties.provider(), properties.model());
+    return of(ChatModelUtils.create(properties), properties.provider());
   }
 
   public static LlmClient fromEnv(LlmProvider provider) {
     return create(LlmClientProperties.fromEnv(provider));
   }
 
-  public static LlmClient of(ChatModel chatModel, LlmProvider provider, String model) {
-    return new SpringAiLlmClient(chatModel, provider, model);
+  public static LlmClient of(ChatModel chatModel, LlmProvider provider) {
+    return new SpringAiLlmClient(chatModel, provider);
   }
 }

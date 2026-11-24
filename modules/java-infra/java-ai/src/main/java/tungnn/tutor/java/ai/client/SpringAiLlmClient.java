@@ -1,27 +1,45 @@
 package tungnn.tutor.java.ai.client;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import reactor.core.publisher.Flux;
 import tungnn.tutor.java.ai.config.LlmProvider;
 import tungnn.tutor.java.ai.util.StringUtils;
 
-public record SpringAiLlmClient(LlmProvider provider, String model, ChatClient chatClient)
-    implements LlmClient {
+public final class SpringAiLlmClient implements LlmClient {
   private static final Logger LOGGER = LoggerFactory.getLogger(SpringAiLlmClient.class);
 
-  public SpringAiLlmClient(ChatModel chatModel, LlmProvider provider, String model) {
-    Objects.requireNonNull(chatModel, "chatModel must not be null");
-    this(
-        Objects.requireNonNull(provider, "provider must not be null"),
-        Objects.requireNonNull(model, "model must not be null"),
-        ChatClient.create(chatModel));
+  private final LlmProvider provider;
+  private final ChatModel chatModel;
+  private final ChatClient chatClient;
+
+  public SpringAiLlmClient(ChatModel chatModel, LlmProvider provider) {
+    this.chatModel = Objects.requireNonNull(chatModel, "chatModel must not be null");
+    this.provider = Objects.requireNonNull(provider, "provider must not be null");
+    this.chatClient = ChatClient.create(chatModel);
+  }
+
+  @Override
+  public LlmProvider provider() {
+    return provider;
+  }
+
+  @Override
+  public Optional<String> model() {
+    return Optional.ofNullable(chatModel.getOptions()).map(ChatOptions::getModel);
+  }
+
+  @Override
+  public ChatClient chatClient() {
+    return chatClient;
   }
 
   @Override
@@ -41,12 +59,16 @@ public record SpringAiLlmClient(LlmProvider provider, String model, ChatClient c
 
   @Override
   public Flux<String> stream(String system, String user) {
-    return spec(system, user).stream().content();
+    Objects.requireNonNull(user, "user message must not be null");
+    return Flux.defer(() -> {
+      var start = System.nanoTime();
+      return spec(system, user).stream().content().doFinally(signal -> logElapsed("stream", start));
+    });
   }
 
   @Override
   public String toString() {
-    return "SpringAiLlmClient[provider=" + provider + ", model=" + model + "]";
+    return "SpringAiLlmClient[provider=" + provider + ", model=" + model().orElse("unknown") + "]";
   }
 
   private ChatClient.ChatClientRequestSpec spec(String system, String user) {
@@ -63,12 +85,16 @@ public record SpringAiLlmClient(LlmProvider provider, String model, ChatClient c
     try {
       return call.get();
     } finally {
-      LOGGER.debug(
-          "LLM {} [provider={}, model={}] took {} ms",
-          operation,
-          provider,
-          model,
-          (System.nanoTime() - start) / 1_000_000);
+      logElapsed(operation, start);
     }
+  }
+
+  private void logElapsed(String operation, long startNanos) {
+    LOGGER.debug(
+        "LLM {} [provider={}, model={}] took {} ms",
+        operation,
+        provider,
+        model().orElse("unknown"),
+        (System.nanoTime() - startNanos) / 1_000_000);
   }
 }

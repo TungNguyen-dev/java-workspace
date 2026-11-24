@@ -10,8 +10,8 @@ public final class OpenAiCompatibleChatModelFactory implements ChatModelFactory 
   public ChatModel create(LlmClientProperties properties) {
     var options =
         OpenAiChatOptions.builder()
-            .baseUrl(properties.baseUrl())
-            .apiKey(properties.apiKey())
+            .baseUrl(properties.baseUrl().orElse(null))
+            .apiKey(properties.apiKey().orElse(null))
             .model(properties.model())
             .temperature(properties.temperature())
             .maxTokens(properties.maxTokens())

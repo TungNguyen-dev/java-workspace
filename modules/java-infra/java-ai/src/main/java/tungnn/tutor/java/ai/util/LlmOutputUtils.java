@@ -3,7 +3,8 @@ package tungnn.tutor.java.ai.util;
 import java.util.regex.Pattern;
 
 public final class LlmOutputUtils {
-  private static final Pattern THINK_BLOCK = Pattern.compile("(?is)<think>.*?</think>");
+
+  private static final Pattern THINK_BLOCK = Pattern.compile("(?is)<think>.*?(?:</think>|\\z)");
   private static final Pattern CODE_FENCE =
       Pattern.compile("(?s)^```[a-zA-Z0-9_-]*\\R(.*?)\\R?```$");
 

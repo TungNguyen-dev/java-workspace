@@ -1,7 +1,5 @@
 package tungnn.tutor.java.ai.util;
 
-import java.util.EnumMap;
-import java.util.Map;
 import org.springframework.ai.chat.model.ChatModel;
 import tungnn.tutor.java.ai.config.LlmClientProperties;
 import tungnn.tutor.java.ai.config.LlmProvider;
@@ -15,7 +13,13 @@ import tungnn.tutor.java.ai.factory.OllamaChatModelFactory;
 import tungnn.tutor.java.ai.factory.OpenAiCompatibleChatModelFactory;
 
 public final class ChatModelUtils {
-  private static final Map<LlmProvider, ChatModelFactory> FACTORIES = createFactories();
+  private static final ChatModelFactory OPENAI_COMPATIBLE = new OpenAiCompatibleChatModelFactory();
+  private static final ChatModelFactory ANTHROPIC = new AnthropicChatModelFactory();
+  private static final ChatModelFactory GOOGLE_GENAI = new GoogleGenAiChatModelFactory();
+  private static final ChatModelFactory OLLAMA = new OllamaChatModelFactory();
+  private static final ChatModelFactory DEEPSEEK = new DeepSeekChatModelFactory();
+  private static final ChatModelFactory MISTRAL_AI = new MistralAiChatModelFactory();
+  private static final ChatModelFactory BEDROCK_CONVERSE = new BedrockConverseChatModelFactory();
 
   private ChatModelUtils() {
     throw new UnsupportedOperationException("cannot instantiate utility class");
@@ -26,28 +30,26 @@ public final class ChatModelUtils {
   }
 
   public static ChatModelFactory factoryFor(LlmProvider provider) {
-    var factory = FACTORIES.get(provider);
-    if (factory == null) {
-      throw new IllegalStateException("No ChatModelFactory registered for " + provider);
-    }
-    return factory;
-  }
-
-  private static Map<LlmProvider, ChatModelFactory> createFactories() {
-    var factories = new EnumMap<LlmProvider, ChatModelFactory>(LlmProvider.class);
-    var openAi = new OpenAiCompatibleChatModelFactory();
-    for (var provider : LlmProvider.values()) {
-      if (provider.isOpenAiCompatible()) {
-        factories.put(provider, openAi);
-      }
-    }
-    factories.put(LlmProvider.OPENAI, openAi);
-    factories.put(LlmProvider.ANTHROPIC, new AnthropicChatModelFactory());
-    factories.put(LlmProvider.GOOGLE_GENAI, new GoogleGenAiChatModelFactory());
-    factories.put(LlmProvider.OLLAMA, new OllamaChatModelFactory());
-    factories.put(LlmProvider.DEEPSEEK, new DeepSeekChatModelFactory());
-    factories.put(LlmProvider.MISTRAL_AI, new MistralAiChatModelFactory());
-    factories.put(LlmProvider.BEDROCK_CONVERSE, new BedrockConverseChatModelFactory());
-    return Map.copyOf(factories);
+    return switch (provider) {
+      case ANTHROPIC -> ANTHROPIC;
+      case GOOGLE_GENAI -> GOOGLE_GENAI;
+      case OLLAMA -> OLLAMA;
+      case DEEPSEEK -> DEEPSEEK;
+      case MISTRAL_AI -> MISTRAL_AI;
+      case BEDROCK_CONVERSE -> BEDROCK_CONVERSE;
+      case OPENAI,
+          HUGGING_FACE,
+          OLLAMA_OPENAI,
+          GROQ,
+          OPENROUTER,
+          TOGETHER_AI,
+          NVIDIA_NIM,
+          PERPLEXITY,
+          XAI_GROK,
+          LM_STUDIO,
+          VLLM,
+          CUSTOM_OPENAI ->
+          OPENAI_COMPATIBLE;
+    };
   }
 }

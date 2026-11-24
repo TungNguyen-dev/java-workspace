@@ -4,13 +4,14 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.UnaryOperator;
 import tungnn.tutor.java.ai.util.StringUtils;
 
 public record LlmClientProperties(
     LlmProvider provider,
-    String baseUrl,
-    String apiKey,
+    Optional<String> baseUrl,
+    Optional<String> apiKey,
     String model,
     Double temperature,
     Integer maxTokens,
@@ -25,28 +26,11 @@ public record LlmClientProperties(
 
   public LlmClientProperties {
     Objects.requireNonNull(provider, "provider must not be null");
-    extra = extra == null ? Map.of() : Map.copyOf(extra);
-    baseUrl = StringUtils.isBlank(baseUrl) ? provider.defaultBaseUrl() : baseUrl.trim();
-    if (baseUrl == null && provider.baseUrlRequired()) {
-      throw new IllegalArgumentException(
-          provider + ": baseUrl must not be blank" + envHint(provider.baseUrlEnv()));
-    }
-    var vertexAi =
-        provider == LlmProvider.GOOGLE_GENAI && StringUtils.isNotBlank(extra.get(EXTRA_PROJECT));
-    if (StringUtils.isBlank(apiKey)) {
-      if (provider.apiKeyRequired() && !vertexAi) {
-        throw new IllegalArgumentException(
-            provider + ": apiKey must not be blank" + envHint(provider.apiKeyEnv()));
-      }
-      apiKey = provider.isOpenAiCompatible() ? NO_API_KEY : null;
-    } else {
-      apiKey = apiKey.trim();
-    }
-    model = StringUtils.isBlank(model) ? provider.defaultModel() : model.trim();
-    if (model == null) {
-      throw new IllegalArgumentException(
-          provider + ": model must not be blank" + envHint(provider.modelEnv()));
-    }
+    extra = normalizeExtra(extra);
+    baseUrl = resolveBaseUrl(provider, Optional.ofNullable(baseUrl).flatMap(v -> v).orElse(null));
+    apiKey =
+        resolveApiKey(provider, Optional.ofNullable(apiKey).flatMap(v -> v).orElse(null), extra);
+    model = resolveModel(provider, model);
     timeout = Objects.requireNonNullElse(timeout, DEFAULT_TIMEOUT);
     if (timeout.isNegative() || timeout.isZero()) {
       throw new IllegalArgumentException("timeout must be positive");
@@ -66,27 +50,75 @@ public record LlmClientProperties(
 
   public static LlmClientProperties fromEnv(LlmProvider provider, UnaryOperator<String> env) {
     var builder = builder(provider);
-    if (provider.apiKeyEnv() != null) {
-      builder.apiKey(env.apply(provider.apiKeyEnv()));
-    }
-    if (provider.modelEnv() != null) {
-      builder.model(env.apply(provider.modelEnv()));
-    }
-    if (provider.baseUrlEnv() != null) {
-      builder.baseUrl(env.apply(provider.baseUrlEnv()));
-    }
-    if (provider == LlmProvider.BEDROCK_CONVERSE) {
-      builder.extra(EXTRA_REGION, env.apply("AWS_REGION"));
-    }
-    if (provider == LlmProvider.GOOGLE_GENAI) {
-      builder.extra(EXTRA_PROJECT, env.apply("GOOGLE_CLOUD_PROJECT"));
-      builder.extra(EXTRA_LOCATION, env.apply("GOOGLE_CLOUD_LOCATION"));
-    }
+    provider.apiKeyEnv().map(env).ifPresent(builder::apiKey);
+    provider.modelEnv().map(env).ifPresent(builder::model);
+    provider.baseUrlEnv().map(env).ifPresent(builder::baseUrl);
+    provider.extraEnv().forEach((key, envVar) -> builder.extra(key, env.apply(envVar)));
     return builder.build();
   }
 
-  private static String envHint(String env) {
-    return env == null ? "" : " (set " + env + ")";
+  private static Map<String, String> normalizeExtra(Map<String, String> extra) {
+    if (extra == null) {
+      return Map.of();
+    }
+    var normalized = new HashMap<String, String>();
+    extra.forEach((key, value) -> {
+      if (key != null && StringUtils.isNotBlank(value)) {
+        normalized.put(key, value.trim());
+      }
+    });
+    return Map.copyOf(normalized);
+  }
+
+  private static Optional<String> clean(String value) {
+    return Optional.ofNullable(value).filter(StringUtils::isNotBlank).map(String::trim);
+  }
+
+  private static Optional<String> resolveBaseUrl(LlmProvider provider, String baseUrl) {
+    var resolved = clean(baseUrl).or(provider::defaultBaseUrl);
+    if (resolved.isEmpty() && provider.baseUrlRequired()) {
+      throw new IllegalArgumentException(
+          provider + ": baseUrl must not be blank" + envHint(provider.baseUrlEnv().orElse(null)));
+    }
+    return resolved;
+  }
+
+  private static Optional<String> resolveApiKey(
+      LlmProvider provider, String apiKey, Map<String, String> extra) {
+    var resolved = clean(apiKey);
+    if (resolved.isPresent()) {
+      return resolved;
+    }
+    if (provider.apiKeyRequired() && !isVertexAi(provider, false, extra)) {
+      throw new IllegalArgumentException(
+          provider + ": apiKey must not be blank" + envHint(provider.apiKeyEnv().orElse(null)));
+    }
+    return provider.isOpenAiCompatible() ? Optional.of(NO_API_KEY) : Optional.empty();
+  }
+
+  private static String resolveModel(LlmProvider provider, String model) {
+    return Optional.ofNullable(model)
+        .filter(StringUtils::isNotBlank)
+        .map(String::trim)
+        .or(provider::defaultModel)
+        .orElseThrow(() ->
+            new IllegalArgumentException(
+                provider
+                    + ": model must not be blank"
+                    + envHint(provider.modelEnv().orElse(null))));
+  }
+
+  private static boolean isVertexAi(
+      LlmProvider provider, boolean hasApiKey, Map<String, String> extra) {
+    return provider == LlmProvider.GOOGLE_GENAI && !hasApiKey && extra.containsKey(EXTRA_PROJECT);
+  }
+
+  private static String envHint(String envName) {
+    return envName == null ? "" : " (set " + envName + ")";
+  }
+
+  public boolean vertexAi() {
+    return isVertexAi(provider, apiKey.isPresent(), extra);
   }
 
   public String extra(String key) {
@@ -99,7 +131,7 @@ public record LlmClientProperties(
         .formatted(
             provider,
             baseUrl,
-            apiKey == null ? "null" : "",
+            apiKey.isPresent() ? "***" : "<none>",
             model,
             temperature,
             maxTokens,
@@ -174,7 +206,15 @@ public record LlmClientProperties(
 
     public LlmClientProperties build() {
       return new LlmClientProperties(
-          provider, baseUrl, apiKey, model, temperature, maxTokens, timeout, maxRetries, extra);
+          provider,
+          Optional.ofNullable(baseUrl),
+          Optional.ofNullable(apiKey),
+          model,
+          temperature,
+          maxTokens,
+          timeout,
+          maxRetries,
+          extra);
     }
   }
 }

@@ -10,21 +10,18 @@ import tungnn.tutor.java.ai.util.HttpUtils;
 
 public final class GoogleGenAiChatModelFactory implements ChatModelFactory {
   private static Client createClient(LlmClientProperties properties) {
-    var httpOptions =
-        HttpOptions.builder().timeout(Math.toIntExact(properties.timeout().toMillis()));
-    if (properties.baseUrl() != null) {
-      httpOptions.baseUrl(properties.baseUrl());
-    }
+    var timeoutMillis = (int) Math.min(properties.timeout().toMillis(), Integer.MAX_VALUE);
+    var httpOptions = HttpOptions.builder().timeout(timeoutMillis);
+    properties.baseUrl().ifPresent(httpOptions::baseUrl);
     var client = Client.builder().httpOptions(httpOptions.build());
-    var project = properties.extra(LlmClientProperties.EXTRA_PROJECT);
-    if (project != null) {
-      client.vertexAI(true).project(project);
+    if (properties.vertexAi()) {
+      client.vertexAI(true).project(properties.extra(LlmClientProperties.EXTRA_PROJECT));
       var location = properties.extra(LlmClientProperties.EXTRA_LOCATION);
       if (location != null) {
         client.location(location);
       }
     } else {
-      client.apiKey(properties.apiKey());
+      client.apiKey(properties.apiKey().orElse(null));
     }
     return client.build();
   }

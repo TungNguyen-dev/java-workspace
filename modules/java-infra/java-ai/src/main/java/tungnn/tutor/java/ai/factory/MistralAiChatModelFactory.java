@@ -12,8 +12,8 @@ public final class MistralAiChatModelFactory implements ChatModelFactory {
   public ChatModel create(LlmClientProperties properties) {
     var api =
         MistralAiApi.builder()
-            .baseUrl(properties.baseUrl())
-            .apiKey(properties.apiKey())
+            .baseUrl(properties.baseUrl().orElse(null))
+            .apiKey(properties.apiKey().orElse(null))
             .restClientBuilder(HttpUtils.restClientBuilder(properties.timeout()))
             .build();
     var options =

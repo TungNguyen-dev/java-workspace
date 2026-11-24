@@ -12,7 +12,7 @@ public final class OllamaChatModelFactory implements ChatModelFactory {
   public ChatModel create(LlmClientProperties properties) {
     var api =
         OllamaApi.builder()
-            .baseUrl(properties.baseUrl())
+            .baseUrl(properties.baseUrl().orElse(null))
             .restClientBuilder(HttpUtils.restClientBuilder(properties.timeout()))
             .build();
     var options =

@@ -40,4 +40,9 @@ class LlmOutputUtilsTest {
 
     assertThat(LlmOutputUtils.clean(text)).isEqualTo(text);
   }
+
+  @Test
+  void shouldDropUnterminatedThinkBlock() {
+    assertThat(LlmOutputUtils.clean("Xin chào <think>suy luận dở dang")).isEqualTo("Xin chào");
+  }
 }

@@ -2,170 +2,79 @@ package tungnn.tutor.java.ai.config;
 
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 
 public enum LlmProvider {
   // ===== Native Spring AI chat models =====
   OPENAI(
-      LlmProviderKind.NATIVE,
-      "https://api.openai.com/v1",
-      "gpt-4o-mini",
-      true,
-      "OPENAI_API_KEY",
-      "OPENAI_MODEL",
-      "OPENAI_BASE_URL"),
+      ProviderSpec.nativeApi("OPENAI").baseUrl("https://api.openai.com/v1").model("gpt-4o-mini")),
   ANTHROPIC(
-      LlmProviderKind.NATIVE,
-      "https://api.anthropic.com",
-      "claude-sonnet-5-5",
-      true,
-      "ANTHROPIC_API_KEY",
-      "ANTHROPIC_MODEL",
-      "ANTHROPIC_BASE_URL"),
+      ProviderSpec.nativeApi("ANTHROPIC")
+          .baseUrl("https://api.anthropic.com")
+          .model("claude-sonnet-5-5")),
   GOOGLE_GENAI(
-      LlmProviderKind.NATIVE,
-      null,
-      "gemini-2.5-flash",
-      true,
-      "GEMINI_API_KEY",
-      "GEMINI_LLM_MODEL",
-      "GEMINI_BASE_URL"),
+      ProviderSpec.nativeApi("GEMINI")
+          .model("gemini-2.5-flash")
+          .modelEnv("GEMINI_LLM_MODEL")
+          .extraEnv(LlmClientProperties.EXTRA_PROJECT, "GOOGLE_CLOUD_PROJECT")
+          .extraEnv(LlmClientProperties.EXTRA_LOCATION, "GOOGLE_CLOUD_LOCATION")),
   OLLAMA(
-      LlmProviderKind.NATIVE,
-      "http://localhost:11434",
-      "llama3",
-      false,
-      null,
-      "OLLAMA_MODEL",
-      "OLLAMA_NATIVE_BASE_URL"),
+      ProviderSpec.nativeApi("OLLAMA")
+          .baseUrl("http://localhost:11434")
+          .model("llama3")
+          .apiKeyOptional()
+          .apiKeyEnv(null)
+          .baseUrlEnv("OLLAMA_NATIVE_BASE_URL")),
   DEEPSEEK(
-      LlmProviderKind.NATIVE,
-      "https://api.deepseek.com",
-      "deepseek-chat",
-      true,
-      "DEEPSEEK_API_KEY",
-      "DEEPSEEK_MODEL",
-      "DEEPSEEK_BASE_URL"),
+      ProviderSpec.nativeApi("DEEPSEEK")
+          .baseUrl("https://api.deepseek.com")
+          .model("deepseek-chat")),
   MISTRAL_AI(
-      LlmProviderKind.NATIVE,
-      "https://api.mistral.ai",
-      "mistral-small-latest",
-      true,
-      "MISTRAL_AI_API_KEY",
-      "MISTRAL_AI_MODEL",
-      "MISTRAL_AI_BASE_URL"),
-  BEDROCK_CONVERSE(LlmProviderKind.NATIVE, null, null, false, null, "BEDROCK_MODEL", null),
+      ProviderSpec.nativeApi("MISTRAL_AI")
+          .baseUrl("https://api.mistral.ai")
+          .model("mistral-small-latest")),
+  BEDROCK_CONVERSE(
+      ProviderSpec.nativeApi("BEDROCK")
+          .apiKeyOptional()
+          .apiKeyEnv(null)
+          .baseUrlEnv(null)
+          .extraEnv(LlmClientProperties.EXTRA_REGION, "AWS_REGION")),
   // ===== OpenAI-compatible endpoints =====
   HUGGING_FACE(
-      LlmProviderKind.OPENAI_COMPATIBLE,
-      "https://router.huggingface.co/v1",
-      null,
-      true,
-      "HF_TOKEN",
-      "HF_MODEL",
-      "HF_BASE_URL"),
+      ProviderSpec.openAiCompatible("HF")
+          .baseUrl("https://router.huggingface.co/v1")
+          .apiKeyEnv("HF_TOKEN")),
   OLLAMA_OPENAI(
-      LlmProviderKind.OPENAI_COMPATIBLE,
-      "http://localhost:11434/v1",
-      "llama3",
-      false,
-      "OLLAMA_TOKEN",
-      "OLLAMA_MODEL",
-      "OLLAMA_BASE_URL"),
+      ProviderSpec.openAiCompatible("OLLAMA")
+          .baseUrl("http://localhost:11434/v1")
+          .model("llama3")
+          .apiKeyOptional()
+          .apiKeyEnv("OLLAMA_TOKEN")),
   GROQ(
-      LlmProviderKind.OPENAI_COMPATIBLE,
-      "https://api.groq.com/openai/v1",
-      "llama-3.3-70b-versatile",
-      true,
-      "GROQ_API_KEY",
-      "GROQ_MODEL",
-      "GROQ_BASE_URL"),
-  OPENROUTER(
-      LlmProviderKind.OPENAI_COMPATIBLE,
-      "https://openrouter.ai/api/v1",
-      null,
-      true,
-      "OPENROUTER_API_KEY",
-      "OPENROUTER_MODEL",
-      "OPENROUTER_BASE_URL"),
-  TOGETHER_AI(
-      LlmProviderKind.OPENAI_COMPATIBLE,
-      "https://api.together.xyz/v1",
-      null,
-      true,
-      "TOGETHER_API_KEY",
-      "TOGETHER_MODEL",
-      "TOGETHER_BASE_URL"),
+      ProviderSpec.openAiCompatible("GROQ")
+          .baseUrl("https://api.groq.com/openai/v1")
+          .model("llama-3.3-70b-versatile")),
+  OPENROUTER(ProviderSpec.openAiCompatible("OPENROUTER").baseUrl("https://openrouter.ai/api/v1")),
+  TOGETHER_AI(ProviderSpec.openAiCompatible("TOGETHER").baseUrl("https://api.together.xyz/v1")),
   NVIDIA_NIM(
-      LlmProviderKind.OPENAI_COMPATIBLE,
-      "https://integrate.api.nvidia.com/v1",
-      null,
-      true,
-      "NVIDIA_API_KEY",
-      "NVIDIA_MODEL",
-      "NVIDIA_BASE_URL"),
+      ProviderSpec.openAiCompatible("NVIDIA").baseUrl("https://integrate.api.nvidia.com/v1")),
   PERPLEXITY(
-      LlmProviderKind.OPENAI_COMPATIBLE,
-      "https://api.perplexity.ai",
-      "sonar",
-      true,
-      "PERPLEXITY_API_KEY",
-      "PERPLEXITY_MODEL",
-      "PERPLEXITY_BASE_URL"),
-  XAI_GROK(
-      LlmProviderKind.OPENAI_COMPATIBLE,
-      "https://api.x.ai/v1",
-      null,
-      true,
-      "XAI_API_KEY",
-      "XAI_MODEL",
-      "XAI_BASE_URL"),
+      ProviderSpec.openAiCompatible("PERPLEXITY")
+          .baseUrl("https://api.perplexity.ai")
+          .model("sonar")),
+  XAI_GROK(ProviderSpec.openAiCompatible("XAI").baseUrl("https://api.x.ai/v1")),
   LM_STUDIO(
-      LlmProviderKind.OPENAI_COMPATIBLE,
-      "http://localhost:1234/v1",
-      null,
-      false,
-      "LM_STUDIO_API_KEY",
-      "LM_STUDIO_MODEL",
-      "LM_STUDIO_BASE_URL"),
-  VLLM(
-      LlmProviderKind.OPENAI_COMPATIBLE,
-      "http://localhost:8000/v1",
-      null,
-      false,
-      "VLLM_API_KEY",
-      "VLLM_MODEL",
-      "VLLM_BASE_URL"),
-  CUSTOM_OPENAI(
-      LlmProviderKind.OPENAI_COMPATIBLE,
-      null,
-      null,
-      false,
-      "LLM_API_KEY",
-      "LLM_MODEL",
-      "LLM_BASE_URL");
-  private final LlmProviderKind kind;
-  private final String defaultBaseUrl;
-  private final String defaultModel;
-  private final boolean apiKeyRequired;
-  private final String apiKeyEnv;
-  private final String modelEnv;
-  private final String baseUrlEnv;
+      ProviderSpec.openAiCompatible("LM_STUDIO")
+          .baseUrl("http://localhost:1234/v1")
+          .apiKeyOptional()),
+  VLLM(ProviderSpec.openAiCompatible("VLLM").baseUrl("http://localhost:8000/v1").apiKeyOptional()),
+  CUSTOM_OPENAI(ProviderSpec.openAiCompatible("LLM").apiKeyOptional());
 
-  LlmProvider(
-      LlmProviderKind kind,
-      String defaultBaseUrl,
-      String defaultModel,
-      boolean apiKeyRequired,
-      String apiKeyEnv,
-      String modelEnv,
-      String baseUrlEnv) {
-    this.kind = kind;
-    this.defaultBaseUrl = defaultBaseUrl;
-    this.defaultModel = defaultModel;
-    this.apiKeyRequired = apiKeyRequired;
-    this.apiKeyEnv = apiKeyEnv;
-    this.modelEnv = modelEnv;
-    this.baseUrlEnv = baseUrlEnv;
+  private final ProviderSpec spec;
+
+  LlmProvider(ProviderSpec spec) {
+    this.spec = spec;
   }
 
   public static LlmProvider from(String name) {
@@ -192,39 +101,39 @@ public enum LlmProvider {
     };
   }
 
-  public LlmProviderKind kind() {
-    return kind;
-  }
-
   public boolean isOpenAiCompatible() {
-    return kind == LlmProviderKind.OPENAI_COMPATIBLE;
+    return spec.openAiCompatible();
   }
 
-  public String defaultBaseUrl() {
-    return defaultBaseUrl;
+  public Optional<String> defaultBaseUrl() {
+    return spec.defaultBaseUrl();
   }
 
-  public String defaultModel() {
-    return defaultModel;
+  public Optional<String> defaultModel() {
+    return spec.defaultModel();
   }
 
   public boolean apiKeyRequired() {
-    return apiKeyRequired;
+    return spec.apiKeyRequired();
   }
 
   public boolean baseUrlRequired() {
-    return isOpenAiCompatible() && defaultBaseUrl == null;
+    return isOpenAiCompatible() && spec.defaultBaseUrl().isEmpty();
   }
 
-  public String apiKeyEnv() {
-    return apiKeyEnv;
+  public Optional<String> apiKeyEnv() {
+    return spec.apiKeyEnv();
   }
 
-  public String modelEnv() {
-    return modelEnv;
+  public Optional<String> modelEnv() {
+    return spec.modelEnv();
   }
 
-  public String baseUrlEnv() {
-    return baseUrlEnv;
+  public Optional<String> baseUrlEnv() {
+    return spec.baseUrlEnv();
+  }
+
+  public Map<String, String> extraEnv() {
+    return spec.extraEnv();
   }
 }

@@ -1,5 +1,6 @@
 package tungnn.tutor.java.ai.client;
 
+import java.util.Optional;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -9,7 +10,7 @@ import tungnn.tutor.java.ai.config.LlmProvider;
 public interface LlmClient {
   LlmProvider provider();
 
-  String model();
+  Optional<String> model();
 
   default String chat(String user) {
     return chat(null, user);

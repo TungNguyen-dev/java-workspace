@@ -58,7 +58,7 @@ class ChatModelUtilsTest {
   void llmClientsShouldExposeProviderAndModel() {
     var client = LlmClientUtils.create(props(LlmProvider.GROQ));
     assertThat(client.provider()).isEqualTo(LlmProvider.GROQ);
-    assertThat(client.model()).isEqualTo("test-model");
+    assertThat(client.model()).hasValue("test-model");
     assertThat(client.chatClient()).isNotNull();
   }
 }

@@ -76,8 +76,8 @@ final class TranslatorFactory {
       if (DUMMY.equals(p)) {
         continue;
       }
-      String keyEnv = LlmProvider.from(p).apiKeyEnv();
-      if (keyEnv != null && blankToNull(lookup.apply(keyEnv)) != null) {
+      var keyEnv = LlmProvider.from(p).apiKeyEnv();
+      if (keyEnv.isPresent() && blankToNull(lookup.apply(keyEnv.get())) != null) {
         return p;
       }
     }
@@ -93,7 +93,10 @@ final class TranslatorFactory {
       LlmProvider provider = LlmProvider.from(providerName);
       String model = blankToNull(modelOverride);
       UnaryOperator<String> withModel =
-          key -> model != null && key.equals(provider.modelEnv()) ? model : lookup.apply(key);
+          key ->
+              model != null && provider.modelEnv().filter(key::equals).isPresent()
+                  ? model
+                  : lookup.apply(key);
       LlmClientProperties props = LlmClientProperties.fromEnv(provider, withModel);
       var client = LlmClientUtils.create(props);
       Integer concurrency = parseInt(lookup.apply(ENV_MAX_CONCURRENCY));
