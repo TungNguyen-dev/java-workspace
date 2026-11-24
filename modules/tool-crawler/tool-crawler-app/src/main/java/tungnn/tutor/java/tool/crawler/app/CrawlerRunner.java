@@ -77,7 +77,6 @@ public class CrawlerRunner implements CommandLineRunner {
     }
   }
 
-  /** Ensures that input, output, and done directories exist. */
   private void ensureDirectoriesExist(CrawlerConfig config) {
     try {
       Files.createDirectories(config.inputDir());
@@ -88,7 +87,6 @@ public class CrawlerRunner implements CommandLineRunner {
     }
   }
 
-  /** Scans all non-hidden regular files in the input directory. */
   private List<Path> scanInputFiles(Path inputDir) {
     try (var stream = Files.walk(inputDir)) {
       return stream
@@ -107,7 +105,6 @@ public class CrawlerRunner implements CommandLineRunner {
     }
   }
 
-  /** Filters successful courses and moves corresponding input files to the done directory. */
   private void moveSuccessfulCourseFilesToDone(
       CrawlCourseResult result, Path inputDir, Path doneDir) {
     if (result == null || result.courses() == null) {

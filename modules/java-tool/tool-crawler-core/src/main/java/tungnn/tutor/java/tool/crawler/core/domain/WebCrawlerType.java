@@ -7,7 +7,6 @@ public enum WebCrawlerType {
   ANTHROPIC_PARTNER,
   GENERIC;
 
-  /** Resolves the WebCrawlerType based on the request URL. */
   public static WebCrawlerType resolveType(CrawlRequest request) {
     if (request == null || request.url() == null) {
       return WebCrawlerType.GENERIC;

@@ -21,10 +21,6 @@ public class GenericWebCrawler extends AbstractWebCrawler {
     return true;
   }
 
-  /**
-   * Finds and returns the text of the first heading element (h1-h6) on the page. Returns an empty
-   * string if no heading is found.
-   */
   @Override
   protected String getTitle() {
     var headingElements = ElementUtil.findElements(driver, FIRST_HEADING_LOCATOR);
@@ -34,7 +30,6 @@ public class GenericWebCrawler extends AbstractWebCrawler {
     return headingElements.getFirst().getText();
   }
 
-  /** Captures and returns the complete outer HTML content of the root element. */
   @Override
   protected String getContentAsHtml() {
     var rootElement = ElementUtil.findElement(driver, ROOT_HTML_LOCATOR);

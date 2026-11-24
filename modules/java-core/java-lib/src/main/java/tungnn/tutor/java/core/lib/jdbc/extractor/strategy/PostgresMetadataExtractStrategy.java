@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.util.*;
 import tungnn.tutor.java.core.lib.jdbc.extractor.model.DatabaseSchema;
 
-/** PostgreSQL Metadata Extraction Strategy. */
 public class PostgresMetadataExtractStrategy extends AbstractMetadataExtractStrategy {
 
   @Override

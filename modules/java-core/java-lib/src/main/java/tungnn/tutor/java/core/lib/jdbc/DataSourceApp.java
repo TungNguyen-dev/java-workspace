@@ -37,7 +37,6 @@ public class DataSourceApp {
     }
   }
 
-  /** Plain-JDBC DataSource: the JDBC driver is resolved from the runtime classpath. */
   public static DataSource getDataSource() {
     if (DB_URL == null) {
       System.out.println("Cannot create data source: DB_URL is not set");

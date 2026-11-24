@@ -230,10 +230,6 @@ public class Demo {
     }
   }
 
-  /**
-   * Chuyển đổi comment về chuỗi an toàn: null-check và replace tất cả ký tự xuống dòng (\r\n, \n,
-   * \r) bằng khoảng trắng.
-   */
   private static String formatComment(String comment) {
     if (comment == null) {
       return "";

@@ -5,7 +5,6 @@ public interface TextTranslator {
 
   TextTranslationResult translate(TextTranslationRequest request);
 
-  /** How many text units a document translator may send to this translator in parallel. */
   default int maxConcurrency() {
     return DEFAULT_MAX_CONCURRENCY;
   }

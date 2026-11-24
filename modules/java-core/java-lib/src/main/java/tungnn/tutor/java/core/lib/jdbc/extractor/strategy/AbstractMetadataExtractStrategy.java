@@ -11,13 +11,6 @@ import java.util.Locale;
 import java.util.Map;
 import tungnn.tutor.java.core.lib.jdbc.extractor.model.DatabaseSchema;
 
-/**
- * Abstract Strategy đóng vai trò khung thực thi (Template Method Pattern) cho việc trích xuất
- * metadata.
- *
- * <p>Thực thi tuần tự các tác vụ trích xuất trên cùng một JDBC Connection để đảm bảo an toàn bộ nhớ
- * và trạng thái kết nối (Thread-Safety).
- */
 public abstract class AbstractMetadataExtractStrategy implements MetadataExtractStrategy {
 
   @Override

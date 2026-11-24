@@ -123,15 +123,6 @@ public final class DocxMarkdownConverterUtils {
     return inlineMarkdown.isEmpty() ? text.strip() : inlineMarkdown;
   }
 
-  /**
-   * Gom text của paragraph thành markdown inline.
-   *
-   * <p>Dùng {@link XWPFRun#text()} (không phải {@code getText(0)}): một run có thể chứa nhiều
-   * {@code <w:t>} xen kẽ {@code <w:tab/>}/{@code <w:br/>} (ví dụ "Tiết 1&lt;tab&gt;&lt;tab&gt;Thanh
-   * khí phận nhiệt"), {@code getText(0)} chỉ trả về phần text đầu tiên nên mất phần còn lại của
-   * dòng. Đồng thời duyệt {@link XWPFParagraph#getIRuns()} để không bỏ sót text nằm trong content
-   * control (SDT).
-   */
   private static String processRunsToMarkdown(XWPFParagraph paragraph) {
     var segments = new ArrayList<Segment>();
     for (var element : paragraph.getIRuns()) {
@@ -168,7 +159,6 @@ public final class DocxMarkdownConverterUtils {
     return sb.toString().strip();
   }
 
-  /** Gộp segment liền nhau có cùng định dạng để không sinh "**a****b**". */
   private static void addSegment(List<Segment> segments, Segment next) {
     if (!segments.isEmpty()) {
       var last = segments.getLast();
@@ -182,7 +172,6 @@ public final class DocxMarkdownConverterUtils {
     segments.add(next);
   }
 
-  /** Dấu định dạng ôm sát phần chữ, khoảng trắng đầu/cuối để ngoài dấu (tránh "**text **"). */
   private static String renderSegment(Segment segment) {
     var text = segment.text();
     var core = text.strip();
@@ -246,7 +235,6 @@ public final class DocxMarkdownConverterUtils {
     return sb.toString();
   }
 
-  /** Đoạn text liên tiếp có cùng định dạng inline. */
   private record Segment(String text, boolean bold, boolean italic, boolean code) {
     boolean sameStyle(Segment other) {
       return bold == other.bold && italic == other.italic && code == other.code;

@@ -27,7 +27,6 @@ public class DefaultMetadataExtractor implements MetadataExtractor {
     }
   }
 
-  /** Đăng ký thêm Strategy mới. Strategy mới đăng ký sẽ được ưu tiên kiểm tra trước. */
   public void registerStrategy(MetadataExtractStrategy strategy) {
     if (strategy != null) {
       // Đưa strategy mới lên đầu danh sách để ưu tiên đè strategy mặc định

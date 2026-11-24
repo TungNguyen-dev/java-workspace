@@ -8,14 +8,6 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 import tungnn.tutor.java.ai.config.LlmClientProperties;
 import tungnn.tutor.java.ai.config.LlmProvider;
 
-/**
- * Selects and configures the {@code TextTranslator} implementation.
- *
- * <p>{@code provider} is {@code dummy} or any {@link LlmProvider} name ({@code google-genai},
- * {@code hugging-face}, {@code ollama-openai}, {@code deepseek}, {@code anthropic}, ...; see {@link
- * LlmProvider#from(String)}). The matching entry of {@code llm} supplies its settings; values left
- * blank fall back to the provider defaults / environment hints of {@code java-ai}.
- */
 @ConfigurationProperties(prefix = "doctrans.translator")
 public record TranslatorConfig(
     @DefaultValue("google-genai") String provider, Map<String, LlmSettings> llm) {
@@ -35,7 +27,6 @@ public record TranslatorConfig(
     return LlmProvider.from(provider);
   }
 
-  /** Settings block for the selected provider (empty settings when none is configured). */
   public LlmSettings llmSettings() {
     var selected = llmProvider();
     var exact = llm.get(provider);

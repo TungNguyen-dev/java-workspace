@@ -18,10 +18,6 @@ public class BatchCrawlExecutor {
     this.webCrawlerPool = webCrawlerPool;
   }
 
-  /**
-   * Accepts a list of crawling requests, processes them concurrently using virtual threads through
-   * ConcurrentUtils, and collects the results into an insertion-ordered map.
-   */
   public Map<CrawlRequest, CrawlResult> submitBatch(List<CrawlRequest.WebPage> batchWebRequests) {
     if (batchWebRequests == null || batchWebRequests.isEmpty()) {
       return Map.of();
@@ -39,9 +35,6 @@ public class BatchCrawlExecutor {
     return crawlResults;
   }
 
-  /**
-   * Borrows an appropriate crawler from the Pool, performs crawling, and returns it to the Pool.
-   */
   private CrawlResult executeCrawl(CrawlRequest.WebPage request) {
     var crawlerType = WebCrawlerType.resolveType(request);
     WebCrawler crawler = null;

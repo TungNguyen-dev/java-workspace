@@ -14,16 +14,6 @@ import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
-/**
- * Reference samples for the java.time API (JSR-310).
- *
- * <p>Covered areas: 1. Parsing and Formatting 2. Arithmetic 3. Adjustment 4. Comparison 5. Legacy
- * Conversion 6. Partial / special types (Year, YearMonth, MonthDay, DayOfWeek, Month)
- *
- * <p>Design notes: - All java.time types are immutable and thread-safe; every "mutating" call
- * returns a new instance. - DateTimeFormatter instances are immutable and safe to hold as
- * constants, unlike the legacy SimpleDateFormat.
- */
 public final class DateTimeApiSamples {
 
   private static final ZoneId ZONE_TOKYO = ZoneId.of("Asia/Tokyo");
@@ -257,7 +247,6 @@ public final class DateTimeApiSamples {
     print("Period equals (1M vs 30D)", Period.ofMonths(1).equals(Period.ofDays(30)));
   }
 
-  /** Inclusive range check. */
   private static boolean isWithin(LocalDate value, LocalDate from, LocalDate to) {
     return !value.isBefore(from) && !value.isAfter(to);
   }

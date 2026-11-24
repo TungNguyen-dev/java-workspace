@@ -38,25 +38,10 @@ public final class DirectoryTreeUtils {
 
   private DirectoryTreeUtils() {}
 
-  /**
-   * Generates a visual directory tree using default exclusions.
-   *
-   * @param sourceDir the root directory to scan
-   * @return formatted tree string
-   * @throws IOException if an I/O error occurs checking sourceDir
-   */
   public static String buildTree(Path sourceDir) throws IOException {
     return buildTree(sourceDir, DEFAULT_EXCLUDED_NAMES);
   }
 
-  /**
-   * Generates a visual directory tree with custom exclusion patterns.
-   *
-   * @param sourceDir the root directory to scan
-   * @param excludeNames file/directory names to skip (case-insensitive)
-   * @return formatted tree string
-   * @throws IOException if an I/O error occurs checking sourceDir
-   */
   public static String buildTree(Path sourceDir, Set<String> excludeNames) throws IOException {
     if (sourceDir == null || !Files.isDirectory(sourceDir)) {
       throw new IllegalArgumentException("sourceDir must be an existing directory: " + sourceDir);
@@ -142,6 +127,5 @@ public final class DirectoryTreeUtils {
     return result;
   }
 
-  /** Internal caching record to avoid redundant Files.isDirectory() OS calls. */
   private record PathEntry(Path path, String name, boolean isDirectory) {}
 }

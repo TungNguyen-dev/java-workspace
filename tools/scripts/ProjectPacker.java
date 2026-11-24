@@ -57,13 +57,6 @@ public class ProjectPacker {
     System.err.println(" java ProjectPacker split merged.pack ./restored-project");
   }
 
-  /**
-   * Merges all .java files from a source directory into a single output file.
-   *
-   * @param sourceDir The root directory of the project to merge.
-   * @param outputFile The single file to write the merged content to.
-   * @throws IOException if an I/O error occurs.
-   */
   public static void mergeProject(Path sourceDir, Path outputFile) throws IOException {
     if (!Files.isDirectory(sourceDir)) {
       throw new IOException("Source directory does not exist: " + sourceDir);
@@ -115,13 +108,6 @@ public class ProjectPacker {
     System.out.println("Merge process completed successfully!");
   }
 
-  /**
-   * Splits a merged file back into its original directory and file structure.
-   *
-   * @param inputFile The merged file to read from.
-   * @param outputDir The destination directory to restore the project to.
-   * @throws IOException if an I/O error occurs.
-   */
   public static void splitProject(Path inputFile, Path outputDir) throws IOException {
     if (!Files.isRegularFile(inputFile)) {
       throw new IOException("Input file does not exist: " + inputFile);

@@ -13,29 +13,10 @@ public final class JavaParserUtil {
 
   private JavaParserUtil() {}
 
-  /**
-   * Tạo JavaParser mặc định với cấu hình cơ bản:
-   *
-   * <ul>
-   *   <li>Ngôn ngữ: Mặc định theo JavaParser (LanguageLevel.BLEEDING_EDGE hoặc JAVA mới nhất)
-   *   <li>Encoding: UTF-8
-   *   <li>SymbolResolver: Chỉ hỗ trợ các class trong JDK chuẩn (ReflectionTypeSolver)
-   * </ul>
-   */
   public static JavaParser createDefaultParser() {
     return createAdvancedParser(ParserConfiguration.LanguageLevel.JAVA_25, false, (Path[]) null);
   }
 
-  /**
-   * Tạo JavaParser nâng cao cho phép tùy chỉnh Language Level, Lexical Preservation và đăng ký
-   * SymbolResolver cho source code dự án.
-   *
-   * @param languageLevel Phiên bản Java (ví dụ: LanguageLevel.JAVA_25)
-   * @param enableLexicalPreservation Bật/Tắt tính năng giữ nguyên định dạng code gốc (spaces,
-   *     comments, layout)
-   * @param sourcePaths Danh sách đường dẫn source code (.java) để SymbolSolver resolve liên kết nội
-   *     bộ
-   */
   public static JavaParser createAdvancedParser(
       ParserConfiguration.LanguageLevel languageLevel,
       boolean enableLexicalPreservation,
@@ -69,12 +50,6 @@ public final class JavaParserUtil {
     return new JavaParser(config);
   }
 
-  /**
-   * Shortcut tạo Advanced Parser mặc định Java 25 với Lexical Preservation bật sẵn.
-   *
-   * @deprecated Khuyên dùng {@link #createAdvancedParser(ParserConfiguration.LanguageLevel,
-   *     boolean, Path...)}
-   */
   @Deprecated
   public static JavaParser createJavaParserVersion25(Path... sourcePaths) {
     return createAdvancedParser(ParserConfiguration.LanguageLevel.JAVA_25, true, sourcePaths);

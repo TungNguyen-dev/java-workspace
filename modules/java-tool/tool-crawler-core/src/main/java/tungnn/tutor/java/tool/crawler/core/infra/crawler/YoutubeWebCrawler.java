@@ -48,7 +48,6 @@ public class YoutubeWebCrawler extends AbstractWebCrawler {
     return extractTranscriptHtml();
   }
 
-  /** Navigates to the transcript tool and submits the YouTube video URL to generate transcript. */
   private void requestTranscriptForVideo(String videoUrl) {
     driver.navigate().to(TRANSCRIPT_GENERATOR_URL);
 
@@ -64,7 +63,6 @@ public class YoutubeWebCrawler extends AbstractWebCrawler {
     submitButton.submit();
   }
 
-  /** Waits for the transcript elements to render and extracts their HTML links. */
   private String extractTranscriptHtml() {
     ElementUtil.waitUntil(
         driver,

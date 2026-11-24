@@ -13,13 +13,10 @@ import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 
 public class MedMarkdownRefineApplication {
 
-  /** System prompt để biến đổi nội dung section "Thành phần" thành bảng bằng LLM. */
   private static final String THANH_PHAN_PROMPT_RESOURCE = "prompts/thanhphan-table.md";
 
-  /** System prompt để chuẩn hoá nội dung section "Phụ phương" bằng LLM. */
   private static final String PHU_PHUONG_PROMPT_RESOURCE = "prompts/phuphuong-normalize.md";
 
-  /** System prompt để chuyển nội dung section "Cách dùng" sang hướng dẫn hiện đại bằng LLM. */
   private static final String CACH_DUNG_PROMPT_RESOURCE = "prompts/cachdung-modern.md";
 
   static void main() throws IOException {

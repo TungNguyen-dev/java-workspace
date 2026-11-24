@@ -22,10 +22,6 @@ public final class JdbcUtils {
     }
   }
 
-  /**
-   * Chú ý: Cần giữ Statement mở cùng với ResultSet. Người gọi hàm chịu trách nhiệm đóng ResultSet
-   * hoặc Connection.
-   */
   public static ResultSet executeQuery(Connection conn, String sql) {
     try {
       Statement stmt = conn.createStatement();
@@ -44,11 +40,6 @@ public final class JdbcUtils {
     }
   }
 
-  /**
-   * Thực thi thao tác Bulk / Batch Insert, Update, Delete
-   *
-   * @return Mảng chứa số lượng bản ghi bị ảnh hưởng bởi mỗi câu lệnh
-   */
   public static int[] executeBulkDMLQuery(
       Connection conn, String sql, List<Parameters> batchParameters) {
 
@@ -65,7 +56,6 @@ public final class JdbcUtils {
     }
   }
 
-  /** Helper method để bind tham số vào PreparedStatement theo đúng vị trí */
   private static void setParameters(PreparedStatement stmt, Parameters parameters)
       throws SQLException {
     if (parameters == null || parameters.parameters() == null) {

@@ -9,10 +9,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
-/**
- * Lớp minh họa các kiểu đại diện thời gian (Temporal) và khoảng thời gian (TemporalAmount) phổ biến
- * nhất trong Java Date-Time API (java.time).
- */
 public class JavaDateTimeOverviewDemo {
 
   static void main() {

@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-/** Root Schema Model chứa toàn bộ metadata đã được normalize. */
 public record DatabaseSchema(
     SchemaMeta meta,
     Map<String, TableModel> tables,

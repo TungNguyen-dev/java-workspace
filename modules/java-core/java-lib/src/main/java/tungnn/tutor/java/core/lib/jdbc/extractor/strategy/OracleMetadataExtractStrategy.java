@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.util.*;
 import tungnn.tutor.java.core.lib.jdbc.extractor.model.DatabaseSchema;
 
-/** Oracle Metadata Extraction Strategy. */
 public class OracleMetadataExtractStrategy extends AbstractMetadataExtractStrategy {
 
   @Override

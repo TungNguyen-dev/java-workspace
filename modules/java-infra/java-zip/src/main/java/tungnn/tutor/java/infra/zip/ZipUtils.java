@@ -19,13 +19,6 @@ public final class ZipUtils {
     throw new UnsupportedOperationException("Cannot instantiate utility class");
   }
 
-  /**
-   * Compresses a single file into a ZIP archive.
-   *
-   * @param sourceFile The path of the file to compress
-   * @param targetZip The path of the output ZIP file
-   * @throws IOException if an I/O error occurs
-   */
   public static void zipFile(Path sourceFile, Path targetZip) throws IOException {
     validateSource(sourceFile);
     try (var zipFile = new ZipFile(targetZip.toFile())) {
@@ -33,13 +26,6 @@ public final class ZipUtils {
     }
   }
 
-  /**
-   * Compresses multiple files into a single ZIP archive.
-   *
-   * @param sourceFiles The list of file paths to compress
-   * @param targetZip The path of the output ZIP file
-   * @throws IOException if an I/O error occurs
-   */
   public static void zipFiles(List<Path> sourceFiles, Path targetZip) throws IOException {
     if (sourceFiles == null || sourceFiles.isEmpty()) {
       throw new IllegalArgumentException("Source file list cannot be null or empty.");
@@ -55,13 +41,6 @@ public final class ZipUtils {
     }
   }
 
-  /**
-   * Compresses an entire folder into a ZIP archive.
-   *
-   * @param sourceFolder The directory to compress
-   * @param targetZip The path of the output ZIP file
-   * @throws IOException if an I/O error occurs
-   */
   public static void zipFolder(Path sourceFolder, Path targetZip) throws IOException {
     validateSource(sourceFolder);
     if (!Files.isDirectory(sourceFolder)) {
@@ -72,14 +51,6 @@ public final class ZipUtils {
     }
   }
 
-  /**
-   * Compresses a file or folder with password protection (AES-256).
-   *
-   * @param source The path of the source file or directory
-   * @param targetZip The path of the output ZIP file
-   * @param password The protection password (as a character array)
-   * @throws IOException if an I/O error occurs
-   */
   public static void zipEncrypted(Path source, Path targetZip, char[] password) throws IOException {
     validateSource(source);
     if (password == null || password.length == 0) {
@@ -101,13 +72,6 @@ public final class ZipUtils {
     }
   }
 
-  /**
-   * Extracts an entire ZIP archive to the specified destination directory.
-   *
-   * @param targetZip The path of the ZIP archive to extract
-   * @param destination The target directory for extracted contents
-   * @throws IOException if an I/O error occurs
-   */
   public static void extract(Path targetZip, Path destination) throws IOException {
     validateSource(targetZip);
     Files.createDirectories(destination);
@@ -117,14 +81,6 @@ public final class ZipUtils {
     }
   }
 
-  /**
-   * Extracts a password-protected ZIP archive.
-   *
-   * @param targetZip The path of the ZIP archive to extract
-   * @param destination The target directory for extracted contents
-   * @param password The decryption password
-   * @throws IOException if an I/O error occurs
-   */
   public static void extractEncrypted(Path targetZip, Path destination, char[] password)
       throws IOException {
     validateSource(targetZip);
@@ -138,7 +94,6 @@ public final class ZipUtils {
     }
   }
 
-  /** Quickly validates the existence and readability of the source path. */
   private static void validateSource(Path path) {
     if (path == null || !Files.exists(path)) {
       throw new IllegalArgumentException("Source path does not exist: " + path);

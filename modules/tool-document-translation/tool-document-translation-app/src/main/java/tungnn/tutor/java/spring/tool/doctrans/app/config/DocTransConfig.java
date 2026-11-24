@@ -19,7 +19,6 @@ public record DocTransConfig(Storage storage, Dir dir, @DefaultValue("2") int wo
     return Path.of(base);
   }
 
-  /** Root directory containing one subdirectory per translation job. */
   public Path jobDir() {
     String job = (dir.job() == null || dir.job().isBlank()) ? "jobs" : dir.job();
     return baseDir().resolve(job);

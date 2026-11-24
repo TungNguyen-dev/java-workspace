@@ -53,7 +53,6 @@ public class CourseraWebCrawler extends AbstractWebCrawler {
         .collect(Collectors.joining("\n"));
   }
 
-  /** Checks if the transcript tab is active and opens it if necessary. */
   private void ensureTranscriptTabIsOpen() {
     var transcriptButton =
         ElementUtil.waitUntil(

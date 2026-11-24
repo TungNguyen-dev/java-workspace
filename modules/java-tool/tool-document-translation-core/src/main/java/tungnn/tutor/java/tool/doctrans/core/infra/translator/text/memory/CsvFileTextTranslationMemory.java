@@ -28,7 +28,6 @@ public class CsvFileTextTranslationMemory implements TextTranslationMemory {
   private static final String COLUMN_TRANSLATION = "translation";
   private static final List<String> HEADERS = List.of(COLUMN_SOURCE, COLUMN_TRANSLATION);
 
-  /** Same as DEFAULT but keeps whitespace: it is significant for a translation memory key. */
   private static final CsvUtils.CsvConfig CSV_CONFIG =
       CsvUtils.CsvConfig.of(
           StandardCharsets.UTF_8,

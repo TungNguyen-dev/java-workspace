@@ -14,13 +14,11 @@ public final class FieldUtil {
 
   private FieldUtil() {}
 
-  /** Lấy các Field được khai báo trực tiếp trong class. */
   public static List<FieldDeclaration> getDeclaredFields(ClassOrInterfaceDeclaration typeDecl) {
     if (typeDecl == null) return Collections.emptyList();
     return typeDecl.getFields();
   }
 
-  /** Lấy các Field được khai báo trực tiếp khớp với bộ Modifier truyền vào. */
   public static List<FieldDeclaration> getDeclaredFields(
       ClassOrInterfaceDeclaration typeDecl, Modifier... modifiers) {
     if (typeDecl == null) return Collections.emptyList();
@@ -30,7 +28,6 @@ public final class FieldUtil {
         .toList();
   }
 
-  /** Lấy tất cả Fields (Declared + Inherited). Yêu cầu JavaParser phải cấu hình SymbolSolver. */
   public static List<ResolvedFieldDeclaration> getAllFields(ClassOrInterfaceDeclaration typeDecl) {
     if (typeDecl == null) return Collections.emptyList();
 

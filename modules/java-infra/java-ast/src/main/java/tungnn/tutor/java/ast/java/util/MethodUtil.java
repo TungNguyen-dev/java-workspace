@@ -20,13 +20,11 @@ public final class MethodUtil {
 
   private MethodUtil() {}
 
-  /** Lấy các Method được khai báo trực tiếp trong class. */
   public static List<MethodDeclaration> getDeclaredMethods(ClassOrInterfaceDeclaration typeDecl) {
     if (typeDecl == null) return Collections.emptyList();
     return typeDecl.getMethods();
   }
 
-  /** Lấy các Method được khai báo trực tiếp khớp với bộ Modifier truyền vào. */
   public static List<MethodDeclaration> getDeclaredMethods(
       ClassOrInterfaceDeclaration typeDecl, Modifier... modifiers) {
     if (typeDecl == null) return Collections.emptyList();
@@ -36,7 +34,6 @@ public final class MethodUtil {
         .toList();
   }
 
-  /** Lấy tất cả Methods (Declared + Inherited). Yêu cầu JavaParser phải cấu hình SymbolSolver. */
   public static List<ResolvedMethodDeclaration> getAllMethods(
       ClassOrInterfaceDeclaration typeDecl) {
     if (typeDecl == null) return Collections.emptyList();
@@ -45,10 +42,6 @@ public final class MethodUtil {
     return resolved.getAllMethods().stream().map(MethodUsage::getDeclaration).toList();
   }
 
-  /**
-   * Tạo chuỗi Chữ ký phương thức (Method Signature). Ví dụ: "public static List<String> getName(int
-   * id, String type)"
-   */
   public static String parseMethodSignature(MethodDeclaration md) {
     if (md == null) {
       return "";
@@ -101,10 +94,6 @@ public final class MethodUtil {
     return builder.toString();
   }
 
-  /**
-   * Tạo chuỗi Lời gọi phương thức (Method Invocation). Ví dụ: "void process(String a, int b)" ->
-   * "process(a, b)"
-   */
   public static String parseMethodInvocation(MethodDeclaration md) {
     if (md == null) {
       return "";
@@ -118,7 +107,6 @@ public final class MethodUtil {
     return md.getNameAsString() + "(" + args + ")";
   }
 
-  /** Lấy danh sách Parameter từ phương thức. */
   public static List<Parameter> getAllMethodParameters(MethodDeclaration md) {
     if (md == null) {
       return Collections.emptyList();

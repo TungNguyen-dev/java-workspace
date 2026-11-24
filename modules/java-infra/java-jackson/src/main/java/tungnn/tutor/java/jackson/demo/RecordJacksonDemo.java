@@ -29,9 +29,5 @@ public class RecordJacksonDemo {
     System.out.println(read.name() + " - " + read.age());
   }
 
-  /**
-   * Java record used as an immutable DTO. Jackson maps JSON properties to record components via the
-   * canonical constructor.
-   */
   record User(String name, int age) {}
 }

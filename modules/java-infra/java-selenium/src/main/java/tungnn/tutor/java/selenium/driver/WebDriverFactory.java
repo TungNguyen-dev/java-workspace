@@ -44,14 +44,8 @@ public interface WebDriverFactory {
     }
   }
 
-  /** Creates (or resolves) a WebDriver bound to the given profile. */
   WebDriver getWebDriver(String profileName);
 
-  /**
-   * Creates one WebDriver per profile concurrently, preserving input order. If any creation fails,
-   * every driver already created in this call is quit before the error is propagated, so no browser
-   * process is leaked.
-   */
   default List<WebDriver> getWebDrivers(String... profileNames) {
     if (profileNames == null || profileNames.length == 0) {
       return List.of();

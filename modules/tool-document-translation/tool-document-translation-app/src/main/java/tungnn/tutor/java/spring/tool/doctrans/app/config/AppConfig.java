@@ -28,10 +28,6 @@ public class AppConfig {
   @Autowired private DocTransConfig docTransConfig;
   @Autowired private TranslatorConfig translatorConfig;
 
-  /**
-   * {@code dummy} for offline runs, otherwise an LLM translator for the configured provider. The
-   * LLM client is built manually (no Spring AI auto-configuration), so no ChatModel beans exist.
-   */
   @Bean
   public TextTranslator textTranslator() {
     if (translatorConfig.isDummy()) {

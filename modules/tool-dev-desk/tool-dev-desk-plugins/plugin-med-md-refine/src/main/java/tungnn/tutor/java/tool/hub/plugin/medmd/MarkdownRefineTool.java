@@ -165,7 +165,6 @@ public class MarkdownRefineTool implements ToolExtension {
     return sb.append(String.join(" | ", parts)).toString();
   }
 
-  /** Một bước refine, dựng từ {@link MarkdownActions} của tool-med-md-refine-core. */
   record RefineRule(String id, String name, boolean enabledByDefault, MarkdownAction action) {}
 
   record RuleOutcome(String ruleId, String ruleName, boolean changed) {}

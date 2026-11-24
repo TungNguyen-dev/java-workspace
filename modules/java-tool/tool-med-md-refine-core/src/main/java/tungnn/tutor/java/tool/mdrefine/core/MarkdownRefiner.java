@@ -8,7 +8,6 @@ import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Bộ rule làm sạch markdown (tài liệu y học / Đông y, tiếng Việt). */
 public final class MarkdownRefiner {
 
   private static final String MARK = "\uE000";
@@ -41,7 +40,6 @@ public final class MarkdownRefiner {
     return new MarkdownRefiner(true); // "12g" -> "12 g"
   }
 
-  /** Che các vùng protected bằng placeholder, chạy fn, rồi khôi phục. */
   private static String protect(String text, UnaryOperator<String> fn) {
     var holders = new ArrayList<String>();
     var m = PROTECTED.matcher(text);
@@ -84,7 +82,6 @@ public final class MarkdownRefiner {
     return s.replace('\u00A0', ' ').replace("\t", "    ").replace("\r\n", "\n");
   }
 
-  /** Nối các dòng bị ngắt cứng (hay gặp khi convert từ PDF/Word) trong cùng 1 đoạn. */
   private String unwrapHardLineBreaks(String s) {
     var lines = s.split("\n", -1);
     var out = new StringBuilder();

@@ -352,7 +352,6 @@ public final class CsvUtils {
 
   public record CsvConfig(Charset charset, CSVFormat csvFormat) {
 
-    /** Default configuration for reading and writing CSV files. */
     public static final CsvConfig DEFAULT =
         of(
             StandardCharsets.UTF_8,

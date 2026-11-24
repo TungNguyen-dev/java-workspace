@@ -127,17 +127,14 @@ public final class FileNameUtil {
 
   public record FileNameInfo(String name, String extension) {
 
-    /** true nếu có phần mở rộng hợp lệ. */
     public boolean hasExtension() {
       return !extension.isEmpty();
     }
 
-    /** Trả về extension kèm dấu chấm (".txt"), hoặc "" nếu không có. */
     public String dottedExtension() {
       return hasExtension() ? "." + extension : "";
     }
 
-    /** Ghép lại thành tên file đầy đủ. */
     public String fullName() {
       return name + dottedExtension();
     }
