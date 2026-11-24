@@ -2,15 +2,23 @@ package tungnn.tutor.java.tool.crawler.app.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import tungnn.tutor.java.selenium.pool.GenericWebDriverPool;
+import tungnn.tutor.java.selenium.pool.WebDriverPool;
+import tungnn.tutor.java.selenium.pool.WebDriverPoolConfig;
 import tungnn.tutor.java.tool.crawler.app.service.BatchCrawlExecutor;
-import tungnn.tutor.java.tool.crawler.core.infra.pool.*;
+import tungnn.tutor.java.tool.crawler.core.infra.pool.KeyedPooledWebCrawlerFactory;
+import tungnn.tutor.java.tool.crawler.core.infra.pool.KeyedPooledWebCrawlerPool;
+import tungnn.tutor.java.tool.crawler.core.infra.pool.WebCrawlerPool;
 
 @Configuration
 public class AppConfig {
 
+    // Must equal the sum of the per-type maxTotal values in KeyedPooledWebCrawlerPool.
+    private static final int DRIVER_COUNT = 10;
+
     @Bean
     public WebDriverPool driverPool() {
-        return new PooledWebDriverPool(10);
+        return new GenericWebDriverPool(WebDriverPoolConfig.fromEnv().withMaxTotal(DRIVER_COUNT));
     }
 
     @Bean

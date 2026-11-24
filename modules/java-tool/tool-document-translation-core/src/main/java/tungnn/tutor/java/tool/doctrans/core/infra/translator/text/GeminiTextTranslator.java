@@ -8,7 +8,7 @@ import tungnn.tutor.java.tool.doctrans.core.domain.text.AbstractTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
 import tungnn.tutor.java.tool.doctrans.core.infra.page.GeminiPage;
-import tungnn.tutor.java.tool.doctrans.core.infra.pool.WebDriverPool;
+import tungnn.tutor.java.selenium.pool.WebDriverPool;
 
 public class GeminiTextTranslator extends AbstractTextTranslator {
 

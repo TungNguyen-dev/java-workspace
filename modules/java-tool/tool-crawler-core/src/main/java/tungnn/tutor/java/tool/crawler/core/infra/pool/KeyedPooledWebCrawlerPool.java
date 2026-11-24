@@ -15,11 +15,12 @@ public class KeyedPooledWebCrawlerPool implements WebCrawlerPool {
     private final Map<WebCrawlerType, GenericObjectPool<WebCrawler>> pools = new EnumMap<>(WebCrawlerType.class);
 
     public KeyedPooledWebCrawlerPool(KeyedPooledObjectFactory<WebCrawlerType, WebCrawler> factory) {
+        // The sum of maxTotal must not exceed the WebDriverPool capacity, otherwise create() blocks forever.
         initKeyConfig(factory, WebCrawlerType.COURSERA, 1, 0, 0);
         initKeyConfig(factory, WebCrawlerType.YOUTUBE, 4, 2, 1);
         initKeyConfig(factory, WebCrawlerType.BAELDUNG, 1, 0, 1);
         initKeyConfig(factory, WebCrawlerType.ANTHROPIC_PARTNER, 1, 0, 1);
-        initKeyConfig(factory, WebCrawlerType.GENERIC, 4, 1, 0);
+        initKeyConfig(factory, WebCrawlerType.GENERIC, 3, 1, 0);
     }
 
     private void initKeyConfig(
