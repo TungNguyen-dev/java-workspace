@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  port: ${HUB_PORT:8080}
+  address: ${HUB_BIND_ADDRESS:127.0.0.1}
   servlet:
     session:
       tracking-modes: cookie
@@ -13,6 +14,9 @@ spring:
       max-file-size: 20MB
       max-request-size: 25MB
 hub:
-  plugins-dir: plugins
-  data-dir: data
-  watch: true
+  plugins-dir: ${HUB_PLUGINS_DIR:plugins}
+  data-dir: ${HUB_DATA_DIR:data}
+  watch: ${HUB_WATCH:true}
+  security:
+    username: ${HUB_USERNAME:admin}
+    password: ${HUB_PASSWORD:}

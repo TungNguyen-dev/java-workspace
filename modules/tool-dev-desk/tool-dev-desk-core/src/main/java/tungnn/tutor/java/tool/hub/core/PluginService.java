@@ -2,9 +2,18 @@ package tungnn.tutor.java.tool.hub.core;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.nio.file.attribute.FileTime;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.pf4j.CompoundPluginDescriptorFinder;
 import org.pf4j.DefaultPluginManager;
+import org.pf4j.ManifestPluginDescriptorFinder;
+import org.pf4j.PluginDescriptor;
+import org.pf4j.PluginDescriptorFinder;
 import org.pf4j.PluginManager;
+import org.pf4j.PropertiesPluginDescriptorFinder;
 import org.pf4j.PluginWrapper;
 import org.pf4j.util.FileUtils;
 import org.slf4j.Logger;
@@ -17,8 +26,14 @@ public class PluginService {
     private final PluginManager pm;
     private final ToolRegistry registry;
     private final Path dataRoot;
+    private final Path pluginsDir;
+    private final Map<Path, String> zipToPlugin = new HashMap<>();
+    private final PluginDescriptorFinder descriptorFinder = new CompoundPluginDescriptorFinder()
+            .add(new PropertiesPluginDescriptorFinder())
+            .add(new ManifestPluginDescriptorFinder());
 
     public PluginService(Path pluginsDir, Path dataRoot, ToolRegistry registry) {
+        this.pluginsDir = pluginsDir;
         this.pm = new DefaultPluginManager(pluginsDir);
         this.registry = registry;
         this.dataRoot = dataRoot;
@@ -31,6 +46,10 @@ public class PluginService {
         return zip.resolveSibling(n.substring(0, n.length() - ".zip".length()));
     }
 
+    private static Path key(Path zip) {
+        return zip.toAbsolutePath().normalize();
+    }
+
     private static void deleteRecursively(Path p) {
         if (!Files.exists(p)) return;
         try (var s = Files.walk(p)) {
@@ -41,22 +60,51 @@ public class PluginService {
     }
 
     public synchronized void loadAll() {
-        pm.loadPlugins();
-        pm.startPlugins();
-        pm.getPlugins().forEach(w -> registerExtensions(w.getPluginId()));
+        List<Path> zips;
+        try (var s = Files.list(pluginsDir)) {
+            zips = s.filter(f -> f.getFileName().toString().toLowerCase().endsWith(".zip"))
+                    .filter(Files::isRegularFile)
+                    .sorted(Comparator.comparing(PluginService::lastModified))
+                    .toList();
+        } catch (IOException e) {
+            log.error("Unable to list plugins directory {}", pluginsDir, e);
+            return;
+        }
+        // oldest first, so when several zips share a plugin id the newest wins
+        zips.forEach(this::loadOne);
+    }
+
+    private static FileTime lastModified(Path p) {
+        try {
+            return Files.getLastModifiedTime(p);
+        } catch (IOException e) {
+            return FileTime.fromMillis(0);
+        }
     }
 
     public synchronized void loadOne(Path zip) {
+        Path zipKey = key(zip);
+        String previous = zipToPlugin.get(zipKey);
+        if (previous != null) unloadOne(previous);
         try {
-            Path dir = FileUtils.expandIfZip(zip);
-            String id = pm.loadPlugin(dir);
-            if (id == null) {
+            Path dir = expandedDir(zip);
+            deleteRecursively(dir);
+            dir = FileUtils.expandIfZip(zip);
+            PluginDescriptor descriptor = descriptorFinder.find(dir);
+            String id = descriptor.getPluginId();
+            if (pm.getPlugin(id) != null) {
+                log.info("Plugin '{}' is already loaded from another file, replacing it with {}", id, zip.getFileName());
+                unloadOne(id);
+            }
+            String loaded = pm.loadPlugin(dir);
+            if (loaded == null) {
                 log.warn("Unable to load plugin: {}", zip);
                 return;
             }
-            pm.startPlugin(id);
-            registerExtensions(id);
-        } catch (Exception e) {
+            zipToPlugin.put(zipKey, loaded);
+            pm.startPlugin(loaded);
+            registerExtensions(loaded);
+        } catch (Throwable e) {
             log.error("Error loading plugin {}", zip, e);
         }
     }
@@ -64,21 +112,24 @@ public class PluginService {
     public synchronized void unloadOne(String pluginId) {
         PluginWrapper w = pm.getPlugin(pluginId);
         registry.unregisterPlugin(pluginId);
+        zipToPlugin.values().removeIf(pluginId::equals);
+        if (w == null) return;
         pm.stopPlugin(pluginId);
         pm.unloadPlugin(pluginId);
-        if (w != null) deleteRecursively(w.getPluginPath());
+        deleteRecursively(w.getPluginPath());
     }
 
-    public synchronized String pluginIdOf(Path zip) {
-        Path dir = expandedDir(zip).toAbsolutePath().normalize();
-        return pm.getPlugins().stream()
-                .filter(w -> w.getPluginPath().toAbsolutePath().normalize().equals(dir))
-                .map(PluginWrapper::getPluginId)
-                .findFirst()
-                .orElse(null);
+    public synchronized void unloadZip(Path zip) {
+        String id = zipToPlugin.get(key(zip));
+        if (id == null) {
+            deleteRecursively(expandedDir(zip));
+            return;
+        }
+        unloadOne(id);
     }
 
-    public void shutdown() {
+    public synchronized void shutdown() {
+        registry.unregisterAll();
         pm.stopPlugins();
     }
 

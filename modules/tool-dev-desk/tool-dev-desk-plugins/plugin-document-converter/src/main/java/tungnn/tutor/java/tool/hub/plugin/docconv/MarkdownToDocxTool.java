@@ -29,7 +29,11 @@ public class MarkdownToDocxTool implements ToolExtension {
                 : in.get("bodyFont").toString().strip();
         int size = d.bodySizePt();
         if (in.get("bodySize") instanceof BigDecimal n) {
-            size = n.intValue();
+            try {
+                size = n.intValueExact();
+            } catch (ArithmeticException e) {
+                throw new ToolException("Font size must be a whole number between 6 and 72 pt");
+            }
             if (size < 6 || size > 72) throw new ToolException("Font size must be between 6 and 72 pt");
         }
         return new Options(font, d.codeFont(), size, d.lineSpacing(), d.headings());

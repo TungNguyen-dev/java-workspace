@@ -37,9 +37,9 @@ final class TransSupport {
         } catch (ToolException e) {
             throw e;
         } catch (Exception e) {
-            throw new ToolException("Translation failed: " + rootMessage(e));
+            throw new ToolException("Translation failed: " + rootMessage(e), e);
         } catch (LinkageError e) {
-            throw new ToolException("Library compatibility error in plugin: " + rootMessage(e));
+            throw new ToolException("Library compatibility error in plugin: " + rootMessage(e), e);
         } finally {
             t.setContextClassLoader(previous);
         }

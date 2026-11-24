@@ -27,7 +27,7 @@ final class ConverterSupport {
         } catch (ToolException e) {
             throw e;
         } catch (Exception e) {
-            throw new ToolException("Conversion failed: " + rootMessage(e));
+            throw new ToolException("Conversion failed: " + rootMessage(e), e);
         } finally {
             t.setContextClassLoader(previous);
         }

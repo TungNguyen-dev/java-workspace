@@ -32,7 +32,7 @@ public class PluginWatcher implements Runnable, AutoCloseable {
         t.setDaemon(true);
         return t;
     });
-    private final Map<Path, ScheduledFuture<?>> pending = new ConcurrentHashMap<>();
+    private final Map<Path, Task> pending = new ConcurrentHashMap<>();
     private volatile boolean running = true;
 
     public PluginWatcher(Path dir, PluginService service) {
@@ -77,33 +77,43 @@ public class PluginWatcher implements Runnable, AutoCloseable {
 
     private void schedule(Path file, WatchEvent.Kind<?> kind) {
         pending.compute(file, (f, old) -> {
-            if (old != null) old.cancel(false);
-            return worker.schedule(() -> handle(file, kind), DEBOUNCE_MS, TimeUnit.MILLISECONDS);
+            if (old != null) old.future.cancel(false);
+            Task task = new Task(file, kind);
+            task.future = worker.schedule(task, DEBOUNCE_MS, TimeUnit.MILLISECONDS);
+            return task;
         });
     }
 
-    private void handle(Path file, WatchEvent.Kind<?> kind) {
-        try {
-            if (kind == ENTRY_DELETE || !Files.exists(file)) {
-                onDeleted(file);
-            } else {
-                onCreatedOrModified(file);
+    private final class Task implements Runnable {
+        private final Path file;
+        private final WatchEvent.Kind<?> kind;
+        private volatile ScheduledFuture<?> future;
+
+        private Task(Path file, WatchEvent.Kind<?> kind) {
+            this.file = file;
+            this.kind = kind;
+        }
+
+        @Override
+        public void run() {
+            try {
+                if (kind == ENTRY_DELETE || !Files.exists(file)) {
+                    onDeleted(file);
+                } else {
+                    onCreatedOrModified(file);
+                }
+            } catch (Throwable t) {
+                log.error("Error handling plugin {} ({})", file.getFileName(), kind.name(), t);
+            } finally {
+                // only remove our own entry, a newer task for the same file must stay tracked
+                pending.remove(file, this);
             }
-        } catch (Throwable t) {
-            log.error("Error handling plugin {} ({})", file.getFileName(), kind.name(), t);
-        } finally {
-            pending.remove(file);
         }
     }
 
     private void onDeleted(Path file) {
-        String id = service.pluginIdOf(file);
-        if (id == null) {
-            log.debug("Skipping removal, no plugin matches {}", file.getFileName());
-            return;
-        }
-        log.info("Removing plugin '{}' ({} was deleted)", id, file.getFileName());
-        service.unloadOne(id);
+        log.info("Removing plugin of {} (file was deleted)", file.getFileName());
+        service.unloadZip(file);
     }
 
     private void onCreatedOrModified(Path file) throws InterruptedException {
@@ -111,13 +121,7 @@ public class PluginWatcher implements Runnable, AutoCloseable {
             log.warn("File {} is still not stable after waiting, skipping this time", file.getFileName());
             return;
         }
-        String id = service.pluginIdOf(file);
-        if (id != null) {
-            log.info("Reloading plugin '{}' ({} changed)", id, file.getFileName());
-            service.unloadOne(id);
-        } else {
-            log.info("Loading new plugin from {}", file.getFileName());
-        }
+        log.info("Loading plugin from {}", file.getFileName());
         service.loadOne(file);
     }
 

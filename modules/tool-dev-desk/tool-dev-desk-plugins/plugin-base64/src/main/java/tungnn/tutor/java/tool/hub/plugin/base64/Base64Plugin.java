@@ -21,6 +21,10 @@ public class Base64Plugin extends Plugin {
                     new ParamSpec("text", "text", true, "Content"));
         }
 
+        private static String normalizeNewlines(String s) {
+            return s.replace("\r\n", "\n");
+        }
+
         @Override
         public ToolResult execute(ToolContext ctx, Map<String, Object> in) throws ToolException {
             Object text = in.get("text");
@@ -30,9 +34,9 @@ public class Base64Plugin extends Plugin {
                 return switch (mode.toString()) {
                     case "encode" ->
                         ToolResult.ok(Base64.getEncoder()
-                                .encodeToString(text.toString().getBytes(StandardCharsets.UTF_8)));
+                                .encodeToString(normalizeNewlines(text.toString()).getBytes(StandardCharsets.UTF_8)));
                     case "decode" ->
-                        ToolResult.ok(new String(Base64.getDecoder().decode(text.toString()), StandardCharsets.UTF_8));
+                        ToolResult.ok(new String(Base64.getDecoder().decode(text.toString().replaceAll("\\s+", "")), StandardCharsets.UTF_8));
                     default -> ToolResult.fail("Invalid mode");
                 };
             } catch (IllegalArgumentException e) {

@@ -62,7 +62,7 @@ public class DocumentTranslateTool implements ToolExtension {
                 .append(target.languageName())
                 .append(" using ")
                 .append(provider)
-                .append(" trong ")
+                .append(" in ")
                 .append(seconds)
                 .append("s — ")
                 .append(ok)

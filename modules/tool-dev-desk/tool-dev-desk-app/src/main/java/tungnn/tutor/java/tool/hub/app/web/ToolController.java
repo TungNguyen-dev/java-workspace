@@ -4,9 +4,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ContentDisposition;
@@ -23,9 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import tungnn.tutor.java.tool.hub.api.ToolContext;
 import tungnn.tutor.java.tool.hub.api.ToolException;
-import tungnn.tutor.java.tool.hub.api.ToolExtension;
 import tungnn.tutor.java.tool.hub.api.ToolFile;
 import tungnn.tutor.java.tool.hub.api.ToolResult;
 import tungnn.tutor.java.tool.hub.app.ui.BindResult;
@@ -35,51 +33,28 @@ import tungnn.tutor.java.tool.hub.app.ui.ResultView;
 import tungnn.tutor.java.tool.hub.app.ui.ResultViewFactory;
 import tungnn.tutor.java.tool.hub.app.ui.ToolCatalog;
 import tungnn.tutor.java.tool.hub.app.ui.ToolView;
+import tungnn.tutor.java.tool.hub.core.ToolEntry;
 import tungnn.tutor.java.tool.hub.core.ToolRegistry;
 
 @Controller
 public class ToolController {
     private static final Logger log = LoggerFactory.getLogger(ToolController.class);
-    private static final String DOWNLOADS_ATTR = "hub.downloads";
-    private static final int MAX_DOWNLOADS_PER_SESSION = 10;
     private final ToolCatalog catalog;
     private final ToolRegistry registry;
     private final ResultViewFactory resultViews;
+    private final DownloadStore downloads;
 
-    public ToolController(ToolCatalog catalog, ToolRegistry registry, ResultViewFactory resultViews) {
+    public ToolController(
+            ToolCatalog catalog, ToolRegistry registry, ResultViewFactory resultViews, DownloadStore downloads) {
         this.catalog = catalog;
         this.registry = registry;
         this.resultViews = resultViews;
+        this.downloads = downloads;
     }
 
     private static String notFound(String id, RedirectAttributes ra) {
         ra.addFlashAttribute("flash", "Tool '" + id + "' does not exist or the plugin has been removed.");
         return "redirect:/";
-    }
-
-    private static String storeDownload(HttpSession session, ToolFile file) {
-        String token = UUID.randomUUID().toString();
-        Map<String, ToolFile> store = downloads(session);
-        synchronized (store) {
-            store.put(token, file);
-        }
-        return token;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, ToolFile> downloads(HttpSession session) {
-        synchronized (session) {
-            Object existing = session.getAttribute(DOWNLOADS_ATTR);
-            if (existing != null) return (Map<String, ToolFile>) existing;
-            Map<String, ToolFile> store = new LinkedHashMap<>() {
-                @Override
-                protected boolean removeEldestEntry(Map.Entry<String, ToolFile> eldest) {
-                    return size() > MAX_DOWNLOADS_PER_SESSION;
-                }
-            };
-            session.setAttribute(DOWNLOADS_ATTR, store);
-            return store;
-        }
     }
 
     private static MediaType safeMediaType(String type) {
@@ -92,8 +67,9 @@ public class ToolController {
 
     @ModelAttribute
     void common(Model model) {
-        model.addAttribute("catalog", catalog.grouped());
-        model.addAttribute("toolCount", catalog.count());
+        Map<String, List<ToolView>> grouped = catalog.grouped();
+        model.addAttribute("catalog", grouped);
+        model.addAttribute("toolCount", grouped.values().stream().mapToInt(List::size).sum());
     }
 
     @GetMapping("/")
@@ -119,9 +95,9 @@ public class ToolController {
             HttpServletRequest request,
             Model model,
             RedirectAttributes ra) {
-        Optional<ToolView> found = catalog.find(id);
-        Optional<ToolExtension> ext = registry.get(id);
-        if (found.isEmpty() || ext.isEmpty()) return notFound(id, ra);
+        Optional<ToolEntry> entry = registry.entry(id);
+        Optional<ToolView> found = entry.flatMap(e -> catalog.view(e.extension()));
+        if (found.isEmpty()) return notFound(id, ra);
         ToolView tool = found.get();
         Map<String, MultipartFile> files =
                 request instanceof MultipartHttpServletRequest mr ? mr.getFileMap() : Map.of();
@@ -129,19 +105,19 @@ public class ToolController {
         if (bound.hasErrors()) {
             return render(model, tool, params, bound.errors(), null, "Invalid input");
         }
-        ToolContext ctx = registry.context(id).orElse(null);
         long start = System.nanoTime();
         try {
-            ToolResult result = ext.get().execute(ctx, bound.input());
+            ToolResult result = entry.get().extension().execute(entry.get().context(), bound.input());
             long ms = (System.nanoTime() - start) / 1_000_000;
             if (result == null) return render(model, tool, params, Map.of(), null, "The tool returned no result");
             if (!result.success()) {
                 String msg = result.message() == null ? "Tool reported an error" : result.message();
                 return render(model, tool, params, Map.of(), null, msg);
             }
-            ResultView view = resultViews.create(result, ms, file -> storeDownload(request.getSession(), file));
+            ResultView view = resultViews.create(result, ms, file -> downloads.put(request.getSession().getId(), file));
             return render(model, tool, params, Map.of(), view, null);
         } catch (ToolException e) {
+            log.warn("Tool {} reported an error", id, e);
             return render(model, tool, params, Map.of(), null, e.getMessage());
         } catch (RuntimeException e) {
             log.error("Tool {} failed while running", id, e);
@@ -154,7 +130,7 @@ public class ToolController {
 
     @GetMapping("/tools/{id}/download/{token}")
     public ResponseEntity<byte[]> download(@PathVariable String id, @PathVariable String token, HttpSession session) {
-        ToolFile file = downloads(session).get(token);
+        ToolFile file = downloads.get(session.getId(), token).orElse(null);
         if (file == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok()
                 .header(

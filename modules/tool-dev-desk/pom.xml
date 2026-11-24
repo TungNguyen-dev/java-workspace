@@ -11,7 +11,6 @@
         <module>tool-dev-desk-api</module>
         <module>tool-dev-desk-core</module>
         <module>tool-dev-desk-plugins/plugin-base64</module>
-        <module>tool-dev-desk-plugins/plugin-samples</module>
         <module>tool-dev-desk-plugins/plugin-document-converter</module>
         <module>tool-dev-desk-plugins/plugin-docs-trans</module>
         <module>tool-dev-desk-plugins/plugin-med-md-refine</module>
@@ -20,6 +19,7 @@
     <properties>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <hub.plugins.output.dir>${project.basedir}/../../dist/plugins</hub.plugins.output.dir>
         <pf4j.version>3.14.1</pf4j.version>
         <slf4j.version>2.0.16</slf4j.version>
         <spring-boot.version>4.1.1</spring-boot.version>
@@ -61,6 +61,9 @@
                 <plugin>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>3.7.1</version>
+                    <configuration>
+                        <outputDirectory>${hub.plugins.output.dir}</outputDirectory>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
