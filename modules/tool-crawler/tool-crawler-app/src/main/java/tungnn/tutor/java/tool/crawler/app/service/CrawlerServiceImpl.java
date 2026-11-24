@@ -3,21 +3,22 @@ package tungnn.tutor.java.tool.crawler.app.service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import tungnn.tutor.java.tool.crawler.app.model.CrawlCourseRequest;
 import tungnn.tutor.java.tool.crawler.app.model.CrawlCourseResult;
-import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
+import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlRequest;
+import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlService;
 
 @Service
 public class CrawlerServiceImpl implements CrawlerService {
 
-    private final BatchCrawlExecutor batchCrawlExecutor;
+    private final WebCrawlService webCrawlService;
 
-    public CrawlerServiceImpl(BatchCrawlExecutor batchCrawlExecutor) {
-        this.batchCrawlExecutor = batchCrawlExecutor;
+    public CrawlerServiceImpl(WebCrawlService webCrawlService) {
+        this.webCrawlService = webCrawlService;
     }
 
     @Override
@@ -26,30 +27,23 @@ public class CrawlerServiceImpl implements CrawlerService {
             return new CrawlCourseResult(Set.of());
         }
 
-        var courseRequestsMap = request.courses().stream()
-                .collect(Collectors.toMap(
-                        course -> course,
-                        course -> readUrlsFromFile(course.path()).stream()
-                                .map(CrawlRequest.WebPage::new)
-                                .toList()));
+        var courses = List.copyOf(request.courses());
+        var urlsPerCourse = courses.stream().map(course -> readUrlsFromFile(course.path())).toList();
 
-        var flatPageRequests =
-                courseRequestsMap.values().stream().flatMap(List::stream).toList();
+        var flatRequests = urlsPerCourse.stream()
+                .flatMap(List::stream)
+                .map(WebCrawlRequest.PageUrl::new)
+                .toList();
+        var flatResults = webCrawlService.crawlAll(flatRequests);
 
-        var crawlResultMap = batchCrawlExecutor.submitBatch(flatPageRequests);
-
-        var resultCourses = courseRequestsMap.entrySet().stream()
-                .map(entry -> {
-                    var courseReq = entry.getKey();
-                    var pageRequests = entry.getValue();
-
-                    var crawlResults =
-                            pageRequests.stream().map(crawlResultMap::get).toList();
-
-                    return new CrawlCourseResult.Course(courseReq.relativePath(), crawlResults);
-                })
-                .collect(Collectors.toSet());
-
+        var resultCourses = new HashSet<CrawlCourseResult.Course>();
+        var offset = 0;
+        for (var i = 0; i < courses.size(); i++) {
+            var size = urlsPerCourse.get(i).size();
+            var slice = List.copyOf(flatResults.subList(offset, offset + size));
+            resultCourses.add(new CrawlCourseResult.Course(courses.get(i).relativePath(), slice));
+            offset += size;
+        }
         return new CrawlCourseResult(resultCourses);
     }
 

@@ -1,7 +1,6 @@
 package tungnn.tutor.java.tool.crawler.core.infra.crawler;
 
 import java.util.stream.Collectors;
-import org.jspecify.annotations.NonNull;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -9,7 +8,6 @@ import tungnn.tutor.java.selenium.element.ElementActions;
 import tungnn.tutor.java.selenium.element.ElementFinder;
 import tungnn.tutor.java.selenium.wait.Waits;
 import tungnn.tutor.java.tool.crawler.core.domain.AbstractWebCrawler;
-import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
 
 public class YoutubeWebCrawler extends AbstractWebCrawler {
 
@@ -26,11 +24,6 @@ public class YoutubeWebCrawler extends AbstractWebCrawler {
 
     public YoutubeWebCrawler(WebDriver driver) {
         super(driver);
-    }
-
-    @Override
-    public boolean supports(@NonNull CrawlRequest request) {
-        return request.url().contains("youtube.com") || request.url().contains("youtu.be");
     }
 
     @Override

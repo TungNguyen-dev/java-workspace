@@ -5,7 +5,6 @@ import org.openqa.selenium.WebDriver;
 import tungnn.tutor.java.selenium.element.ElementFinder;
 import tungnn.tutor.java.selenium.element.ElementInfo;
 import tungnn.tutor.java.tool.crawler.core.domain.AbstractWebCrawler;
-import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
 
 public class AwsDocSdkWebCrawler extends AbstractWebCrawler {
 
@@ -14,11 +13,6 @@ public class AwsDocSdkWebCrawler extends AbstractWebCrawler {
 
     public AwsDocSdkWebCrawler(WebDriver driver) {
         super(driver);
-    }
-
-    @Override
-    public boolean supports(CrawlRequest request) {
-        return request.url().contains("docs.aws.amazon.com");
     }
 
     @Override

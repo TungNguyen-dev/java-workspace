@@ -70,6 +70,11 @@ public class GenericWebDriverPool implements WebDriverPool {
         }
     }
 
+    @Override
+    public int size() {
+        return pool.getMaxTotal();
+    }
+
     public int getNumActive() {
         return pool.getNumActive();
     }

@@ -14,7 +14,6 @@ import org.openqa.selenium.WebDriver;
 import tungnn.tutor.java.selenium.element.ElementFinder;
 import tungnn.tutor.java.selenium.element.ElementInfo;
 import tungnn.tutor.java.tool.crawler.core.domain.AbstractWebCrawler;
-import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
 
 public class SpringDocWebCrawler extends AbstractWebCrawler {
 
@@ -38,16 +37,12 @@ public class SpringDocWebCrawler extends AbstractWebCrawler {
     }
 
     @Override
-    public boolean supports(CrawlRequest request) {
-        return request.url().contains("docs.spring.io");
-    }
-
-    @Override
     protected String getTitle() {
         return ElementFinder.findElementIfPresent(driver, TITLE_LOCATOR)
                 .map(ElementInfo::getText)
                 .filter(title -> !title.isBlank())
-                .orElseGet(() -> Objects.requireNonNullElse(driver.getTitle(), "").trim());
+                .orElseGet(
+                        () -> Objects.requireNonNullElse(driver.getTitle(), "").trim());
     }
 
     @Override
@@ -75,7 +70,9 @@ public class SpringDocWebCrawler extends AbstractWebCrawler {
     }
 
     private String toAbsolute(String href) {
-        return URI.create(Objects.requireNonNull(driver.getCurrentUrl())).resolve(href).toString();
+        return URI.create(Objects.requireNonNull(driver.getCurrentUrl()))
+                .resolve(href)
+                .toString();
     }
 
     private String normalize(String url) {

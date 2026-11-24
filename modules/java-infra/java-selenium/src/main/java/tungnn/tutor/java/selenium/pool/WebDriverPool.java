@@ -10,6 +10,8 @@ public interface WebDriverPool extends AutoCloseable {
 
     void invalidateDriver(WebDriver driver);
 
+    int size();
+
     @Override
     void close();
 }

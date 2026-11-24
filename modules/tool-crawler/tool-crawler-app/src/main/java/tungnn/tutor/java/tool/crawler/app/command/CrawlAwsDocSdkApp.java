@@ -6,8 +6,8 @@ import tungnn.tutor.java.core.lib.io.filesystem.FileNameUtils;
 import tungnn.tutor.java.core.lib.io.filesystem.FileUtils;
 import tungnn.tutor.java.selenium.driver.chrome.ChromeDriverUtils;
 import tungnn.tutor.java.tool.crawler.app.model.ObsidianNote;
-import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
-import tungnn.tutor.java.tool.crawler.core.domain.CrawlResult;
+import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlRequest;
+import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlResult;
 import tungnn.tutor.java.tool.crawler.core.infra.crawler.AwsDocSdkWebCrawler;
 
 public class CrawlAwsDocSdkApp {
@@ -40,13 +40,13 @@ public class CrawlAwsDocSdkApp {
     }
 
     private static void crawlAndSave(AwsDocSdkWebCrawler crawler, String url, int index, int indexWidth) {
-        switch (crawler.crawl(new CrawlRequest.WebPage(url))) {
-            case CrawlResult.Success(var pageUrl, var title, var content) -> {
+        switch (crawler.crawl(new WebCrawlRequest.PageUrl(url))) {
+            case WebCrawlResult.Success(var pageUrl, var title, var content) -> {
                 var filename = "%0*d - %s.md".formatted(indexWidth, index, FileNameUtils.sanitize(title));
                 var note = new ObsidianNote(title, content, pageUrl, List.of(), "TungNN", "tungnn.hn@gmail.com");
                 FileUtils.writeString(OUTPUT_DIR.resolve(filename), note.toMarkdown());
             }
-            case CrawlResult.Failure(var exception) ->
+            case WebCrawlResult.Failure(_, var exception) ->
                 System.err.println("Failed to crawl " + url + ": " + exception.getMessage());
         }
     }

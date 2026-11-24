@@ -19,7 +19,7 @@ public abstract class AbstractWebCrawler implements WebCrawler {
     }
 
     @Override
-    public CrawlResult crawl(CrawlRequest request) {
+    public WebCrawlResult crawl(WebCrawlRequest request) {
         var url = request.url();
         try {
             NavigationUtils.navigateTo(driver, url);
@@ -29,10 +29,10 @@ public abstract class AbstractWebCrawler implements WebCrawler {
             var content = MarkdownDocumentUtils.convertHtmlToMarkdown(getContentAsHtml());
 
             LOGGER.log(System.Logger.Level.INFO, "Success to crawl URL: " + url);
-            return new CrawlResult.Success(url, title, content);
+            return new WebCrawlResult.Success(url, title, content);
         } catch (Exception e) {
             LOGGER.log(System.Logger.Level.ERROR, "Failed to crawl URL: " + url, e);
-            return new CrawlResult.Failure(e);
+            return new WebCrawlResult.Failure(url, e);
         }
     }
 

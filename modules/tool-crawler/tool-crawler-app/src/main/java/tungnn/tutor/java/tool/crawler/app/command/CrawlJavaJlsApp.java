@@ -6,8 +6,8 @@ import tungnn.tutor.java.core.lib.io.filesystem.FileNameUtils;
 import tungnn.tutor.java.core.lib.io.filesystem.FileUtils;
 import tungnn.tutor.java.selenium.driver.chrome.ChromeDriverUtils;
 import tungnn.tutor.java.tool.crawler.app.model.ObsidianNote;
-import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
-import tungnn.tutor.java.tool.crawler.core.domain.CrawlResult;
+import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlRequest;
+import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlResult;
 import tungnn.tutor.java.tool.crawler.core.infra.crawler.JavaJlsWebCrawler;
 
 public class CrawlJavaJlsApp {
@@ -44,9 +44,9 @@ public class CrawlJavaJlsApp {
     }
 
     private void crawlAndSave(JavaJlsWebCrawler crawler, String url) {
-        switch (crawler.crawl(new CrawlRequest.WebPage(url))) {
-            case CrawlResult.Success(var pageUrl, var title, var content) -> save(pageUrl, title, content);
-            case CrawlResult.Failure(var exception) ->
+        switch (crawler.crawl(new WebCrawlRequest.PageUrl(url))) {
+            case WebCrawlResult.Success(var pageUrl, var title, var content) -> save(pageUrl, title, content);
+            case WebCrawlResult.Failure(_, var exception) ->
                 System.err.println("Failed to crawl " + url + ": " + exception.getMessage());
         }
     }

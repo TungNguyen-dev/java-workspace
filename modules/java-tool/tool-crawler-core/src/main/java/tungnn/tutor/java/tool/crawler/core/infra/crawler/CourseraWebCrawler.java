@@ -1,14 +1,12 @@
 package tungnn.tutor.java.tool.crawler.core.infra.crawler;
 
 import java.util.stream.Collectors;
-import org.jspecify.annotations.NonNull;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import tungnn.tutor.java.selenium.element.ElementInfo;
 import tungnn.tutor.java.selenium.wait.Waits;
 import tungnn.tutor.java.tool.crawler.core.domain.AbstractWebCrawler;
-import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
 
 public class CourseraWebCrawler extends AbstractWebCrawler {
 
@@ -20,11 +18,6 @@ public class CourseraWebCrawler extends AbstractWebCrawler {
 
     public CourseraWebCrawler(WebDriver driver) {
         super(driver);
-    }
-
-    @Override
-    public boolean supports(@NonNull CrawlRequest request) {
-        return request.url().contains("coursera.org");
     }
 
     @Override

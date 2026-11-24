@@ -4,11 +4,11 @@ import tungnn.tutor.java.selenium.pool.GenericWebDriverPool;
 import tungnn.tutor.java.selenium.pool.WebDriverPoolConfig;
 import tungnn.tutor.java.tool.crawler.app.CrawlerRunner;
 import tungnn.tutor.java.tool.crawler.app.config.CrawlerConfig;
-import tungnn.tutor.java.tool.crawler.app.service.BatchCrawlExecutor;
 import tungnn.tutor.java.tool.crawler.app.service.CrawlerServiceImpl;
 import tungnn.tutor.java.tool.crawler.app.service.ObsidianServiceImpl;
-import tungnn.tutor.java.tool.crawler.core.infra.pool.KeyedPooledWebCrawlerFactory;
-import tungnn.tutor.java.tool.crawler.core.infra.pool.KeyedPooledWebCrawlerPool;
+import tungnn.tutor.java.tool.crawler.core.infra.service.DefaultWebCrawlService;
+import tungnn.tutor.java.tool.crawler.core.infra.service.WebCrawlOptions;
+import tungnn.tutor.java.tool.crawler.core.infra.service.WebCrawlerRegistry;
 
 public class CrawlApplication {
 
@@ -20,8 +20,9 @@ public class CrawlApplication {
                 new CrawlerConfig.Dir("01-todo", "02-result", "03-done"));
 
         try (var driverPool = new GenericWebDriverPool(WebDriverPoolConfig.fromEnv().withMaxTotal(DRIVER_COUNT));
-                var crawlerPool = new KeyedPooledWebCrawlerPool(new KeyedPooledWebCrawlerFactory(driverPool))) {
-            var crawlerService = new CrawlerServiceImpl(new BatchCrawlExecutor(crawlerPool));
+                var crawlService = new DefaultWebCrawlService(
+                        driverPool, WebCrawlerRegistry.defaults(), WebCrawlOptions.defaults())) {
+            var crawlerService = new CrawlerServiceImpl(crawlService);
             new CrawlerRunner(crawlerService, new ObsidianServiceImpl(config), config).run();
         }
     }

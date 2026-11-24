@@ -5,7 +5,6 @@ import org.openqa.selenium.WebDriver;
 import tungnn.tutor.java.selenium.element.ElementFinder;
 import tungnn.tutor.java.selenium.element.ElementInfo;
 import tungnn.tutor.java.tool.crawler.core.domain.AbstractWebCrawler;
-import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
 
 public class GenericWebCrawler extends AbstractWebCrawler {
 
@@ -15,11 +14,6 @@ public class GenericWebCrawler extends AbstractWebCrawler {
 
     public GenericWebCrawler(WebDriver driver) {
         super(driver);
-    }
-
-    @Override
-    public boolean supports(CrawlRequest request) {
-        return true;
     }
 
     @Override

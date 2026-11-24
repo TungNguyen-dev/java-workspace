@@ -12,7 +12,7 @@ import tungnn.tutor.java.core.lib.io.filesystem.FileUtils;
 import tungnn.tutor.java.tool.crawler.app.config.CrawlerConfig;
 import tungnn.tutor.java.tool.crawler.app.model.CrawlCourseResult;
 import tungnn.tutor.java.tool.crawler.app.model.ObsidianNote;
-import tungnn.tutor.java.tool.crawler.core.domain.CrawlResult;
+import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlResult;
 
 @Service
 public class ObsidianServiceImpl implements ObsidianService {
@@ -52,20 +52,20 @@ public class ObsidianServiceImpl implements ObsidianService {
 
         var unitNumber = 1;
         for (var result : results) {
-            if (result instanceof CrawlResult.Success success) {
+            if (result instanceof WebCrawlResult.Success success) {
                 var sanitizedTitle = FileNameUtils.sanitize(success.title());
                 var fileName = String.format(formatPattern, unitNumber, sanitizedTitle);
                 var destinationFile = courseDir.resolve(fileName);
 
                 writeLessonNote(destinationFile, success);
-            } else if (result instanceof CrawlResult.Failure(Exception exception)) {
-                log.error("Skipping failed lesson due to error", exception);
+            } else if (result instanceof WebCrawlResult.Failure(var failedUrl, var exception)) {
+                log.error("Skipping failed lesson: " + failedUrl, exception);
             }
             unitNumber++;
         }
     }
 
-    private void writeLessonNote(Path filePath, CrawlResult.Success success) {
+    private void writeLessonNote(Path filePath, WebCrawlResult.Success success) {
         var note = new ObsidianNote(
                 success.title(), success.content(), success.url(), List.of(), "TungNN", "tungnn.hn@gmail.com");
         var markdownContent = note.toMarkdown();
