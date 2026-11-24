@@ -3,22 +3,14 @@ package tungnn.tutor.java.tool.doctrans.core.infra.dictionary;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import org.apache.commons.csv.CSVFormat;
-import tungnn.tutor.java.csv.utils.CsvUtils;
+import tungnn.tutor.java.csv.CsvUtils;
 
 public class CsvDictionaryRepository implements DictionaryRepository {
 
     private final Path path;
-    private final CSVFormat csvFormat;
 
     public CsvDictionaryRepository(Path path) {
         this.path = Objects.requireNonNull(path);
-
-        this.csvFormat = CSVFormat.DEFAULT
-                .builder()
-                .setHeader("id", "original", "translation")
-                .setSkipHeaderRecord(false)
-                .build();
 
         initFileIfNotExists();
     }
