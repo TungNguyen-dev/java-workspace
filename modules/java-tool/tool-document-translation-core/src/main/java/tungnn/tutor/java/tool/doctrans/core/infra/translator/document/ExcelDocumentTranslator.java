@@ -26,7 +26,7 @@ public class ExcelDocumentTranslator extends AbstractDocumentTranslator<Workbook
     try {
       return WorkbookFactory.create(request.documentSource().path().toFile());
     } catch (IOException e) {
-      throw new RuntimeException("Lỗi khi mở tài liệu Excel: " + e.getMessage(), e);
+      throw new RuntimeException("Failed to open Excel document: " + e.getMessage(), e);
     }
   }
 
@@ -61,7 +61,7 @@ public class ExcelDocumentTranslator extends AbstractDocumentTranslator<Workbook
     try (var out = java.nio.file.Files.newOutputStream(translationPath)) {
       document.write(out);
     } catch (IOException e) {
-      throw new RuntimeException("Lỗi khi lưu tài liệu Excel: " + e.getMessage(), e);
+      throw new RuntimeException("Failed to save Excel document: " + e.getMessage(), e);
     }
   }
 

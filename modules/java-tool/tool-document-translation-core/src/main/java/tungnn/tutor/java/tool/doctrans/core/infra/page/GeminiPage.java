@@ -11,7 +11,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import tungnn.tutor.java.core.lib.multithread.ThreadUtils;
-import tungnn.tutor.java.selenium.util.ElementUtil;
+import tungnn.tutor.java.selenium.element.ElementUtils;
 
 public class GeminiPage {
 
@@ -37,7 +37,7 @@ public class GeminiPage {
     ThreadUtils.sleep(randomMillis);
 
     WebElement responseBlock = waitForAndGetResponse();
-    return ElementUtil.getText(responseBlock);
+    return ElementUtils.getText(responseBlock);
   }
 
   private void navigateToHomePage() {
@@ -58,7 +58,7 @@ public class GeminiPage {
         By.xpath(
             "//div[@contenteditable='true' and (contains(@aria-label, 'prompt') or contains(@class, 'ql-editor'))]");
     WebElement inputArea =
-        ElementUtil.findClickableElement(webDriver, inputLocator, DEFAULT_TIMEOUT);
+        ElementUtils.findClickableElement(webDriver, inputLocator, DEFAULT_TIMEOUT);
 
     String htmlPrompt = "<p>%s</p>".formatted(prompt);
     inputArea.click();

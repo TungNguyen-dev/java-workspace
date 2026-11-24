@@ -26,7 +26,7 @@ public class WordDocumentTranslator extends AbstractDocumentTranslator<XWPFDocum
     try {
       return new XWPFDocument(Files.newInputStream(request.documentSource().path()));
     } catch (IOException e) {
-      throw new RuntimeException("Lỗi khi mở tài liệu Word: " + e.getMessage(), e);
+      throw new RuntimeException("Failed to open Word document: " + e.getMessage(), e);
     }
   }
 
@@ -49,7 +49,7 @@ public class WordDocumentTranslator extends AbstractDocumentTranslator<XWPFDocum
     try (var out = Files.newOutputStream(translationPath)) {
       document.write(out);
     } catch (IOException e) {
-      throw new RuntimeException("Lỗi khi lưu tài liệu Word: " + e.getMessage(), e);
+      throw new RuntimeException("Failed to save Word document: " + e.getMessage(), e);
     }
   }
 

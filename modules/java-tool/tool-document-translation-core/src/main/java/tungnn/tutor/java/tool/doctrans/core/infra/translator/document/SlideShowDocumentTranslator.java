@@ -26,7 +26,7 @@ public class SlideShowDocumentTranslator extends AbstractDocumentTranslator<XMLS
     try {
       return new XMLSlideShow(Files.newInputStream(request.documentSource().path()));
     } catch (IOException e) {
-      throw new RuntimeException("Lỗi khi mở tài liệu PowerPoint: " + e.getMessage(), e);
+      throw new RuntimeException("Failed to open PowerPoint document: " + e.getMessage(), e);
     }
   }
 
@@ -47,7 +47,7 @@ public class SlideShowDocumentTranslator extends AbstractDocumentTranslator<XMLS
     try (var out = Files.newOutputStream(translationPath)) {
       document.write(out);
     } catch (IOException e) {
-      throw new RuntimeException("Lỗi khi lưu tài liệu PowerPoint: " + e.getMessage(), e);
+      throw new RuntimeException("Failed to save PowerPoint document: " + e.getMessage(), e);
     }
   }
 
