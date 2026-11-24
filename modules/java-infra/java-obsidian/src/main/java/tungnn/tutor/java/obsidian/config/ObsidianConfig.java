@@ -16,11 +16,10 @@ public record ObsidianConfig(
 
     public static final Path DEFAULT_EXECUTABLE = Path.of("/usr/local/bin/obsidian");
     public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(60);
-    public static final String DEFAULT_TEMPLATES_FOLDER = "Templates";
     public static final String DEFAULT_REPORTS_FOLDER = "Reports";
 
     public ObsidianConfig(Path executable, String vault, Duration timeout) {
-        this(executable, vault, timeout, DEFAULT_TEMPLATES_FOLDER, DEFAULT_REPORTS_FOLDER, null);
+        this(executable, vault, timeout, null, DEFAULT_REPORTS_FOLDER, null);
     }
 
     public static ObsidianConfig forVault(String vault) {
@@ -36,7 +35,7 @@ public record ObsidianConfig(
                 Path.of(value(env, CLI_PATH_ENV, DEFAULT_EXECUTABLE.toString())),
                 value(env, VAULT_ENV, null),
                 Duration.ofSeconds(seconds(env)),
-                value(env, TEMPLATES_FOLDER_ENV, DEFAULT_TEMPLATES_FOLDER),
+                value(env, TEMPLATES_FOLDER_ENV, null),
                 value(env, REPORTS_FOLDER_ENV, DEFAULT_REPORTS_FOLDER),
                 value(env, AUTHOR_ENV, null));
     }

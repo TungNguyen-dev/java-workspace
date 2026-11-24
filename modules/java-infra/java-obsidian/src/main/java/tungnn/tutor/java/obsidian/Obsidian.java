@@ -22,8 +22,8 @@ public final class Obsidian {
     private Obsidian(ObsidianCli cli, ObsidianConfig config) {
         this.config = config;
         this.notes = new NoteService(cli);
-        this.templates = new TemplateService(cli, notes, config.templatesFolder());
         this.vault = new VaultService(cli);
+        this.templates = new TemplateService(cli, notes, vault::root, config.templatesFolder());
         this.reports = new ReportService(vault);
         this.publisher = new ReportPublisher(notes, config.reportsFolder());
         this.indexes = new IndexNoteGenerator(vault, publisher);

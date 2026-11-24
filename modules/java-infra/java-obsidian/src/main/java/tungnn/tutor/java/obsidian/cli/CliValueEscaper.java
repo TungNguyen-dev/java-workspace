@@ -8,11 +8,11 @@ public final class CliValueEscaper {
         if (value == null) {
             return "";
         }
+        // The CLI only decodes \n and \t, so backslashes stay as they are (a literal "\n" in input becomes a newline)
         var sb = new StringBuilder(value.length() + 16);
         for (var i = 0; i < value.length(); i++) {
             var c = value.charAt(i);
             switch (c) {
-                case '\\' -> sb.append("\\\\");
                 case '\n' -> sb.append("\\n");
                 case '\t' -> sb.append("\\t");
                 case '\r' -> {}

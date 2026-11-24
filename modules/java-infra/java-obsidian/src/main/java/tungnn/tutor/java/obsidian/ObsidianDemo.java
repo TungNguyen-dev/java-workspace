@@ -16,6 +16,10 @@ public class ObsidianDemo {
 
         System.out.println(ObsidianUtils.readNote("Sandbox/Java Obsidian Test.md"));
 
-        System.out.println(ObsidianUtils.publishDailyReport());
+        try {
+            System.out.println(ObsidianUtils.publishDailyReport());
+        } catch (tungnn.tutor.java.obsidian.cli.ObsidianCliException e) {
+            System.out.println("Daily report skipped: " + e.getMessage());
+        }
     }
 }

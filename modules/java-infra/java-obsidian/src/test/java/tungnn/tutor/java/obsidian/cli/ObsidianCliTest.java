@@ -23,12 +23,7 @@ class ObsidianCliTest {
 
         assertThat(runner.calls.getFirst())
                 .containsExactly(
-                        "/bin/obsidian",
-                        "vault=TungNN",
-                        "create",
-                        "path=A/B.md",
-                        "content=x\\\\y\\nz\\tq",
-                        "overwrite");
+                        "/bin/obsidian", "vault=TungNN", "create", "path=A/B.md", "content=x\\y\\nz\\tq", "overwrite");
     }
 
     @Test

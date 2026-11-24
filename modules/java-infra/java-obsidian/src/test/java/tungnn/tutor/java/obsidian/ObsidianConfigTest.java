@@ -18,7 +18,7 @@ class ObsidianConfigTest {
         assertThat(config.executable()).isEqualTo(ObsidianConfig.DEFAULT_EXECUTABLE);
         assertThat(config.vault()).isNull();
         assertThat(config.timeout()).isEqualTo(Duration.ofSeconds(60));
-        assertThat(config.templatesFolder()).isEqualTo("Templates");
+        assertThat(config.templatesFolder()).isNull();
         assertThat(config.reportsFolder()).isEqualTo("Reports");
     }
 
