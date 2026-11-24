@@ -10,7 +10,7 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <artifactId>plugin-docs-trans</artifactId>
-    <description>Plugin dịch tài liệu (Word/Excel/PowerPoint/Markdown) và văn bản bằng LLM, dùng
+    <description>Plugin that translates documents (Word/Excel/PowerPoint/Markdown) and text with an LLM, using
         tool-document-translation-core
     </description>
     <properties>

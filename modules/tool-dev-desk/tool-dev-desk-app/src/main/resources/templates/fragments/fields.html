@@ -34,7 +34,7 @@
                 </select>
                 <div th:case="'FILE'" class="dropzone">
                     <input type="file" th:id="${fid}" th:name="${f.name}">
-                    <small class="muted">Chọn lại file mỗi lần chạy.</small>
+                    <small class="muted">Choose the file again on every run.</small>
                 </div>
                 <input th:case="*" type="text" th:id="${fid}" th:name="${f.name}" th:value="${val}">
             </th:block>

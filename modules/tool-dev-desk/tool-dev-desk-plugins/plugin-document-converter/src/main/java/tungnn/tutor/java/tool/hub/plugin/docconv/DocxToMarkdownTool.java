@@ -21,7 +21,7 @@ public class DocxToMarkdownTool implements ToolExtension {
     return new ToolDescriptor(
         "docx-to-markdown",
         "DOCX → Markdown",
-        "Chuyển tài liệu Word (.docx) sang Markdown: heading, đậm/nghiêng, code, danh sách, bảng",
+        "Convert a Word (.docx) document to Markdown: headings, bold/italic, code, lists, tables",
         "document",
         ToolLayout.FILE);
   }
@@ -30,7 +30,7 @@ public class DocxToMarkdownTool implements ToolExtension {
   public List<ParamSpec> params() {
     return List.of(
         new ParamSpec("file", "file", true, "File Word (.docx)"),
-        new ParamSpec("output", ConverterSupport.OUTPUT_TYPE, true, "Kết quả", "preview"));
+        new ParamSpec("output", ConverterSupport.OUTPUT_TYPE, true, "Result", "preview"));
   }
 
   @Override

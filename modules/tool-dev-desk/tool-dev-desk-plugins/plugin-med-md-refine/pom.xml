@@ -10,7 +10,7 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <artifactId>plugin-med-md-refine</artifactId>
-    <description>Plugin refine nội dung file Markdown theo bộ rule, dùng markdown adapter của java-document
+    <description>Plugin that refines Markdown file content with a rule set, using the java-document markdown adapter
     </description>
     <properties>
         <java-document.version>1.0.0-SNAPSHOT</java-document.version>

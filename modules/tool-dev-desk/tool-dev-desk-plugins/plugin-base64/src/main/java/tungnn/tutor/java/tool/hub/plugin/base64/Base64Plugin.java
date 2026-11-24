@@ -18,15 +18,15 @@ public class Base64Plugin extends Plugin {
     @Override
     public List<ParamSpec> params() {
       return List.of(
-          new ParamSpec("mode", "enum:encode|decode", true, "Chế độ", "encode"),
-          new ParamSpec("text", "text", true, "Nội dung"));
+          new ParamSpec("mode", "enum:encode|decode", true, "Mode", "encode"),
+          new ParamSpec("text", "text", true, "Content"));
     }
 
     @Override
     public ToolResult execute(ToolContext ctx, Map<String, Object> in) throws ToolException {
       Object text = in.get("text");
       Object mode = in.get("mode");
-      if (text == null || mode == null) return ToolResult.fail("Thiếu tham số mode/text");
+      if (text == null || mode == null) return ToolResult.fail("Missing mode/text parameter");
       try {
         return switch (mode.toString()) {
           case "encode" ->
@@ -36,10 +36,10 @@ public class Base64Plugin extends Plugin {
           case "decode" ->
               ToolResult.ok(
                   new String(Base64.getDecoder().decode(text.toString()), StandardCharsets.UTF_8));
-          default -> ToolResult.fail("mode không hợp lệ");
+          default -> ToolResult.fail("Invalid mode");
         };
       } catch (IllegalArgumentException e) {
-        return ToolResult.fail("Chuỗi Base64 không hợp lệ");
+        return ToolResult.fail("Invalid Base64 string");
       }
     }
   }

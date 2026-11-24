@@ -37,9 +37,9 @@ final class TransSupport {
     } catch (ToolException e) {
       throw e;
     } catch (Exception e) {
-      throw new ToolException("Dịch thất bại: " + rootMessage(e));
+      throw new ToolException("Translation failed: " + rootMessage(e));
     } catch (LinkageError e) {
-      throw new ToolException("Lỗi tương thích thư viện trong plugin: " + rootMessage(e));
+      throw new ToolException("Library compatibility error in plugin: " + rootMessage(e));
     } finally {
       t.setContextClassLoader(previous);
     }
@@ -60,7 +60,7 @@ final class TransSupport {
     try {
       return LanguageCode.valueOf(String.valueOf(value).toUpperCase(Locale.ROOT));
     } catch (IllegalArgumentException e) {
-      throw new ToolException("Ngôn ngữ không hỗ trợ: " + value);
+      throw new ToolException("Unsupported language: " + value);
     }
   }
 

@@ -29,7 +29,7 @@ public class TextTranslateTool implements ToolExtension {
     return new ToolDescriptor(
         "text-trans",
         "Text Translator",
-        "Dịch nhanh một đoạn văn bản bằng LLM",
+        "Quickly translate a piece of text with an LLM",
         "translation",
         ToolLayout.TRANSFORM);
   }
@@ -40,7 +40,7 @@ public class TextTranslateTool implements ToolExtension {
         factory != null ? factory : new TranslatorFactory(TransSupport.dataDir(null));
     return List.of(
         new ParamSpec(
-            "targetLang", TransSupport.LANGUAGE_TYPE, true, "Dịch sang", LanguageCode.VI.name()),
+            "targetLang", TransSupport.LANGUAGE_TYPE, true, "Translate to", LanguageCode.VI.name()),
         new ParamSpec(
             "provider",
             TranslatorFactory.providerParamType(),
@@ -48,8 +48,8 @@ public class TextTranslateTool implements ToolExtension {
             "LLM provider",
             f.defaultProvider()),
         new ParamSpec("model", "string", false, "Model"),
-        new ParamSpec("useMemory", "boolean", false, "Bộ nhớ dịch", "true"),
-        new ParamSpec("text", "text", true, "Văn bản gốc"));
+        new ParamSpec("useMemory", "boolean", false, "Translation memory", "true"),
+        new ParamSpec("text", "text", true, "Source text"));
   }
 
   @Override
@@ -67,7 +67,7 @@ public class TextTranslateTool implements ToolExtension {
       if (memory != null) {
         var hit = memory.find(target, text);
         if (hit.isPresent()) {
-          return new ToolResult(true, hit.get(), "Lấy từ bộ nhớ dịch (không gọi LLM)");
+          return new ToolResult(true, hit.get(), "Taken from translation memory (no LLM call)");
         }
       }
       var translator = f.create(provider, TransSupport.str(in.get("model")));
@@ -79,7 +79,7 @@ public class TextTranslateTool implements ToolExtension {
               null);
       return switch (translator.translate(request)) {
         case TextTranslationResult.Failure fail ->
-            throw new ToolException("Dịch thất bại: " + fail.error().message());
+            throw new ToolException("Translation failed: " + fail.error().message());
         case TextTranslationResult.Success ok -> {
           String translated = ok.translation().translation();
           if (memory != null && translated != null && !translated.isBlank()) {

@@ -54,9 +54,9 @@ public class DocumentTranslateTool implements ToolExtension {
     int failed = translator.failureCount();
     if (failed > 0 && ok == 0) {
       throw new ToolException(
-          "Không dịch được đoạn nào ("
+          "No segment could be translated ("
               + failed
-              + " lỗi). Lỗi đầu tiên: "
+              + " errors). First error: "
               + translator.firstError());
     }
 
@@ -64,24 +64,24 @@ public class DocumentTranslateTool implements ToolExtension {
     String seconds =
         String.format(Locale.ROOT, "%.1f", (System.currentTimeMillis() - start) / 1000.0);
     StringBuilder msg =
-        new StringBuilder("Đã dịch sang ")
+        new StringBuilder("Translated to ")
             .append(target.languageName())
-            .append(" bằng ")
+            .append(" using ")
             .append(provider)
             .append(" trong ")
             .append(seconds)
             .append("s — ")
             .append(ok)
-            .append(" đoạn gọi LLM");
+            .append(" segments sent to the LLM");
 
     if (failed > 0) {
       msg.append(", ")
           .append(failed)
-          .append(" đoạn lỗi giữ nguyên bản gốc (")
+          .append(" failed segments kept as the original (")
           .append(translator.firstError())
           .append(')');
     }
-    msg.append(". Các đoạn trùng/có trong bộ nhớ dịch không tính.");
+    msg.append(". Duplicate segments and ones found in translation memory are not counted.");
 
     if (ctx != null && ctx.logger() != null) {
       ctx.logger()
@@ -120,7 +120,7 @@ public class DocumentTranslateTool implements ToolExtension {
     return new ToolDescriptor(
         "docs-trans",
         "Document Translator",
-        "Dịch tài liệu Word, Excel, PowerPoint, Markdown bằng LLM, giữ nguyên định dạng",
+        "Translate Word, Excel, PowerPoint and Markdown documents with an LLM, preserving the formatting",
         "translation",
         ToolLayout.FILE);
   }
@@ -128,31 +128,31 @@ public class DocumentTranslateTool implements ToolExtension {
   @Override
   public List<ParamSpec> params() {
     return List.of(
-        new ParamSpec("file", "file", true, "Tài liệu (.docx, .xlsx, .pptx, .md, .txt)"),
+        new ParamSpec("file", "file", true, "Document (.docx, .xlsx, .pptx, .md, .txt)"),
         new ParamSpec(
-            "targetLang", TransSupport.LANGUAGE_TYPE, true, "Dịch sang", LanguageCode.VI.name()),
+            "targetLang", TransSupport.LANGUAGE_TYPE, true, "Translate to", LanguageCode.VI.name()),
         new ParamSpec(
             "provider",
             TranslatorFactory.providerParamType(),
             true,
             "LLM provider",
             factory().defaultProvider()),
-        new ParamSpec("model", "string", false, "Model (bỏ trống = mặc định)"),
+        new ParamSpec("model", "string", false, "Model (empty = default)"),
         new ParamSpec(
-            "useMemory", "boolean", false, "Dùng bộ nhớ dịch (translation memory)", "true"));
+            "useMemory", "boolean", false, "Use translation memory", "true"));
   }
 
   @Override
   public ToolResult execute(ToolContext ctx, Map<String, Object> in) throws ToolException {
     ToolFile file = (ToolFile) in.get("file");
     if (file == null || file.filename() == null) {
-      throw new ToolException("Vui lòng cung cấp file cần dịch.");
+      throw new ToolException("Please provide the file to translate.");
     }
 
     String ext = extensionOf(file.filename());
     if (!CONTENT_TYPES.containsKey(ext)) {
       throw new ToolException(
-          "Không hỗ trợ file '" + file.filename() + "'. Hỗ trợ: .docx, .xlsx, .pptx, .md, .txt");
+          "Unsupported file '" + file.filename() + "'. Supported: .docx, .xlsx, .pptx, .md, .txt");
     }
 
     LanguageCode target = TransSupport.language(in.get("targetLang"));
@@ -184,7 +184,7 @@ public class DocumentTranslateTool implements ToolExtension {
         DocumentTranslationResult result = service.translateDocument(input, target.name());
         return switch (result) {
           case DocumentTranslationResult.Failure f ->
-              throw new ToolException("Dịch thất bại: " + f.error().message());
+              throw new ToolException("Translation failed: " + f.error().message());
           case DocumentTranslationResult.Success s ->
               toResult(ctx, s.translation().path(), ext, translator, provider, target, start);
         };

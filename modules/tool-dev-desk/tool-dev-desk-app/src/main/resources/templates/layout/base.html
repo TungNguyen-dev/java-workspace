@@ -15,7 +15,7 @@
 </header>
 <div class="shell">
 <nav class="sidebar">
-<p class="muted" th:if="${#maps.isEmpty(catalog)}">Chưa có tool nào.</p>
+<p class="muted" th:if="${#maps.isEmpty(catalog)}">No tools yet.</p>
 <th:block th:each="entry : ${catalog}">
 <div class="sidebar-cat" th:text="${entry.key}">category</div>
 <a th:each="t : ${entry.value}"

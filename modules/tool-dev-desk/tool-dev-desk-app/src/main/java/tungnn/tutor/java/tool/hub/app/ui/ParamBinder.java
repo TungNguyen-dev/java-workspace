@@ -24,20 +24,20 @@ public final class ParamBinder {
       if (f.widget() == Widget.FILE) {
         MultipartFile mf = files == null ? null : files.get(name);
         if (mf == null || mf.isEmpty()) {
-          if (f.required()) errors.put(name, "Vui lòng chọn file");
+          if (f.required()) errors.put(name, "Please choose a file");
           continue;
         }
         try {
           input.put(
               name, new ToolFile(mf.getOriginalFilename(), mf.getContentType(), mf.getBytes()));
         } catch (IOException e) {
-          errors.put(name, "Không đọc được file: " + e.getMessage());
+          errors.put(name, "Unable to read file: " + e.getMessage());
         }
         continue;
       }
       String raw = params.get(name);
       if (raw == null || raw.isBlank()) {
-        if (f.required()) errors.put(name, "Không được để trống");
+        if (f.required()) errors.put(name, "Must not be empty");
         continue;
       }
       switch (f.widget()) {
@@ -45,12 +45,12 @@ public final class ParamBinder {
           try {
             input.put(name, new BigDecimal(raw.trim()));
           } catch (NumberFormatException e) {
-            errors.put(name, "Phải là số");
+            errors.put(name, "Must be a number");
           }
         }
         case SELECT -> {
           if (f.options().contains(raw)) input.put(name, raw);
-          else errors.put(name, "Giá trị không hợp lệ: " + raw);
+          else errors.put(name, "Invalid value: " + raw);
         }
         default -> input.put(name, raw);
       }

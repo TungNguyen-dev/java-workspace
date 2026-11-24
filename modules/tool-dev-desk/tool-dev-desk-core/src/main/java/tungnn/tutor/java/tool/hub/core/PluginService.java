@@ -37,7 +37,7 @@ public class PluginService {
     try (var s = Files.walk(p)) {
       s.sorted(Comparator.reverseOrder()).forEach(f -> f.toFile().delete());
     } catch (IOException e) {
-      log.warn("Không xoá được {}", p, e);
+      log.warn("Unable to delete {}", p, e);
     }
   }
 
@@ -52,13 +52,13 @@ public class PluginService {
       Path dir = FileUtils.expandIfZip(zip);
       String id = pm.loadPlugin(dir);
       if (id == null) {
-        log.warn("Không load được plugin: {}", zip);
+        log.warn("Unable to load plugin: {}", zip);
         return;
       }
       pm.startPlugin(id);
       registerExtensions(id);
     } catch (Exception e) {
-      log.error("Lỗi load plugin {}", zip, e);
+      log.error("Error loading plugin {}", zip, e);
     }
   }
 
@@ -88,7 +88,7 @@ public class PluginService {
       try {
         registry.register(pluginId, ext, newContext(pluginId));
       } catch (Exception e) {
-        log.error("Không đăng ký được tool của plugin {}", pluginId, e);
+        log.error("Unable to register tools of plugin {}", pluginId, e);
       }
     }
   }

@@ -16,7 +16,7 @@ public class ToolRegistry {
   public void register(String pluginId, ToolExtension ext, ToolContext ctx) {
     String id = ext.descriptor().id();
     if (tools.putIfAbsent(id, ext) != null) {
-      throw new IllegalStateException("Trùng tool id: " + id);
+      throw new IllegalStateException("Duplicate tool id: " + id);
     }
     contexts.put(id, ctx);
     byPlugin.computeIfAbsent(pluginId, k -> ConcurrentHashMap.newKeySet()).add(id);

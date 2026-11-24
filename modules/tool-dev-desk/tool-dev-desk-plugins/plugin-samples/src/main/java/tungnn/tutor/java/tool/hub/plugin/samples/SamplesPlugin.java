@@ -24,22 +24,22 @@ public class SamplesPlugin extends Plugin {
 
     @Override
     public ToolDescriptor descriptor() {
-      return new ToolDescriptor("uuid", "UUID Generator", "Sinh UUID ngẫu nhiên", "generator");
+      return new ToolDescriptor("uuid", "UUID Generator", "Generate random UUIDs", "generator");
     }
 
     @Override
     public List<ParamSpec> params() {
       return List.of(
-          new ParamSpec("count", "number", true, "Số lượng (1-100)", "5"),
-          new ParamSpec("uppercase", "boolean", false, "Viết hoa"),
-          new ParamSpec("prefix", "string", false, "Tiền tố mỗi dòng"));
+          new ParamSpec("count", "number", true, "Count (1-100)", "5"),
+          new ParamSpec("uppercase", "boolean", false, "Upper case"),
+          new ParamSpec("prefix", "string", false, "Prefix for each line"));
     }
 
     @Override
     public ToolResult execute(ToolContext ctx, Map<String, Object> in) {
       Object rawCount = in.get("count");
       if (rawCount == null) {
-        return ToolResult.fail("Thiếu tham số count");
+        return ToolResult.fail("Missing count parameter");
       }
       int count;
       if (rawCount instanceof BigDecimal bd) {
@@ -50,12 +50,12 @@ public class SamplesPlugin extends Plugin {
         try {
           count = Integer.parseInt(rawCount.toString().trim());
         } catch (NumberFormatException e) {
-          return ToolResult.fail("count phải là số nguyên hợp lệ");
+          return ToolResult.fail("count must be a valid integer");
         }
       }
 
       if (count < 1 || count > 100) {
-        return ToolResult.fail("count phải trong khoảng 1-100");
+        return ToolResult.fail("count must be between 1 and 100");
       }
 
       boolean upper = Boolean.TRUE.equals(in.get("uppercase"));
@@ -81,15 +81,15 @@ public class SamplesPlugin extends Plugin {
     @Override
     public List<ParamSpec> params() {
       return List.of(
-          new ParamSpec("mode", "enum:pretty|minify", true, "Chế độ", "pretty"),
-          new ParamSpec("json", "text", true, "JSON đầu vào"));
+          new ParamSpec("mode", "enum:pretty|minify", true, "Mode", "pretty"),
+          new ParamSpec("json", "text", true, "Input JSON"));
     }
 
     @Override
     public ToolResult execute(ToolContext ctx, Map<String, Object> in) throws ToolException {
       Object rawJson = in.get("json");
       if (rawJson == null) {
-        throw new ToolException("Thiếu tham số json");
+        throw new ToolException("Missing json parameter");
       }
       String json = rawJson.toString();
       Object rawMode = in.get("mode");
@@ -103,22 +103,22 @@ public class SamplesPlugin extends Plugin {
 
     @Override
     public ToolDescriptor descriptor() {
-      return new ToolDescriptor("file-hash", "File Hash", "Tính checksum của file", "file");
+      return new ToolDescriptor("file-hash", "File Hash", "Compute a file checksum", "file");
     }
 
     @Override
     public List<ParamSpec> params() {
       return List.of(
-          new ParamSpec("file", "file", true, "File cần tính hash"),
+          new ParamSpec("file", "file", true, "File to hash"),
           new ParamSpec(
-              "algorithm", "enum:ALL|MD5|SHA-1|SHA-256|SHA-512", true, "Thuật toán", "ALL"));
+              "algorithm", "enum:ALL|MD5|SHA-1|SHA-256|SHA-512", true, "Algorithm", "ALL"));
     }
 
     @Override
     public ToolResult execute(ToolContext ctx, Map<String, Object> in) throws ToolException {
       Object rawFile = in.get("file");
       if (!(rawFile instanceof ToolFile file)) {
-        throw new ToolException("File không hợp lệ hoặc bị thiếu");
+        throw new ToolException("File is invalid or missing");
       }
       Object rawAlgo = in.get("algorithm");
       String algo = rawAlgo == null ? "ALL" : rawAlgo.toString();
@@ -133,7 +133,7 @@ public class SamplesPlugin extends Plugin {
           out.put(a, HexFormat.of().formatHex(MessageDigest.getInstance(a).digest(file.content())));
         }
       } catch (NoSuchAlgorithmException e) {
-        throw new ToolException("Thuật toán không hỗ trợ: " + e.getMessage());
+        throw new ToolException("Unsupported algorithm: " + e.getMessage());
       }
       return ToolResult.ok(out);
     }
@@ -145,26 +145,26 @@ public class SamplesPlugin extends Plugin {
     @Override
     public ToolDescriptor descriptor() {
       return new ToolDescriptor(
-          "gzip", "Gzip Compress", "Nén file bằng gzip", "file", ToolLayout.FILE);
+          "gzip", "Gzip Compress", "Compress a file with gzip", "file", ToolLayout.FILE);
     }
 
     @Override
     public List<ParamSpec> params() {
-      return List.of(new ParamSpec("file", "file", true, "File cần nén"));
+      return List.of(new ParamSpec("file", "file", true, "File to compress"));
     }
 
     @Override
     public ToolResult execute(ToolContext ctx, Map<String, Object> in) throws ToolException {
       Object rawFile = in.get("file");
       if (!(rawFile instanceof ToolFile file)) {
-        throw new ToolException("File không hợp lệ hoặc bị thiếu");
+        throw new ToolException("File is invalid or missing");
       }
 
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       try (GZIPOutputStream gz = new GZIPOutputStream(bos)) {
         gz.write(file.content());
       } catch (IOException e) {
-        throw new ToolException("Nén thất bại: " + e.getMessage());
+        throw new ToolException("Compression failed: " + e.getMessage());
       }
 
       byte[] compressed = bos.toByteArray();
@@ -181,7 +181,7 @@ public class SamplesPlugin extends Plugin {
       return new ToolDescriptor(
           "sys-props",
           "System Properties",
-          "Liệt kê Java system properties của server",
+          "List the server's Java system properties",
           "system",
           ToolLayout.TABLE);
     }
@@ -189,7 +189,7 @@ public class SamplesPlugin extends Plugin {
     @Override
     public List<ParamSpec> params() {
       return List.of(
-          new ParamSpec("filter", "string", false, "Lọc theo key (chứa chuỗi)", "java."));
+          new ParamSpec("filter", "string", false, "Filter by key (contains)", "java."));
     }
 
     @Override

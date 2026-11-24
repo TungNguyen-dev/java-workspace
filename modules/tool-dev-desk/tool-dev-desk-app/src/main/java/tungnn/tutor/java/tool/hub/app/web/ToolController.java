@@ -53,7 +53,7 @@ public class ToolController {
   }
 
   private static String notFound(String id, RedirectAttributes ra) {
-    ra.addFlashAttribute("flash", "Tool '" + id + "' không tồn tại hoặc plugin đã bị gỡ.");
+    ra.addFlashAttribute("flash", "Tool '" + id + "' does not exist or the plugin has been removed.");
     return "redirect:/";
   }
 
@@ -128,7 +128,7 @@ public class ToolController {
         request instanceof MultipartHttpServletRequest mr ? mr.getFileMap() : Map.of();
     BindResult bound = ParamBinder.bind(tool.fields(), params, files);
     if (bound.hasErrors()) {
-      return render(model, tool, params, bound.errors(), null, "Dữ liệu nhập chưa hợp lệ");
+      return render(model, tool, params, bound.errors(), null, "Invalid input");
     }
     ToolContext ctx = registry.context(id).orElse(null);
     long start = System.nanoTime();
@@ -136,9 +136,9 @@ public class ToolController {
       ToolResult result = ext.get().execute(ctx, bound.input());
       long ms = (System.nanoTime() - start) / 1_000_000;
       if (result == null)
-        return render(model, tool, params, Map.of(), null, "Tool không trả về kết quả");
+        return render(model, tool, params, Map.of(), null, "The tool returned no result");
       if (!result.success()) {
-        String msg = result.message() == null ? "Tool báo lỗi" : result.message();
+        String msg = result.message() == null ? "Tool reported an error" : result.message();
         return render(model, tool, params, Map.of(), null, msg);
       }
       ResultView view =
@@ -147,11 +147,11 @@ public class ToolController {
     } catch (ToolException e) {
       return render(model, tool, params, Map.of(), null, e.getMessage());
     } catch (RuntimeException e) {
-      log.error("Tool {} lỗi khi chạy", id, e);
-      return render(model, tool, params, Map.of(), null, "Lỗi không mong muốn: " + e);
+      log.error("Tool {} failed while running", id, e);
+      return render(model, tool, params, Map.of(), null, "Unexpected error: " + e);
     } catch (LinkageError e) {
-      log.error("Tool {} lỗi tương thích thư viện", id, e);
-      return render(model, tool, params, Map.of(), null, "Plugin lỗi tương thích thư viện: " + e);
+      log.error("Tool {} has a library compatibility error", id, e);
+      return render(model, tool, params, Map.of(), null, "Plugin library compatibility error: " + e);
     }
   }
 

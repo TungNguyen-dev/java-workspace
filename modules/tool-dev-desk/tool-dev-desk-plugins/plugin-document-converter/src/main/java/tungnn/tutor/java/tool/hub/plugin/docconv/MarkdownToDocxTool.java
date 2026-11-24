@@ -29,7 +29,7 @@ public class MarkdownToDocxTool implements ToolExtension {
     int size = d.bodySizePt();
     if (in.get("bodySize") instanceof BigDecimal n) {
       size = n.intValue();
-      if (size < 6 || size > 72) throw new ToolException("Cỡ chữ phải trong khoảng 6-72 pt");
+      if (size < 6 || size > 72) throw new ToolException("Font size must be between 6 and 72 pt");
     }
     return new Options(font, d.codeFont(), size, d.lineSpacing(), d.headings());
   }
@@ -39,7 +39,7 @@ public class MarkdownToDocxTool implements ToolExtension {
     return new ToolDescriptor(
         "markdown-to-docx",
         "Markdown → DOCX",
-        "Tạo tài liệu Word (.docx) từ Markdown: upload file .md hoặc dán nội dung",
+        "Create a Word (.docx) document from Markdown: upload an .md file or paste the content",
         "document",
         ToolLayout.FILE);
   }
@@ -48,11 +48,11 @@ public class MarkdownToDocxTool implements ToolExtension {
   public List<ParamSpec> params() {
     Options d = Options.defaults();
     return List.of(
-        new ParamSpec("file", "file", false, "File Markdown (.md) — bỏ trống nếu dán nội dung"),
-        new ParamSpec("markdown", "text", false, "Hoặc dán nội dung Markdown"),
-        new ParamSpec("filename", "string", false, "Tên file kết quả", "document"),
-        new ParamSpec("bodyFont", "string", false, "Font chữ", d.bodyFont()),
-        new ParamSpec("bodySize", "number", false, "Cỡ chữ (pt)", String.valueOf(d.bodySizePt())));
+        new ParamSpec("file", "file", false, "Markdown file (.md) — leave empty if pasting content"),
+        new ParamSpec("markdown", "text", false, "Or paste Markdown content"),
+        new ParamSpec("filename", "string", false, "Result file name", "document"),
+        new ParamSpec("bodyFont", "string", false, "Font", d.bodyFont()),
+        new ParamSpec("bodySize", "number", false, "Font size (pt)", String.valueOf(d.bodySizePt())));
   }
 
   @Override
@@ -71,7 +71,7 @@ public class MarkdownToDocxTool implements ToolExtension {
               ? "document"
               : ConverterSupport.baseName(in.get("filename").toString());
     } else {
-      throw new ToolException("Cần upload file .md hoặc dán nội dung Markdown");
+      throw new ToolException("Upload an .md file or paste Markdown content");
     }
     Options options = options(in);
     byte[] docx =

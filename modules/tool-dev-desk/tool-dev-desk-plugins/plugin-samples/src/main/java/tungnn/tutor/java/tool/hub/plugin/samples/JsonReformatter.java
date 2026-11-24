@@ -12,9 +12,9 @@ final class JsonReformatter {
   private JsonReformatter() {}
 
   static String reformat(String json, boolean pretty) throws ToolException {
-    Objects.requireNonNull(json, "JSON không được null");
+    Objects.requireNonNull(json, "JSON must not be null");
     if (json.isBlank()) {
-      throw new ToolException("JSON rỗng");
+      throw new ToolException("JSON is empty");
     }
 
     StringBuilder out = new StringBuilder(json.length() + 16);
@@ -56,7 +56,7 @@ final class JsonReformatter {
         case '}', ']' -> {
           char open = c == '}' ? '{' : '[';
           if (stack.isEmpty() || stack.pop() != open) {
-            throw new ToolException("JSON không hợp lệ: '" + c + "' không khớp tại vị trí " + i);
+            throw new ToolException("Invalid JSON: '" + c + "' does not match at position " + i);
           }
           if (pretty) {
             newline(out, stack.size());
@@ -71,21 +71,21 @@ final class JsonReformatter {
         }
         case ':' -> out.append(pretty ? ": " : ":");
         case ' ', '\t', '\n', '\r' -> {
-          // Bỏ qua khoảng trắng bên ngoài chuỗi
+          // Skip whitespace outside of strings
         }
         default -> out.append(c);
       }
     }
 
     if (inString) {
-      throw new ToolException("JSON không hợp lệ: chuỗi chưa được đóng");
+      throw new ToolException("Invalid JSON: unterminated string");
     }
     if (!stack.isEmpty()) {
       throw new ToolException(
-          "JSON không hợp lệ: thiếu '" + (stack.peek() == '{' ? '}' : ']') + "'");
+          "Invalid JSON: missing '" + (stack.peek() == '{' ? '}' : ']') + "'");
     }
     if (out.isEmpty()) {
-      throw new ToolException("JSON rỗng");
+      throw new ToolException("JSON is empty");
     }
     return out.toString();
   }

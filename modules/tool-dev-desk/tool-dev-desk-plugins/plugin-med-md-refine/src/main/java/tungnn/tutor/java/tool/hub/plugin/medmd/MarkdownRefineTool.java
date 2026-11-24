@@ -28,7 +28,7 @@ public class MarkdownRefineTool implements ToolExtension {
       List.of(
           new RefineRule(
               "normalize",
-              "Chuẩn hóa văn bản",
+              "Normalize text",
               true,
               MarkdownActions.normalize(MarkdownRefiner.defaultMedical())));
   private final List<RefineRule> rules;
@@ -62,14 +62,14 @@ public class MarkdownRefineTool implements ToolExtension {
       String lower = filename.toLowerCase(Locale.ROOT);
       if (!(lower.endsWith(".md") || lower.endsWith(".markdown") || lower.endsWith(".txt"))) {
         throw new ToolException(
-            "File '" + filename + "' không phải Markdown (.md, .markdown, .txt)");
+            "File '" + filename + "' is not Markdown (.md, .markdown, .txt)");
       }
       return new Source(baseName(filename), new String(file.content(), StandardCharsets.UTF_8));
     }
     if (in.get("markdown") instanceof CharSequence seq && !seq.toString().isBlank()) {
       return new Source("document", seq.toString());
     }
-    throw new ToolException("Cần upload file .md hoặc dán nội dung Markdown");
+    throw new ToolException("Upload an .md file or paste Markdown content");
   }
 
   private static String baseName(String filename) {
@@ -84,7 +84,7 @@ public class MarkdownRefineTool implements ToolExtension {
     return new ToolDescriptor(
         "med-md-refine",
         "Markdown Refine",
-        "Refine nội dung file Markdown theo bộ rule",
+        "Refine Markdown file content with the rule set",
         "document",
         ToolLayout.FILE);
   }
@@ -93,9 +93,9 @@ public class MarkdownRefineTool implements ToolExtension {
   public List<ParamSpec> params() {
     List<ParamSpec> params = new ArrayList<>();
     params.add(
-        new ParamSpec("file", "file", false, "File Markdown (.md) — bỏ trống nếu dán nội dung"));
-    params.add(new ParamSpec("markdown", "text", false, "Hoặc dán nội dung Markdown"));
-    params.add(new ParamSpec("output", "enum:preview|download", true, "Kết quả", "preview"));
+        new ParamSpec("file", "file", false, "Markdown file (.md) — leave empty if pasting content"));
+    params.add(new ParamSpec("markdown", "text", false, "Or paste Markdown content"));
+    params.add(new ParamSpec("output", "enum:preview|download", true, "Result", "preview"));
     for (RefineRule rule : rules) {
       params.add(
           new ParamSpec(
@@ -120,13 +120,13 @@ public class MarkdownRefineTool implements ToolExtension {
     try {
       result = refine(source.markdown(), enabled);
     } catch (RuntimeException e) {
-      throw new ToolException("Refine thất bại: " + e.getMessage());
+      throw new ToolException("Refine failed: " + e.getMessage());
     }
 
     if (ctx != null && ctx.logger() != null) {
       ctx.logger()
           .info(
-              "med-md-refine {}: {} rule, {} thay đổi",
+              "med-md-refine {}: {} rules, {} changes",
               source.name(),
               enabled.size(),
               result.changedCount());
@@ -147,20 +147,20 @@ public class MarkdownRefineTool implements ToolExtension {
 
   private String summary(int enabledCount, RefineResult result) {
     if (rules.isEmpty()) {
-      return "Chưa có rule nào (thêm vào DEFAULT_RULES) — kết quả chỉ qua parse/render của MarkdownDocumentUtils.";
+      return "No rules defined (add them to DEFAULT_RULES) — the result only went through MarkdownDocumentUtils parse/render.";
     }
     if (enabledCount == 0) {
-      return "Không bật rule nào — kết quả chỉ qua parse/render của MarkdownDocumentUtils.";
+      return "No rule enabled — the result only went through MarkdownDocumentUtils parse/render.";
     }
     StringBuilder sb =
-        new StringBuilder("Đã áp dụng ")
+        new StringBuilder("Applied ")
             .append(enabledCount)
             .append(" rule, ")
             .append(result.changedCount())
-            .append(" rule có thay đổi: ");
+            .append(" rules with changes: ");
     List<String> parts = new ArrayList<>();
     for (RuleOutcome o : result.outcomes()) {
-      parts.add(o.ruleName() + (o.changed() ? " ✔" : " (không đổi)"));
+      parts.add(o.ruleName() + (o.changed() ? " ✔" : " (unchanged)"));
     }
     return sb.append(String.join(" | ", parts)).toString();
   }

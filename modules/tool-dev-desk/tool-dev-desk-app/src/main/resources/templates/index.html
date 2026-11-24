@@ -4,9 +4,9 @@
 <section th:fragment="content">
     <h1>Tools</h1>
     <div class="empty" th:if="${#maps.isEmpty(catalog)}">
-        <p>Chưa có plugin nào được nạp.</p>
-        <p class="muted">Thả file <code>plugin-*.zip</code> vào thư mục <code>plugins</code> — tool sẽ xuất hiện khi tải
-            lại trang.</p>
+        <p>No plugins loaded yet.</p>
+        <p class="muted">Drop a <code>plugin-*.zip</code> file into the <code>plugins</code> directory — the tool will appear when you reload
+            the page.</p>
     </div>
     <th:block th:each="entry : ${catalog}">
         <h2 class="cat-title" th:text="${entry.key}">category</h2>

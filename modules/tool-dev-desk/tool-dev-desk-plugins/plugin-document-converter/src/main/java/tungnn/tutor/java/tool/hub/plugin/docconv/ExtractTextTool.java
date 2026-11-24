@@ -22,7 +22,7 @@ public class ExtractTextTool implements ToolExtension {
     return new ToolDescriptor(
         "extract-text",
         "Document → Text",
-        "Trích xuất nội dung văn bản từ PDF, Word, Excel, PowerPoint, HTML... (Apache Tika)",
+        "Extract text content from PDF, Word, Excel, PowerPoint, HTML... (Apache Tika)",
         "document",
         ToolLayout.FILE);
   }
@@ -30,8 +30,8 @@ public class ExtractTextTool implements ToolExtension {
   @Override
   public List<ParamSpec> params() {
     return List.of(
-        new ParamSpec("file", "file", true, "Tài liệu"),
-        new ParamSpec("output", ConverterSupport.OUTPUT_TYPE, true, "Kết quả", "preview"));
+        new ParamSpec("file", "file", true, "Document"),
+        new ParamSpec("output", ConverterSupport.OUTPUT_TYPE, true, "Result", "preview"));
   }
 
   @Override
@@ -45,7 +45,7 @@ public class ExtractTextTool implements ToolExtension {
         });
     text = text == null ? "" : text.strip();
     if (text.isEmpty()) {
-      return new ToolResult(true, "", "Không trích xuất được nội dung văn bản (file ảnh/scan?)");
+      return new ToolResult(true, "", "Unable to extract any text (image/scanned file?)");
     }
     return ConverterSupport.textResult(
         text, in.get("output"), ConverterSupport.baseName(file.filename()) + ".txt", "text/plain");

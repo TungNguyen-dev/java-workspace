@@ -105,9 +105,9 @@ final class TranslatorFactory {
           : new LlmTextTranslator(client, concurrency);
     } catch (IllegalArgumentException e) {
       throw new ToolException(
-          "Cấu hình LLM chưa đủ: "
+          "Incomplete LLM configuration: "
               + e.getMessage()
-              + ". Đặt biến môi trường hoặc thêm vào file "
+              + ". Set the environment variable or add it to the file "
               + configFile.toAbsolutePath());
     }
   }

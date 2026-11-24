@@ -10,7 +10,7 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <artifactId>plugin-document-converter</artifactId>
-    <description>Plugin chuyển đổi tài liệu (DOCX ↔ Markdown, trích xuất text) dùng converter của java-document
+    <description>Plugin that converts documents (DOCX ↔ Markdown, text extraction) using the java-document converters
     </description>
     <properties>
         <java-document.version>1.0.0-SNAPSHOT</java-document.version>
@@ -33,12 +33,12 @@
             <artifactId>java-document</artifactId>
             <version>${java.workspace.infra.version}</version>
             <exclusions>
-                <!-- Loại bỏ Log4j2 Implementation để nhường quyền cho Spring Boot / App chính -->
+                <!-- Exclude the Log4j2 implementation to leave it to Spring Boot / the main app -->
                 <exclusion>
                     <groupId>org.apache.logging.log4j</groupId>
                     <artifactId>log4j-core</artifactId>
                 </exclusion>
-                <!-- Loại bỏ SLF4J -> Log4j2 Binding để tránh trùng lặp/xung đột binding -->
+                <!-- Exclude the SLF4J -> Log4j2 binding to avoid duplicate/conflicting bindings -->
                 <exclusion>
                     <groupId>org.apache.logging.log4j</groupId>
                     <artifactId>log4j-slf4j2-impl</artifactId>

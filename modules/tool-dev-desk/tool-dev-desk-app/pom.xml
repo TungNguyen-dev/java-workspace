@@ -9,7 +9,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
     <artifactId>tool-dev-desk-app</artifactId>
-    <description>Web UI (Spring MVC + Thymeleaf) tự sinh giao diện cho các tool plugin</description>
+    <description>Web UI (Spring MVC + Thymeleaf) that generates the interface for tool plugins automatically</description>
     <dependencyManagement>
         <dependencies>
             <dependency>

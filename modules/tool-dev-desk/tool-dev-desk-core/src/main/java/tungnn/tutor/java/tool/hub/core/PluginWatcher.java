@@ -50,12 +50,12 @@ public class PluginWatcher implements Runnable, AutoCloseable {
   public void run() {
     try (WatchService ws = dir.getFileSystem().newWatchService()) {
       dir.register(ws, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
-      log.info("Đang theo dõi thư mục plugins: {}", dir);
+      log.info("Watching plugins directory: {}", dir);
       while (running && !Thread.currentThread().isInterrupted()) {
         WatchKey key = ws.take();
         for (WatchEvent<?> ev : key.pollEvents()) {
           if (ev.kind() == OVERFLOW) {
-            log.warn("WatchService bị overflow, có thể đã bỏ lỡ sự kiện");
+            log.warn("WatchService overflowed, events may have been missed");
             continue;
           }
           Path file = dir.resolve((Path) ev.context());
@@ -63,14 +63,14 @@ public class PluginWatcher implements Runnable, AutoCloseable {
           schedule(file, ev.kind());
         }
         if (!key.reset()) {
-          log.warn("Thư mục plugins không còn hợp lệ, dừng watcher: {}", dir);
+          log.warn("Plugins directory is no longer valid, stopping watcher: {}", dir);
           break;
         }
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (IOException e) {
-      log.error("Không khởi tạo được WatchService cho {}", dir, e);
+      log.error("Unable to create a WatchService for {}", dir, e);
     } finally {
       worker.shutdownNow();
     }
@@ -93,7 +93,7 @@ public class PluginWatcher implements Runnable, AutoCloseable {
         onCreatedOrModified(file);
       }
     } catch (Throwable t) {
-      log.error("Lỗi xử lý plugin {} ({})", file.getFileName(), kind.name(), t);
+      log.error("Error handling plugin {} ({})", file.getFileName(), kind.name(), t);
     } finally {
       pending.remove(file);
     }
@@ -102,24 +102,24 @@ public class PluginWatcher implements Runnable, AutoCloseable {
   private void onDeleted(Path file) {
     String id = service.pluginIdOf(file);
     if (id == null) {
-      log.debug("Bỏ qua xoá, không có plugin ứng với {}", file.getFileName());
+      log.debug("Skipping removal, no plugin matches {}", file.getFileName());
       return;
     }
-    log.info("Gỡ plugin '{}' ({} bị xoá)", id, file.getFileName());
+    log.info("Removing plugin '{}' ({} was deleted)", id, file.getFileName());
     service.unloadOne(id);
   }
 
   private void onCreatedOrModified(Path file) throws InterruptedException {
     if (!waitUntilStable(file)) {
-      log.warn("File {} chưa ổn định sau khi chờ, bỏ qua lần này", file.getFileName());
+      log.warn("File {} is still not stable after waiting, skipping this time", file.getFileName());
       return;
     }
     String id = service.pluginIdOf(file);
     if (id != null) {
-      log.info("Reload plugin '{}' ({} thay đổi)", id, file.getFileName());
+      log.info("Reloading plugin '{}' ({} changed)", id, file.getFileName());
       service.unloadOne(id);
     } else {
-      log.info("Nạp plugin mới từ {}", file.getFileName());
+      log.info("Loading new plugin from {}", file.getFileName());
     }
     service.loadOne(file);
   }
@@ -135,7 +135,7 @@ public class PluginWatcher implements Runnable, AutoCloseable {
         Thread.sleep(STABLE_CHECK_MS);
       }
     } catch (IOException e) {
-      log.warn("Không đọc được kích thước {}", file, e);
+      log.warn("Unable to read the size of {}", file, e);
     }
     return false;
   }

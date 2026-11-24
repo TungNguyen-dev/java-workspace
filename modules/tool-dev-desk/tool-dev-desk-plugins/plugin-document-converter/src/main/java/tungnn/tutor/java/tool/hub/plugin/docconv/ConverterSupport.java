@@ -27,7 +27,7 @@ final class ConverterSupport {
     } catch (ToolException e) {
       throw e;
     } catch (Exception e) {
-      throw new ToolException("Chuyển đổi thất bại: " + rootMessage(e));
+      throw new ToolException("Conversion failed: " + rootMessage(e));
     } finally {
       t.setContextClassLoader(previous);
     }
@@ -59,7 +59,7 @@ final class ConverterSupport {
 
   static void requireExtension(ToolFile file, String... extensions) throws ToolException {
     if (file == null || file.filename() == null || file.filename().isBlank()) {
-      throw new ToolException("Tên file không hợp lệ");
+      throw new ToolException("Invalid file name");
     }
     String name = file.filename().toLowerCase(Locale.ROOT);
     if (extensions != null) {
@@ -71,7 +71,7 @@ final class ConverterSupport {
     }
     String expected = extensions == null ? "" : String.join(", ", extensions);
     throw new ToolException(
-        "File '" + file.filename() + "' không đúng định dạng, cần: " + expected);
+        "File '" + file.filename() + "' has the wrong format, expected: " + expected);
   }
 
   static String baseName(String filename) {
