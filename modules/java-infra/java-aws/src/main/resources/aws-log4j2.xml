@@ -12,7 +12,7 @@
         <!-- AWS SDK logging -->
         <Logger name="software.amazon.awssdk" level="INFO"/>
 
-        <!-- Debug khi cần -->
+        <!-- Debug when needed -->
         <Logger name="software.amazon.awssdk.request" level="DEBUG"/>
 
         <Root level="INFO">
