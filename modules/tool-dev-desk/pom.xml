@@ -13,7 +13,7 @@
         <module>tool-dev-desk-plugins/plugin-base64</module>
         <module>tool-dev-desk-plugins/plugin-document-converter</module>
         <module>tool-dev-desk-plugins/plugin-docs-trans</module>
-        <module>tool-dev-desk-plugins/plugin-med-md-refine</module>
+        <module>tool-dev-desk-plugins/plugin-med-doc-trans</module>
         <module>tool-dev-desk-app</module>
     </modules>
     <properties>
