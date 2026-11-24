@@ -5,7 +5,7 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
-import tungnn.tutor.java.selenium.driver.options.ChromeOptionUtil;
+import tungnn.tutor.java.selenium.driver.chrome.ChromeDriverUtils;
 
 public class PooledWebDriverPool implements WebDriverPool {
 
@@ -29,11 +29,11 @@ public class PooledWebDriverPool implements WebDriverPool {
     try {
       WebDriver driver = pool.borrowObject();
       if (driver instanceof ChromeDriver chromeDriver) {
-        ChromeOptionUtil.removeWebdriverAttribute(chromeDriver);
+        ChromeDriverUtils.removeWebdriverAttribute(chromeDriver);
       }
       return driver;
     } catch (Exception e) {
-      throw new RuntimeException("Không thể lấy WebDriver từ Pool", e);
+      throw new RuntimeException("Unable to borrow a WebDriver from the pool", e);
     }
   }
 

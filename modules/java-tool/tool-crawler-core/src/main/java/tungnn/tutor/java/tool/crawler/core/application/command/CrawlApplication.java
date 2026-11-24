@@ -15,8 +15,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import org.openqa.selenium.WebDriver;
-import tungnn.tutor.java.selenium.driver.ChromeWebDriverFactory;
-import tungnn.tutor.java.selenium.driver.options.ChromeOptionsFactory;
+import tungnn.tutor.java.selenium.driver.chrome.ChromeDriverUtils;
 import tungnn.tutor.java.tool.crawler.core.application.model.CrawlResult;
 import tungnn.tutor.java.tool.crawler.core.application.service.CrawlService;
 import tungnn.tutor.java.tool.crawler.core.application.service.impl.WebPageCrawlService;
@@ -37,8 +36,7 @@ public class CrawlApplication {
   private static final Path DONE_DIR = STORAGE.resolve("03-done");
 
   static void main(String[] args) throws IOException {
-    var driverFactory = new ChromeWebDriverFactory(new ChromeOptionsFactory());
-    var drivers = driverFactory.getWebDrivers(DRIVER_COUNT);
+    var drivers = ChromeDriverUtils.createDrivers(DRIVER_COUNT);
 
     Map<PageSource, BlockingQueue<PageCrawler>> pools =
         Map.of(
@@ -68,7 +66,7 @@ public class CrawlApplication {
   }
 
   private static BlockingQueue<PageCrawler> newPool(
-      List<WebDriver> drivers, Function<WebDriver, PageCrawler> crawlerFactory) {
+      List<? extends WebDriver> drivers, Function<WebDriver, PageCrawler> crawlerFactory) {
     return new LinkedBlockingDeque<>(drivers.stream().map(crawlerFactory).toList());
   }
 

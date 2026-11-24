@@ -5,8 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import tungnn.tutor.java.core.lib.io.filesystem.FileUtil;
-import tungnn.tutor.java.selenium.driver.ChromeWebDriverFactory;
-import tungnn.tutor.java.selenium.driver.options.ChromeOptionsFactory;
+import tungnn.tutor.java.selenium.driver.chrome.ChromeDriverUtils;
 import tungnn.tutor.java.tool.crawler.core.infra.obsidian.ObsidianNote;
 import tungnn.tutor.java.tool.crawler.core.infra.webpage.JavaJLSPage;
 
@@ -24,8 +23,7 @@ public class CrawlApplicationJavaJlsUseCase {
   }
 
   private void run() throws IOException {
-    var driverFactory = new ChromeWebDriverFactory(new ChromeOptionsFactory());
-    var driver = driverFactory.getWebDrivers(1).getFirst();
+    var driver = ChromeDriverUtils.createDriver("profile_0");
     try {
       var page = new JavaJLSPage(driver);
       for (var url : readUrls()) {

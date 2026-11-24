@@ -24,8 +24,8 @@ public class UnitPageFileNameStrategy implements FileNameStrategy<PageCrawlResul
     String slug =
         raw.trim()
             .toLowerCase(Locale.ROOT)
-            .replaceAll("[^\\p{Alnum}]+", "-") // ký tự không hợp lệ -> '-'
-            .replaceAll("(^-+|-+$)", ""); // bỏ '-' ở đầu/cuối
+            .replaceAll("[^\\p{Alnum}]+", "-") // invalid characters -> '-'
+            .replaceAll("(^-+|-+$)", ""); // strip leading/trailing '-'
 
     if (slug.length() > MAX_LENGTH) {
       slug = slug.substring(0, MAX_LENGTH).replaceAll("-+$", "");

@@ -5,7 +5,7 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.*;
 import org.openqa.selenium.*;
-import tungnn.tutor.java.selenium.util.ElementUtil;
+import tungnn.tutor.java.selenium.element.ElementUtils;
 import tungnn.tutor.java.tool.crawler.core.infra.webpage.crawler.PageCrawlResult;
 import tungnn.tutor.java.tool.crawler.core.infra.webpage.crawler.PageCrawler;
 
@@ -86,7 +86,7 @@ public class SpringDocPage extends BasePage implements PageCrawler {
 
     while (current != null && visited.size() < MAX_PAGES) {
       if (!visited.add(current)) {
-        break; // đã ghé thăm -> phát hiện vòng lặp, dừng an toàn
+        break; // already visited -> loop detected, stop safely
       }
       navigateTo(current);
       boolean hasArticle = waitForArticle().isPresent();
@@ -97,7 +97,7 @@ public class SpringDocPage extends BasePage implements PageCrawler {
 
   private Optional<WebElement> waitForArticle() {
     try {
-      return Optional.of(ElementUtil.findElement(driver, ARTICLE_CONTENT_SELECTOR, timeout()));
+      return Optional.of(ElementUtils.findElement(driver, ARTICLE_CONTENT_SELECTOR, timeout()));
     } catch (WebDriverException e) {
       return Optional.empty();
     }
@@ -116,7 +116,7 @@ public class SpringDocPage extends BasePage implements PageCrawler {
   }
 
   private Optional<String> findPaginationUrl(By locator) {
-    return ElementUtil.findElementIfPresent(driver, locator)
+    return ElementUtils.findElementIfPresent(driver, locator)
         .map(link -> {
           String href = link.getDomProperty("href");
           return (href == null || href.isBlank()) ? link.getDomAttribute("href") : href;
@@ -134,8 +134,8 @@ public class SpringDocPage extends BasePage implements PageCrawler {
   // =====================================================================================
 
   private String getTitle() {
-    return ElementUtil.findElementIfPresent(driver, TITLE_SELECTOR)
-        .map(ElementUtil::getText)
+    return ElementUtils.findElementIfPresent(driver, TITLE_SELECTOR)
+        .map(ElementUtils::getText)
         .filter(title -> !title.isBlank())
         .orElseGet(() -> {
           String docTitle = driver.getTitle();
@@ -145,7 +145,7 @@ public class SpringDocPage extends BasePage implements PageCrawler {
 
   private String getContent() {
     Optional<WebElement> article =
-        ElementUtil.findElementIfPresent(driver, ARTICLE_CONTENT_SELECTOR);
+        ElementUtils.findElementIfPresent(driver, ARTICLE_CONTENT_SELECTOR);
     if (article.isEmpty()) {
       return "";
     }
@@ -157,10 +157,10 @@ public class SpringDocPage extends BasePage implements PageCrawler {
           return s.strip();
         }
       } catch (WebDriverException ignored) {
-        // fallback bên dưới
+        // fall through to the fallback below
       }
     }
-    return ElementUtil.getText(root);
+    return ElementUtils.getText(root);
   }
 
   private String toAbsolute(String href) {

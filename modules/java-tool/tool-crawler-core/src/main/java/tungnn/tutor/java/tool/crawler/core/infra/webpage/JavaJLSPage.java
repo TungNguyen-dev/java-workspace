@@ -4,7 +4,7 @@ import java.time.Duration;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import tungnn.tutor.java.selenium.util.ElementUtil;
+import tungnn.tutor.java.selenium.element.ElementUtils;
 import tungnn.tutor.java.tool.crawler.core.infra.webpage.crawler.PageCrawlResult;
 import tungnn.tutor.java.tool.crawler.core.infra.webpage.crawler.PageCrawler;
 
@@ -35,17 +35,17 @@ public class JavaJLSPage extends BasePage implements PageCrawler {
       id = url.substring(url.lastIndexOf('/') + 1).replace(".html", "");
     }
 
-    var root = ElementUtil.findElement(driver, By.id(id), timeout());
+    var root = ElementUtils.findElement(driver, By.id(id), timeout());
 
     return new PageCrawlResult(url, getTitle(root), getContent(root, id));
   }
 
   private String getTitle(WebElement root) {
-    return ElementUtil.findChildElement(root, By.className("titlepage")).getText();
+    return ElementUtils.findChildElement(root, By.className("titlepage")).getText();
   }
 
   private String getContent(WebElement root, String id) {
-    var paragraphs = ElementUtil.findElements(root, By.cssSelector("p[id^='" + id + "']"));
+    var paragraphs = ElementUtils.findElements(root, By.cssSelector("p[id^='" + id + "']"));
 
     var content = new StringBuilder();
     for (var paragraph : paragraphs) {

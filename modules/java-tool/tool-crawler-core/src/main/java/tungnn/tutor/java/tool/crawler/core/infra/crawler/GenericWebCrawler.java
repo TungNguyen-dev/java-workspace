@@ -2,7 +2,7 @@ package tungnn.tutor.java.tool.crawler.core.infra.crawler;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import tungnn.tutor.java.selenium.util.ElementUtil;
+import tungnn.tutor.java.selenium.element.ElementUtils;
 import tungnn.tutor.java.tool.crawler.core.domain.AbstractWebCrawler;
 import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
 
@@ -23,7 +23,7 @@ public class GenericWebCrawler extends AbstractWebCrawler {
 
   @Override
   protected String getTitle() {
-    var headingElements = ElementUtil.findElements(driver, FIRST_HEADING_LOCATOR);
+    var headingElements = ElementUtils.findElements(driver, FIRST_HEADING_LOCATOR);
     if (headingElements.isEmpty()) {
       return "";
     }
@@ -32,7 +32,7 @@ public class GenericWebCrawler extends AbstractWebCrawler {
 
   @Override
   protected String getContentAsHtml() {
-    var rootElement = ElementUtil.findElement(driver, ROOT_HTML_LOCATOR);
-    return ElementUtil.getAttribute(rootElement, "outerHTML");
+    var rootElement = ElementUtils.findElement(driver, ROOT_HTML_LOCATOR);
+    return ElementUtils.getAttribute(rootElement, "outerHTML");
   }
 }

@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import tungnn.tutor.java.core.lib.io.filesystem.FileNameUtil;
 import tungnn.tutor.java.core.lib.io.filesystem.FileUtil;
-import tungnn.tutor.java.selenium.driver.ChromeWebDriverFactory;
-import tungnn.tutor.java.selenium.driver.options.ChromeOptionsFactory;
+import tungnn.tutor.java.selenium.driver.chrome.ChromeDriverUtils;
 import tungnn.tutor.java.tool.crawler.core.infra.obsidian.ObsidianNote;
 import tungnn.tutor.java.tool.crawler.core.infra.webpage.SpringDocPage;
 
@@ -18,8 +17,7 @@ public class CrawlApplicationSpringDocUseCase {
   }
 
   private void run() throws IOException {
-    var driverFactory = new ChromeWebDriverFactory(new ChromeOptionsFactory());
-    var driver = driverFactory.getWebDrivers(1).getFirst();
+    var driver = ChromeDriverUtils.createDriver("profile_0");
     try {
       var page = new SpringDocPage(driver);
       var results = page.crawlAll();

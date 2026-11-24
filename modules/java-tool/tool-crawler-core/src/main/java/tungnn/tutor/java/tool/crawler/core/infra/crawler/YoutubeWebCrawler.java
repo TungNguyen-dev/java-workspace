@@ -5,7 +5,7 @@ import org.jspecify.annotations.NonNull;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import tungnn.tutor.java.selenium.util.ElementUtil;
+import tungnn.tutor.java.selenium.element.ElementUtils;
 import tungnn.tutor.java.tool.crawler.core.domain.AbstractWebCrawler;
 import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
 
@@ -36,7 +36,7 @@ public class YoutubeWebCrawler extends AbstractWebCrawler {
   @Override
   protected String getTitle() {
     var element =
-        ElementUtil.waitUntil(
+        ElementUtils.waitUntil(
             driver, ExpectedConditions.visibilityOfElementLocated(TITLE_LOCATOR), timeout());
     return element.getText();
   }
@@ -52,26 +52,26 @@ public class YoutubeWebCrawler extends AbstractWebCrawler {
     driver.navigate().to(TRANSCRIPT_GENERATOR_URL);
 
     var formElement =
-        ElementUtil.waitUntil(
+        ElementUtils.waitUntil(
             driver, ExpectedConditions.visibilityOfElementLocated(FORM_LOCATOR), timeout());
 
-    var inputElement = ElementUtil.findElement(formElement, INPUT_LOCATOR);
-    ElementUtil.clear(inputElement);
-    ElementUtil.sendKeys(inputElement, videoUrl);
+    var inputElement = ElementUtils.findElement(formElement, INPUT_LOCATOR);
+    ElementUtils.clear(inputElement);
+    ElementUtils.sendKeys(inputElement, videoUrl);
 
-    var submitButton = ElementUtil.findElement(formElement, SUBMIT_BTN_LOCATOR);
+    var submitButton = ElementUtils.findElement(formElement, SUBMIT_BTN_LOCATOR);
     submitButton.submit();
   }
 
   private String extractTranscriptHtml() {
-    ElementUtil.waitUntil(
+    ElementUtils.waitUntil(
         driver,
         ExpectedConditions.visibilityOfAllElementsLocatedBy(TRANSCRIPT_ITEMS_LOCATOR),
         timeout());
 
-    var transcriptContainer = ElementUtil.findElement(driver, TRANSCRIPT_CONTAINER_LOCATOR);
+    var transcriptContainer = ElementUtils.findElement(driver, TRANSCRIPT_CONTAINER_LOCATOR);
 
-    return ElementUtil.findChildElements(transcriptContainer, TRANSCRIPT_LINKS_LOCATOR).stream()
+    return ElementUtils.findChildElements(transcriptContainer, TRANSCRIPT_LINKS_LOCATOR).stream()
         .map(link -> link.getAttribute("outerHTML"))
         .collect(Collectors.joining(" "));
   }

@@ -6,8 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 import tungnn.tutor.java.core.lib.io.filesystem.FileNameUtil;
 import tungnn.tutor.java.core.lib.io.filesystem.FileUtil;
-import tungnn.tutor.java.selenium.driver.ChromeWebDriverFactory;
-import tungnn.tutor.java.selenium.driver.options.ChromeOptionsFactory;
+import tungnn.tutor.java.selenium.driver.chrome.ChromeDriverUtils;
 import tungnn.tutor.java.tool.crawler.core.infra.obsidian.ObsidianNote;
 import tungnn.tutor.java.tool.crawler.core.infra.webpage.AwsDocSdkPage;
 
@@ -17,8 +16,7 @@ public class CrawlApplicationAwsDocSdk {
   private static final Path OUTPUT_DIR = Path.of("storage", "aws-sdk-2x");
 
   static void main() throws IOException {
-    var driverFactory = new ChromeWebDriverFactory(new ChromeOptionsFactory());
-    var driver = driverFactory.getWebDrivers(1).getFirst();
+    var driver = ChromeDriverUtils.createDriver("profile_0");
     try {
       var page = new AwsDocSdkPage(driver);
       var urls = readUrls();

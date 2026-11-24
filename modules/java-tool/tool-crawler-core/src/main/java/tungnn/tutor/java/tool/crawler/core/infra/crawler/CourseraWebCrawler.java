@@ -5,7 +5,7 @@ import org.jspecify.annotations.NonNull;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import tungnn.tutor.java.selenium.util.ElementUtil;
+import tungnn.tutor.java.selenium.element.ElementUtils;
 import tungnn.tutor.java.tool.crawler.core.domain.AbstractWebCrawler;
 import tungnn.tutor.java.tool.crawler.core.domain.CrawlRequest;
 
@@ -29,7 +29,7 @@ public class CourseraWebCrawler extends AbstractWebCrawler {
   @Override
   protected String getTitle() {
     var element =
-        ElementUtil.waitUntil(
+        ElementUtils.waitUntil(
             driver, ExpectedConditions.visibilityOfElementLocated(VIDEO_TITLE_LOCATOR), timeout());
     return element.getText();
   }
@@ -39,7 +39,7 @@ public class CourseraWebCrawler extends AbstractWebCrawler {
     ensureTranscriptTabIsOpen();
 
     // Wait explicitly until at least one transcript container becomes visible
-    ElementUtil.waitUntil(
+    ElementUtils.waitUntil(
         driver,
         ExpectedConditions.visibilityOfElementLocated(TRANSCRIPT_CONTAINERS_LOCATOR),
         timeout());
@@ -49,22 +49,22 @@ public class CourseraWebCrawler extends AbstractWebCrawler {
 
     // Concatenate the innerHTML of all found elements
     return transcriptContainers.stream()
-        .map(element -> ElementUtil.getAttribute(element, "innerHTML"))
+        .map(element -> ElementUtils.getAttribute(element, "innerHTML"))
         .collect(Collectors.joining("\n"));
   }
 
   private void ensureTranscriptTabIsOpen() {
     var transcriptButton =
-        ElementUtil.waitUntil(
+        ElementUtils.waitUntil(
             driver, ExpectedConditions.elementToBeClickable(TRANSCRIPT_TAB_BTN_LOCATOR), timeout());
 
     var isPressed =
-        Boolean.parseBoolean(ElementUtil.getAttribute(transcriptButton, "aria-pressed"));
+        Boolean.parseBoolean(ElementUtils.getAttribute(transcriptButton, "aria-pressed"));
     if (!isPressed) {
       transcriptButton.click();
 
       // Wait explicitly until the transcript containers become visible.
-      ElementUtil.waitUntil(
+      ElementUtils.waitUntil(
           driver,
           ExpectedConditions.visibilityOfElementLocated(TRANSCRIPT_CONTAINERS_LOCATOR),
           timeout());

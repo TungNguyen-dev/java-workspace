@@ -4,9 +4,9 @@ import java.time.Duration;
 import java.util.Objects;
 import org.openqa.selenium.WebDriver;
 import tungnn.tutor.java.infra.document.adapter.markdown.MarkdownDocumentUtils;
-import tungnn.tutor.java.selenium.util.DriverUtil;
-import tungnn.tutor.java.selenium.util.ElementUtil;
-import tungnn.tutor.java.selenium.util.WindowUtil;
+import tungnn.tutor.java.selenium.browser.NavigationUtils;
+import tungnn.tutor.java.selenium.element.ElementUtils;
+import tungnn.tutor.java.selenium.browser.ScriptUtils;
 
 public abstract class AbstractWebCrawler implements WebCrawler {
 
@@ -22,7 +22,7 @@ public abstract class AbstractWebCrawler implements WebCrawler {
   public CrawlResult crawl(CrawlRequest request) {
     var url = request.url();
     try {
-      DriverUtil.navigateTo(driver, url);
+      NavigationUtils.navigateTo(driver, url);
       waitForPageToLoad();
 
       var title = getTitle();
@@ -49,9 +49,9 @@ public abstract class AbstractWebCrawler implements WebCrawler {
   }
 
   private void waitForPageToLoad() {
-    ElementUtil.newWait(driver, timeout())
+    ElementUtils.newWait(driver, timeout())
         .until(driver ->
             Objects.equals(
-                WindowUtil.executeScript(driver, "return document.readyState"), "complete"));
+                ScriptUtils.executeScript(driver, "return document.readyState"), "complete"));
   }
 }

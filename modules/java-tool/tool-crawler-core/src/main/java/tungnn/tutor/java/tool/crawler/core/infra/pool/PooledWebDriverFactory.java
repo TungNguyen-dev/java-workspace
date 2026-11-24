@@ -8,7 +8,7 @@ import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.openqa.selenium.WebDriver;
-import tungnn.tutor.java.selenium.util.ChromeDriverUtils;
+import tungnn.tutor.java.selenium.driver.chrome.ChromeDriverUtils;
 
 public class PooledWebDriverFactory extends BasePooledObjectFactory<WebDriver> {
 
