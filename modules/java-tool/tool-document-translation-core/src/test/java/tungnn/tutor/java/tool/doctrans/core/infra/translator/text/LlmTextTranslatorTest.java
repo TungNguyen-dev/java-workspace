@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import tungnn.tutor.java.ai.client.LlmClient;
 import tungnn.tutor.java.ai.config.LlmProvider;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
 
@@ -86,6 +88,52 @@ class LlmTextTranslatorTest {
         var result = translator.translate(request("Hello"));
 
         assertThat(result).isInstanceOf(TextTranslationResult.Failure.class);
+    }
+
+    private static TextTranslationBatchRequest batchRequest(String... contents) {
+        var units = new java.util.ArrayList<TextTranslationRequest.TextUnit>();
+        for (int i = 0; i < contents.length; i++) {
+            units.add(new TextTranslationRequest.TextUnit("u" + i, contents[i]));
+        }
+        return new TextTranslationBatchRequest(units, LanguageCode.VI, null, null);
+    }
+
+    private static String translationOf(TextTranslationResult result) {
+        return ((TextTranslationResult.Success) result).translation().translation();
+    }
+
+    @Test
+    void shouldTranslateBatchWithSingleLlmCall() {
+        var llmClient = llmClient();
+        when(llmClient.chat(contains("MỘT mảng JSON"), anyString()))
+                .thenReturn("```json\n"
+                        + "[{\"id\":\"1\",\"translation\":\"Một\"},{\"id\":\"2\",\"translation\":\"Hai\"}]\n"
+                        + "```");
+
+        var results = new LlmTextTranslator(llmClient).translateBatch(batchRequest("一", "二"));
+
+        assertThat(results.stream().map(LlmTextTranslatorTest::translationOf)).containsExactly("Một", "Hai");
+        verify(llmClient, times(1)).chat(anyString(), anyString());
+    }
+
+    @Test
+    void shouldFallBackToSingleCallsWhenBatchJsonIsInvalid() {
+        var llmClient = llmClient();
+        when(llmClient.chat(contains("MỘT mảng JSON"), anyString())).thenReturn("not json");
+        when(llmClient.chat(contains("Phương tễ học"), anyString())).thenReturn("Dịch đơn");
+
+        var results = new LlmTextTranslator(llmClient).translateBatch(batchRequest("一", "二"));
+
+        assertThat(results.stream().map(LlmTextTranslatorTest::translationOf)).containsExactly("Dịch đơn", "Dịch đơn");
+    }
+
+    @Test
+    void defaultBatchPolicyShouldDependOnProvider() {
+        assertThat(LlmTextTranslator.defaultBatchPolicy(LlmProvider.OLLAMA).maxUnits())
+                .isEqualTo(5);
+        assertThat(LlmTextTranslator.defaultBatchPolicy(LlmProvider.GOOGLE_GENAI)
+                        .maxUnits())
+                .isEqualTo(20);
     }
 
     @Test

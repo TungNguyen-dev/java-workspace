@@ -14,10 +14,12 @@ import org.slf4j.LoggerFactory;
 import tungnn.tutor.java.core.lib.io.filesystem.FileNameUtils;
 import tungnn.tutor.java.core.lib.multithread.ConcurrentUtils;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextUnitBatchUtils;
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.text.memory.NoOpTextTranslationMemory;
 
 public abstract class AbstractDocumentTranslator<D> implements DocumentTranslator {
@@ -103,16 +105,33 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
             }
         }
         LOGGER.debug("Deduplicated {} text blocks into {} unique contents.", textBlocks.size(), uniqueContents.size());
-        var maxConcurrency = Math.max(1, textTranslator.maxConcurrency());
-        var contentTranslations = uniqueContents.isEmpty()
-                ? List.<ContentTranslation>of()
-                : ConcurrentUtils.executeConcurrently(
-                        new ArrayList<>(uniqueContents),
-                        content -> translateContent(request.targetLanguage(), content),
-                        maxConcurrency);
+        var targetLanguage = request.targetLanguage();
         Map<String, TextTranslationResult.TextTranslation> translationByContent = new HashMap<>();
-        for (var contentTranslation : contentTranslations) {
-            translationByContent.put(contentTranslation.content(), contentTranslation.translation());
+        var pendingUnits = new ArrayList<TextTranslationRequest.TextUnit>();
+        for (var content : uniqueContents) {
+            var textUnitId = UUID.randomUUID().toString();
+            var memorized = translationMemory.find(targetLanguage, content);
+            if (memorized.isPresent()) {
+                LOGGER.debug("Translation memory hit for text unit [id={}]", textUnitId);
+                translationByContent.put(
+                        content,
+                        new TextTranslationResult.TextTranslation(textUnitId, content, memorized.get(), targetLanguage));
+            } else {
+                LOGGER.debug("Translation memory miss for text unit [id={}]", textUnitId);
+                pendingUnits.add(new TextTranslationRequest.TextUnit(textUnitId, content));
+            }
+        }
+        var chunks = TextUnitBatchUtils.chunk(pendingUnits, textTranslator.batchPolicy());
+        LOGGER.debug("Split {} pending text units into {} chunks.", pendingUnits.size(), chunks.size());
+        var maxConcurrency = Math.max(1, textTranslator.maxConcurrency());
+        var chunkTranslations = chunks.isEmpty()
+                ? List.<List<ContentTranslation>>of()
+                : ConcurrentUtils.executeConcurrently(
+                        chunks, chunk -> translateChunk(targetLanguage, chunk), maxConcurrency);
+        for (var chunkTranslation : chunkTranslations) {
+            for (var contentTranslation : chunkTranslation) {
+                translationByContent.put(contentTranslation.content(), contentTranslation.translation());
+            }
         }
         var textBlockTranslations = new ArrayList<TextBlockTranslation>(textBlocks.size());
         for (var textBlock : textBlocks) {
@@ -125,27 +144,71 @@ public abstract class AbstractDocumentTranslator<D> implements DocumentTranslato
         return textBlockTranslations;
     }
 
-    private ContentTranslation translateContent(LanguageCode targetLanguage, String content) {
-        var textUnit = new TextTranslationRequest.TextUnit(UUID.randomUUID().toString(), content);
-        var memorized = translationMemory.find(targetLanguage, content);
-        if (memorized.isPresent()) {
-            LOGGER.debug("Translation memory hit for text unit [id={}]", textUnit.id());
-            return new ContentTranslation(
-                    content,
-                    new TextTranslationResult.TextTranslation(textUnit.id(), content, memorized.get(), targetLanguage));
+    private List<ContentTranslation> translateChunk(
+            LanguageCode targetLanguage, List<TextTranslationRequest.TextUnit> chunk) {
+        LOGGER.debug("Translating chunk of {} text units.", chunk.size());
+        var batchRequest = new TextTranslationBatchRequest(chunk, targetLanguage, null, null);
+        List<TextTranslationResult> results;
+        try {
+            results = textTranslator.translateBatch(batchRequest);
+        } catch (Exception e) {
+            LOGGER.warn("Chunk translation threw, translating {} text units individually", chunk.size(), e);
+            results = translateIndividually(targetLanguage, chunk);
         }
-        LOGGER.debug("Translation memory miss for text unit [id={}]", textUnit.id());
-        var textTranslationRequest = new TextTranslationRequest.Standard(textUnit, targetLanguage, null, null);
-        LOGGER.debug("Translating text unit [id={}] with content length: {}", textUnit.id(), content.length());
-        var textTranslationResult = textTranslator.translate(textTranslationRequest);
-        if (!isApplicable(textTranslationResult)) {
+        var successById = new HashMap<String, TextTranslationResult>();
+        for (var result : results) {
+            if (result instanceof TextTranslationResult.Success(TextTranslationResult.TextTranslation translation)
+                    && translation != null
+                    && translation.id() != null) {
+                successById.putIfAbsent(translation.id(), result);
+            }
+        }
+        var sameSize = results.size() == chunk.size();
+        var contentTranslations = new ArrayList<ContentTranslation>(chunk.size());
+        for (int i = 0; i < chunk.size(); i++) {
+            var textUnit = chunk.get(i);
+            var result = successById.get(textUnit.id());
+            if (result == null && sameSize && !isForeignSuccess(results.get(i), textUnit)) {
+                result = results.get(i);
+            }
+            contentTranslations.add(toContentTranslation(targetLanguage, textUnit, result));
+        }
+        return contentTranslations;
+    }
+
+    private List<TextTranslationResult> translateIndividually(
+            LanguageCode targetLanguage, List<TextTranslationRequest.TextUnit> chunk) {
+        var results = new ArrayList<TextTranslationResult>(chunk.size());
+        for (var textUnit : chunk) {
+            try {
+                results.add(textTranslator.translate(
+                        new TextTranslationRequest.Standard(textUnit, targetLanguage, null, null)));
+            } catch (Exception e) {
+                LOGGER.warn("Translation threw for text unit [id={}]", textUnit.id(), e);
+                results.add(null);
+            }
+        }
+        return results;
+    }
+
+    private static boolean isForeignSuccess(TextTranslationResult result, TextTranslationRequest.TextUnit textUnit) {
+        return result instanceof TextTranslationResult.Success(TextTranslationResult.TextTranslation translation)
+                && translation != null
+                && translation.id() != null
+                && !translation.id().equals(textUnit.id());
+    }
+
+    private ContentTranslation toContentTranslation(
+            LanguageCode targetLanguage, TextTranslationRequest.TextUnit textUnit, TextTranslationResult result) {
+        var content = textUnit.content();
+        if (!isApplicable(result)) {
             LOGGER.debug(
                     "Translation failed or returned non-success for text unit [id={}], falling back to original"
                             + " content",
                     textUnit.id());
             return new ContentTranslation(content, null);
         }
-        var translation = ((TextTranslationResult.Success) textTranslationResult).translation();
+        var translation = ((TextTranslationResult.Success) result).translation();
         LOGGER.debug("Successfully translated text unit [id={}]", textUnit.id());
         if (isMemorizable(translation)) {
             translationMemory.save(targetLanguage, content, translation.translation());
