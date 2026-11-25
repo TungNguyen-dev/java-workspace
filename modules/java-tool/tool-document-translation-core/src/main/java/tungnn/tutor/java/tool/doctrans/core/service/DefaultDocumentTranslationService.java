@@ -12,14 +12,14 @@ import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.MarkdownDo
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.SlideShowDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.WordDocumentTranslator;
 
-public class DocumentTranslationServiceImpl implements DocumentTranslationService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DocumentTranslationServiceImpl.class);
+public class DefaultDocumentTranslationService implements DocumentTranslationService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDocumentTranslationService.class);
     private final WordDocumentTranslator wordDocumentTranslator;
     private final ExcelDocumentTranslator excelDocumentTranslator;
     private final SlideShowDocumentTranslator slideShowDocumentTranslator;
     private final MarkdownDocumentTranslator markdownDocumentTranslator;
 
-    public DocumentTranslationServiceImpl(
+    public DefaultDocumentTranslationService(
             WordDocumentTranslator wordDocumentTranslator,
             ExcelDocumentTranslator excelDocumentTranslator,
             SlideShowDocumentTranslator slideShowDocumentTranslator,
@@ -31,18 +31,18 @@ public class DocumentTranslationServiceImpl implements DocumentTranslationServic
     }
 
     @Override
-    public Path translate(Path documentPath, String targetLang) {
-        return handleTranslationResult(translateDocument(documentPath, targetLang));
+    public Path translateToPath(Path documentPath, String targetLang) {
+        return handleTranslationResult(translate(documentPath, targetLang));
     }
 
     @Override
-    public DocumentTranslationResult translateDocument(Path documentPath, String targetLang) {
+    public DocumentTranslationResult translate(Path documentPath, String targetLang) {
         validateInputs(documentPath, targetLang);
         var mediaType = TikaFormatDetectorUtils.detectMediaType(documentPath);
         var mimeType = TikaFormatDetectorUtils.findExtensionByMediaType(mediaType)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Unsupported or unknown file format for path: " + documentPath));
-        var request = new DocumentTranslationRequest.Standard(
+        var request = new DocumentTranslationRequest.Single(
                 new DocumentTranslationRequest.DocumentSource(documentPath),
                 LanguageCode.valueOf(targetLang.toUpperCase()),
                 null,
@@ -70,8 +70,8 @@ public class DocumentTranslationServiceImpl implements DocumentTranslationServic
             case DocumentTranslationResult.Success success -> {
                 LOGGER.info(
                         "Document translated successfully. Output path: {}",
-                        success.translation().path());
-                yield success.translation().path();
+                        success.translatedDocument().path());
+                yield success.translatedDocument().path();
             }
             case DocumentTranslationResult.Failure failure -> {
                 var err = failure.error();

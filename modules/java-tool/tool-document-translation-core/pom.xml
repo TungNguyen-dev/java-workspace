@@ -51,10 +51,6 @@
             <groupId>tungnn.tutor.java.infra</groupId>
             <artifactId>java-jackson</artifactId>
         </dependency>
-        <dependency>
-            <groupId>tungnn.tutor.java.infra</groupId>
-            <artifactId>java-selenium</artifactId>
-        </dependency>
     </dependencies>
 
 </project>

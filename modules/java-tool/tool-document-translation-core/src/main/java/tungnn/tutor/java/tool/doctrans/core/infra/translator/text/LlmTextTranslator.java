@@ -13,8 +13,6 @@ import tungnn.tutor.java.ai.util.LlmOutputUtils;
 import tungnn.tutor.java.core.lib.io.resource.ResourceUtils;
 import tungnn.tutor.java.jackson.JsonMapperUtils;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.AbstractTextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchPolicy;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
 
@@ -34,67 +32,39 @@ public class LlmTextTranslator extends AbstractTextTranslator {
 
     private final LlmClient llmClient;
     private final int maxConcurrency;
-    private final TextTranslationBatchPolicy batchPolicy;
 
     public LlmTextTranslator(LlmClient llmClient) {
         this(llmClient, defaultConcurrency(llmClient.provider()));
     }
 
     public LlmTextTranslator(LlmClient llmClient, int maxConcurrency) {
-        this(llmClient, maxConcurrency, defaultBatchPolicy(llmClient.provider()));
-    }
-
-    public LlmTextTranslator(LlmClient llmClient, int maxConcurrency, TextTranslationBatchPolicy batchPolicy) {
         this.llmClient = Objects.requireNonNull(llmClient, "llmClient must not be null");
         if (maxConcurrency < 1) {
             throw new IllegalArgumentException("maxConcurrency must be >= 1");
         }
         this.maxConcurrency = maxConcurrency;
-        this.batchPolicy = Objects.requireNonNull(batchPolicy, "batchPolicy must not be null");
         LOGGER.info(
-                "LlmTextTranslator initialized [provider={}, prompt={}, maxConcurrency={}, batchPolicy={}]",
+                "LlmTextTranslator initialized [provider={}, prompt={}, maxConcurrency={}]",
                 llmClient.provider(),
                 SYSTEM_PROMPT_RESOURCE,
-                maxConcurrency,
-                batchPolicy);
+                maxConcurrency);
     }
 
-    public static LlmTextTranslator create(
-            LlmClient llmClient, Integer maxConcurrency, Integer maxBatchUnits, Integer maxBatchChars) {
-        var provider = llmClient.provider();
-        var defaults = defaultBatchPolicy(provider);
+    public static LlmTextTranslator create(LlmClient llmClient, Integer maxConcurrency) {
         return new LlmTextTranslator(
-                llmClient,
-                maxConcurrency != null ? maxConcurrency : defaultConcurrency(provider),
-                new TextTranslationBatchPolicy(
-                        maxBatchUnits != null ? maxBatchUnits : defaults.maxUnits(),
-                        maxBatchChars != null ? maxBatchChars : defaults.maxChars()));
-    }
-
-    static TextTranslationBatchPolicy defaultBatchPolicy(LlmProvider provider) {
-        return switch (provider) {
-            case OLLAMA, OLLAMA_OPENAI, LM_STUDIO, VLLM -> new TextTranslationBatchPolicy(5, 2000);
-            default -> new TextTranslationBatchPolicy(20, 3000);
-        };
+                llmClient, maxConcurrency != null ? maxConcurrency : defaultConcurrency(llmClient.provider()));
     }
 
     @Override
-    public TextTranslationBatchPolicy batchPolicy() {
-        return batchPolicy;
-    }
-
-    @Override
-    protected List<TextTranslationResult.TextTranslation> doTranslateBatch(TextTranslationBatchRequest request) {
+    protected List<TextTranslationResult.TranslatedText> doTranslateBatch(TextTranslationRequest.Batch request) {
         var sourceUnits = request.textUnits();
         var numberedUnits = new ArrayList<TextTranslationRequest.TextUnit>(sourceUnits.size());
         for (int i = 0; i < sourceUnits.size(); i++) {
-            numberedUnits.add(new TextTranslationRequest.TextUnit(String.valueOf(i + 1), sourceUnits.get(i).content()));
+            numberedUnits.add(new TextTranslationRequest.TextUnit(
+                    String.valueOf(i + 1), sourceUnits.get(i).content()));
         }
-        var numberedRequest = new TextTranslationBatchRequest(
-                numberedUnits,
-                request.targetLanguage(),
-                request.translationContext(),
-                request.translationGlossary());
+        var numberedRequest = new TextTranslationRequest.Batch(
+                numberedUnits, request.targetLanguage(), request.translationContext(), request.translationGlossary());
         var userPrompt = OBJECT_MAPPER.writeValueAsString(numberedRequest);
         LOGGER.trace("Batch User Prompt (JSON payload): {}", userPrompt);
         var raw = LlmOutputUtils.clean(llmClient.chat(BATCH_SYSTEM_PROMPT, userPrompt));
@@ -114,12 +84,12 @@ public class LlmTextTranslator extends AbstractTextTranslator {
                 LOGGER.warn("Duplicate batch item id [{}] ignored", item.id());
             }
         }
-        var translations = new ArrayList<TextTranslationResult.TextTranslation>(sourceUnits.size());
+        var translations = new ArrayList<TextTranslationResult.TranslatedText>(sourceUnits.size());
         for (int i = 0; i < sourceUnits.size(); i++) {
             var translation = translationByIndex.get(String.valueOf(i + 1));
             if (translation != null) {
                 var textUnit = sourceUnits.get(i);
-                translations.add(new TextTranslationResult.TextTranslation(
+                translations.add(new TextTranslationResult.TranslatedText(
                         textUnit.id(), textUnit.content(), translation, request.targetLanguage()));
             }
         }
@@ -142,7 +112,7 @@ public class LlmTextTranslator extends AbstractTextTranslator {
     }
 
     @Override
-    protected TextTranslationResult.TextTranslation doTranslate(TextTranslationRequest request) {
+    protected TextTranslationResult.TranslatedText doTranslate(TextTranslationRequest.Single request) {
         var userPrompt = OBJECT_MAPPER.writeValueAsString(request);
         LOGGER.trace("User Prompt (JSON payload): {}", userPrompt);
         var translated = LlmOutputUtils.clean(llmClient.chat(SYSTEM_PROMPT, userPrompt));
@@ -152,6 +122,6 @@ public class LlmTextTranslator extends AbstractTextTranslator {
             throw new IllegalStateException("%s returned an empty translation for text unit [id=%s]"
                     .formatted(llmClient.provider(), textUnit.id()));
         }
-        return new TextTranslationResult.TextTranslation(textUnit.id(), source, translated, request.targetLanguage());
+        return new TextTranslationResult.TranslatedText(textUnit.id(), source, translated, request.targetLanguage());
     }
 }

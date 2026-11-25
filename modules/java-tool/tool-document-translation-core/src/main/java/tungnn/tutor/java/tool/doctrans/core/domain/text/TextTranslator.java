@@ -1,24 +1,15 @@
 package tungnn.tutor.java.tool.doctrans.core.domain.text;
 
-import java.util.List;
-
 public interface TextTranslator {
+
     int DEFAULT_MAX_CONCURRENCY = 5;
 
-    TextTranslationResult translate(TextTranslationRequest request);
+    TextTranslationResult.Single translate(TextTranslationRequest.Single request);
 
-    default List<TextTranslationResult> translateBatch(TextTranslationBatchRequest request) {
-        return request.textUnits().stream()
-                .map(textUnit -> translate(new TextTranslationRequest.Standard(
-                        textUnit,
-                        request.targetLanguage(),
-                        request.translationContext(),
-                        request.translationGlossary())))
-                .toList();
-    }
-
-    default TextTranslationBatchPolicy batchPolicy() {
-        return TextTranslationBatchPolicy.SINGLE;
+    default TextTranslationResult.Batch translateBatch(TextTranslationRequest.Batch request) {
+        return new TextTranslationResult.Batch(request.textUnits().stream()
+                .map(textUnit -> translate(request.single(textUnit)))
+                .toList());
     }
 
     default int maxConcurrency() {

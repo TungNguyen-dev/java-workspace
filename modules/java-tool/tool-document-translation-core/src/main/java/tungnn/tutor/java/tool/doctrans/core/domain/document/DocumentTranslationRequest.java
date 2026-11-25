@@ -1,23 +1,46 @@
 package tungnn.tutor.java.tool.doctrans.core.domain.document;
 
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
 
-public interface DocumentTranslationRequest {
-    DocumentSource documentSource();
+public sealed interface DocumentTranslationRequest
+        permits DocumentTranslationRequest.Single, DocumentTranslationRequest.Batch {
 
     LanguageCode targetLanguage();
 
+    TranslationContext translationContext();
+
+    TranslationGlossary translationGlossary();
+
     record DocumentSource(Path path) {}
 
-    record DocumentTranslationContext() {}
+    record TranslationContext() {}
 
-    record DocumentTranslationGlossary() {}
+    record TranslationGlossary() {}
 
-    record Standard(
+    record Single(
             DocumentSource documentSource,
             LanguageCode targetLanguage,
-            DocumentTranslationContext translationContext,
-            DocumentTranslationGlossary translationGlossary)
+            TranslationContext translationContext,
+            TranslationGlossary translationGlossary)
             implements DocumentTranslationRequest {}
+
+    record Batch(
+            List<DocumentSource> documentSources,
+            LanguageCode targetLanguage,
+            TranslationContext translationContext,
+            TranslationGlossary translationGlossary)
+            implements DocumentTranslationRequest {
+
+        public Batch {
+            Objects.requireNonNull(documentSources, "documentSources must not be null");
+            documentSources = List.copyOf(documentSources);
+        }
+
+        public Single single(DocumentSource documentSource) {
+            return new Single(documentSource, targetLanguage, translationContext, translationGlossary);
+        }
+    }
 }

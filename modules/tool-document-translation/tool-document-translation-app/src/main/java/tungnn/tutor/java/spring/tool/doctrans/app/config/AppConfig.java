@@ -10,7 +10,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tungnn.tutor.java.ai.util.LlmClientUtils;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslator;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchOverride;
+import tungnn.tutor.java.tool.doctrans.core.domain.cache.TranslationCache;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.ExcelDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.MarkdownDocumentTranslator;
@@ -18,9 +19,9 @@ import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.SlideShowD
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.WordDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.text.DummyTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.text.LlmTextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infra.translator.text.memory.CsvFileTextTranslationMemory;
+import tungnn.tutor.java.tool.doctrans.core.infra.cache.CsvFileTranslationCache;
 import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationService;
-import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationServiceImpl;
+import tungnn.tutor.java.tool.doctrans.core.service.DefaultDocumentTranslationService;
 
 @Configuration
 public class AppConfig {
@@ -41,41 +42,48 @@ public class AppConfig {
         LOGGER.info("Using LLM text translator: {}", properties);
         var llmClient = LlmClientUtils.create(properties);
         var settings = translatorConfig.llmSettings();
-        return LlmTextTranslator.create(
-                llmClient, settings.maxConcurrency(), settings.maxBatchUnits(), settings.maxBatchChars());
+        return LlmTextTranslator.create(llmClient, settings.maxConcurrency());
+    }
+
+    private TextTranslationBatchOverride batchOverride() {
+        if (translatorConfig.isDummy()) {
+            return TextTranslationBatchOverride.NONE;
+        }
+        var settings = translatorConfig.llmSettings();
+        return new TextTranslationBatchOverride(settings.maxBatchUnits(), settings.maxBatchChars());
     }
 
     @Bean
-    public TextTranslationMemory textTranslationMemory() {
-        return new CsvFileTextTranslationMemory(docTransConfig.memoryDir());
+    public TranslationCache textTranslationCache() {
+        return new CsvFileTranslationCache(docTransConfig.memoryDir());
     }
 
     @Bean
     @Qualifier("wordDocumentTranslator")
     public DocumentTranslator wordDocumentTranslator(
-            TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-        return new WordDocumentTranslator(textTranslator, textTranslationMemory);
+            TextTranslator textTranslator, TranslationCache textTranslationCache) {
+        return new WordDocumentTranslator(textTranslator, textTranslationCache, batchOverride());
     }
 
     @Bean
     @Qualifier("excelDocumentTranslator")
     public DocumentTranslator excelDocumentTranslator(
-            TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-        return new ExcelDocumentTranslator(textTranslator, textTranslationMemory);
+            TextTranslator textTranslator, TranslationCache textTranslationCache) {
+        return new ExcelDocumentTranslator(textTranslator, textTranslationCache, batchOverride());
     }
 
     @Bean
     @Qualifier("slideShowDocumentTranslator")
     public DocumentTranslator slideShowDocumentTranslator(
-            TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-        return new SlideShowDocumentTranslator(textTranslator, textTranslationMemory);
+            TextTranslator textTranslator, TranslationCache textTranslationCache) {
+        return new SlideShowDocumentTranslator(textTranslator, textTranslationCache, batchOverride());
     }
 
     @Bean
     @Qualifier("markdownDocumentTranslator")
     public DocumentTranslator markdownDocumentTranslator(
-            TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-        return new MarkdownDocumentTranslator(textTranslator, textTranslationMemory);
+            TextTranslator textTranslator, TranslationCache textTranslationCache) {
+        return new MarkdownDocumentTranslator(textTranslator, textTranslationCache, batchOverride());
     }
 
     @Bean
@@ -84,7 +92,7 @@ public class AppConfig {
             @Qualifier("excelDocumentTranslator") DocumentTranslator excelDocumentTranslator,
             @Qualifier("slideShowDocumentTranslator") DocumentTranslator slideShowDocumentTranslator,
             @Qualifier("markdownDocumentTranslator") DocumentTranslator markdownDocumentTranslator) {
-        return new DocumentTranslationServiceImpl(
+        return new DefaultDocumentTranslationService(
                 (WordDocumentTranslator) wordDocumentTranslator,
                 (ExcelDocumentTranslator) excelDocumentTranslator,
                 (SlideShowDocumentTranslator) slideShowDocumentTranslator,

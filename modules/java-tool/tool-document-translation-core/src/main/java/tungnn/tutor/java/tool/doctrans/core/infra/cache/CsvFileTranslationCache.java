@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.doctrans.core.infra.translator.text.memory;
+package tungnn.tutor.java.tool.doctrans.core.infra.cache;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -17,11 +17,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tungnn.tutor.java.csv.CsvFormatUtils;
 import tungnn.tutor.java.csv.CsvUtils;
+import tungnn.tutor.java.tool.doctrans.core.domain.cache.TranslationCache;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 
-public class CsvFileTextTranslationMemory implements TextTranslationMemory {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CsvFileTextTranslationMemory.class);
+public class CsvFileTranslationCache implements TranslationCache {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CsvFileTranslationCache.class);
     private static final String FILE_NAME_PREFIX = "text-translation-memory_";
     private static final String FILE_EXTENSION = ".csv";
     private static final String COLUMN_SOURCE = "source";
@@ -30,15 +30,15 @@ public class CsvFileTextTranslationMemory implements TextTranslationMemory {
 
     private static final CSVFormat CSV_FORMAT = CsvFormatUtils.createFormat(b -> b.setTrim(false));
 
-    private final Path memoryDir;
+    private final Path cacheDir;
     private final Map<LanguageCode, LanguagePartition> partitions = new ConcurrentHashMap<>();
 
-    public CsvFileTextTranslationMemory(Path memoryDir) {
-        this.memoryDir = Objects.requireNonNull(memoryDir, "memoryDir must not be null");
+    public CsvFileTranslationCache(Path cacheDir) {
+        this.cacheDir = Objects.requireNonNull(cacheDir, "cacheDir must not be null");
         try {
-            Files.createDirectories(memoryDir);
+            Files.createDirectories(cacheDir);
         } catch (IOException e) {
-            throw new UncheckedIOException("Failed to create memory directory: " + memoryDir, e);
+            throw new UncheckedIOException("Failed to create cache directory: " + cacheDir, e);
         }
     }
 
@@ -65,8 +65,8 @@ public class CsvFileTextTranslationMemory implements TextTranslationMemory {
         }
     }
 
-    public Path memoryFileOf(LanguageCode targetLanguage) {
-        return memoryDir.resolve(FILE_NAME_PREFIX + targetLanguage.name() + FILE_EXTENSION);
+    public Path cacheFileOf(LanguageCode targetLanguage) {
+        return cacheDir.resolve(FILE_NAME_PREFIX + targetLanguage.name() + FILE_EXTENSION);
     }
 
     private LanguagePartition partitionOf(LanguageCode targetLanguage) {
@@ -74,7 +74,7 @@ public class CsvFileTextTranslationMemory implements TextTranslationMemory {
     }
 
     private LanguagePartition load(LanguageCode targetLanguage) {
-        var file = memoryFileOf(targetLanguage);
+        var file = cacheFileOf(targetLanguage);
         var entries = new ConcurrentHashMap<String, String>();
         if (Files.notExists(file)) {
             return new LanguagePartition(file, entries);
@@ -83,7 +83,7 @@ public class CsvFileTextTranslationMemory implements TextTranslationMemory {
             records.filter(CSVRecord::isConsistent)
                     .forEach(r -> entries.put(r.get(COLUMN_SOURCE), r.get(COLUMN_TRANSLATION)));
         } catch (RuntimeException e) {
-            LOGGER.warn("Failed to load translation memory from {}", file, e);
+            LOGGER.warn("Failed to load translation cache from {}", file, e);
         }
         return new LanguagePartition(file, entries);
     }
@@ -97,7 +97,7 @@ public class CsvFileTextTranslationMemory implements TextTranslationMemory {
                     e -> new Object[] {e.source(), e.translation()},
                     CSV_FORMAT);
         } catch (RuntimeException e) {
-            LOGGER.warn("Failed to append translation memory entry to {}", file, e);
+            LOGGER.warn("Failed to append translation cache entry to {}", file, e);
         }
     }
 

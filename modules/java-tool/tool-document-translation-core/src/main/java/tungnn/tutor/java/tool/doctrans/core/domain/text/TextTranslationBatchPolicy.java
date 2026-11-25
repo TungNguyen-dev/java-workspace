@@ -1,6 +1,7 @@
 package tungnn.tutor.java.tool.doctrans.core.domain.text;
 
 public record TextTranslationBatchPolicy(int maxUnits, int maxChars) {
+
     public static final TextTranslationBatchPolicy SINGLE = new TextTranslationBatchPolicy(1, Integer.MAX_VALUE);
 
     public TextTranslationBatchPolicy {

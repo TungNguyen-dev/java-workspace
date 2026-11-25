@@ -110,11 +110,11 @@ public class TranslationJobService {
         repository.update(jobId, TranslationJob::markProcessing);
         var job = repository.find(jobId).orElseThrow();
         try {
-            var result = translationService.translateDocument(job.sourcePath(), job.targetLanguage());
+            var result = translationService.translate(job.sourcePath(), job.targetLanguage());
             switch (result) {
                 case DocumentTranslationResult.Success success -> {
                     repository.update(
-                            jobId, j -> j.markCompleted(success.translation().path()));
+                            jobId, j -> j.markCompleted(success.translatedDocument().path()));
                     LOGGER.info("Job [{}] completed", jobId);
                 }
                 case DocumentTranslationResult.Failure failure -> {

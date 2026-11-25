@@ -9,19 +9,35 @@ import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.poi.xssf.usermodel.XSSFSimpleShape;
 import tungnn.tutor.java.infra.document.utils.DocumentSemanticUnitCollector;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.AbstractDocumentTranslator;
+import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentSegment;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTextBlock;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslationRequest;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchOverride;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchPolicy;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.domain.cache.TranslationCache;
 
 public class ExcelDocumentTranslator extends AbstractDocumentTranslator<Workbook> {
+    private static final TextTranslationBatchPolicy DEFAULT_BATCH_POLICY = new TextTranslationBatchPolicy(20, 3000);
 
-    public ExcelDocumentTranslator(TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-        super(textTranslator, textTranslationMemory);
+    public ExcelDocumentTranslator(TextTranslator textTranslator, TranslationCache textTranslationCache) {
+        super(textTranslator, textTranslationCache);
+    }
+
+    public ExcelDocumentTranslator(
+            TextTranslator textTranslator,
+            TranslationCache textTranslationCache,
+            TextTranslationBatchOverride batchOverride) {
+        super(textTranslator, textTranslationCache, batchOverride);
     }
 
     @Override
-    protected Workbook openDocument(DocumentTranslationRequest request) {
+    protected TextTranslationBatchPolicy defaultBatchPolicy() {
+        return DEFAULT_BATCH_POLICY;
+    }
+
+    @Override
+    protected Workbook openDocument(DocumentTranslationRequest.Single request) {
         try {
             return WorkbookFactory.create(request.documentSource().path().toFile());
         } catch (IOException e) {
@@ -30,29 +46,48 @@ public class ExcelDocumentTranslator extends AbstractDocumentTranslator<Workbook
     }
 
     @Override
-    protected List<DocumentTextBlock> collectTextBlock(Workbook document) {
-        var textBlocks = new ArrayList<DocumentTextBlock>();
-        // 1. Cell
-        DocumentSemanticUnitCollector.collectCells(document).stream()
-                .map(CellDocumentTextBlock::new)
-                .forEach(textBlocks::add);
+    protected List<DocumentSegment> collectSegments(Workbook document) {
+        var segments = new ArrayList<DocumentSegment>();
+        // 1. Cell: the cells of one row form a segment
+        var rowBlocks = new ArrayList<DocumentTextBlock>();
+        Row currentRow = null;
+        for (var cell : DocumentSemanticUnitCollector.collectCells(document)) {
+            if (currentRow != null && cell.getRow() != currentRow) {
+                addSegment(segments, rowBlocks);
+                rowBlocks = new ArrayList<>();
+            }
+            currentRow = cell.getRow();
+            rowBlocks.add(new CellDocumentTextBlock(cell));
+        }
+        addSegment(segments, rowBlocks);
         // 2. Comment
-        DocumentSemanticUnitCollector.collectComments(document).stream()
-                .map(CommentDocumentTextBlock::new)
-                .forEach(textBlocks::add);
-        // 3. Header
+        addSegment(
+                segments,
+                DocumentSemanticUnitCollector.collectComments(document).stream()
+                        .<DocumentTextBlock>map(CommentDocumentTextBlock::new)
+                        .toList());
+        // 3. Header and 4. Footer: page furniture of the sheets
+        var furniture = new ArrayList<DocumentTextBlock>();
         DocumentSemanticUnitCollector.collectHeaders(document).stream()
                 .map(HeaderDocumentTextBlock::new)
-                .forEach(textBlocks::add);
-        // 4. Footer
+                .forEach(furniture::add);
         DocumentSemanticUnitCollector.collectFooters(document).stream()
                 .map(FooterDocumentTextBlock::new)
-                .forEach(textBlocks::add);
+                .forEach(furniture::add);
+        addSegment(segments, furniture);
         // 5. Shape
-        DocumentSemanticUnitCollector.collectTextShapes(document).stream()
-                .map(ShapeDocumentTextBlock::new)
-                .forEach(textBlocks::add);
-        return textBlocks;
+        addSegment(
+                segments,
+                DocumentSemanticUnitCollector.collectTextShapes(document).stream()
+                        .<DocumentTextBlock>map(ShapeDocumentTextBlock::new)
+                        .toList());
+        return segments;
+    }
+
+    private static void addSegment(List<DocumentSegment> segments, List<DocumentTextBlock> textBlocks) {
+        if (!textBlocks.isEmpty()) {
+            segments.add(new DocumentSegment(textBlocks));
+        }
     }
 
     @Override

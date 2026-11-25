@@ -12,17 +12,20 @@ public abstract class AbstractTextTranslator implements TextTranslator {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTextTranslator.class);
 
     @Override
-    public TextTranslationResult translate(TextTranslationRequest request) {
+    public TextTranslationResult.Single translate(TextTranslationRequest.Single request) {
         try {
             // Log full request record before calling implementation
             LOGGER.debug("Starting translation. Request: [{}]", request);
-            var textTranslation = doTranslate(request);
+            var translatedText = doTranslate(request);
             // Log full translation result record on success
-            LOGGER.debug("Completed translation successfully. Result: [{}]", textTranslation);
+            LOGGER.debug("Completed translation successfully. Result: [{}]", translatedText);
             var textUnit = request.textUnit();
-            var textTranslationNormalized = new TextTranslationResult.TextTranslation(
-                    textUnit.id(), textUnit.content(), textTranslation.translation(), textTranslation.languageCode());
-            return new TextTranslationResult.Success(textTranslationNormalized);
+            var normalizedText = new TextTranslationResult.TranslatedText(
+                    textUnit.id(),
+                    textUnit.content(),
+                    translatedText.translatedContent(),
+                    translatedText.targetLanguage());
+            return new TextTranslationResult.Success(normalizedText);
         } catch (Exception e) {
             LOGGER.error("Failed translation. Request: [{}]. Error: {}", request, e.getMessage(), e);
             return new TextTranslationResult.Failure(new TextTranslationResult.Error("", e.getMessage()));
@@ -30,17 +33,19 @@ public abstract class AbstractTextTranslator implements TextTranslator {
     }
 
     @Override
-    public List<TextTranslationResult> translateBatch(TextTranslationBatchRequest request) {
+    public TextTranslationResult.Batch translateBatch(TextTranslationRequest.Batch request) {
         var textUnits = request.textUnits();
         if (textUnits.size() <= 1) {
             return TextTranslator.super.translateBatch(request);
         }
-        Map<String, TextTranslationResult.TextTranslation> translationById = new HashMap<>();
+        Map<String, TextTranslationResult.TranslatedText> translatedTextById = new HashMap<>();
         try {
             LOGGER.debug("Starting batch translation of {} text units", textUnits.size());
-            for (var translation : doTranslateBatch(request)) {
-                if (translation != null && translation.id() != null && translation.translation() != null) {
-                    translationById.put(translation.id(), translation);
+            for (var translatedText : doTranslateBatch(request)) {
+                if (translatedText != null
+                        && translatedText.id() != null
+                        && translatedText.translatedContent() != null) {
+                    translatedTextById.put(translatedText.id(), translatedText);
                 }
             }
         } catch (Exception e) {
@@ -49,14 +54,17 @@ public abstract class AbstractTextTranslator implements TextTranslator {
                     textUnits.size(),
                     e.getMessage());
         }
-        var results = new TextTranslationResult[textUnits.size()];
+        var results = new TextTranslationResult.Single[textUnits.size()];
         var missing = new ArrayList<Integer>();
         for (int i = 0; i < textUnits.size(); i++) {
             var textUnit = textUnits.get(i);
-            var translation = translationById.get(textUnit.id());
-            if (isUsable(textUnit, translation)) {
-                results[i] = new TextTranslationResult.Success(new TextTranslationResult.TextTranslation(
-                        textUnit.id(), textUnit.content(), translation.translation(), request.targetLanguage()));
+            var translatedText = translatedTextById.get(textUnit.id());
+            if (isUsable(textUnit, translatedText)) {
+                results[i] = new TextTranslationResult.Success(new TextTranslationResult.TranslatedText(
+                        textUnit.id(),
+                        textUnit.content(),
+                        translatedText.translatedContent(),
+                        request.targetLanguage()));
             } else {
                 missing.add(i);
             }
@@ -64,41 +72,31 @@ public abstract class AbstractTextTranslator implements TextTranslator {
         if (!missing.isEmpty()) {
             LOGGER.warn("Missing batch translation for {} text units, translating individually", missing.size());
             var retried = ConcurrentUtils.executeConcurrently(
-                    missing,
-                    index -> translate(new TextTranslationRequest.Standard(
-                            textUnits.get(index),
-                            request.targetLanguage(),
-                            request.translationContext(),
-                            request.translationGlossary())),
-                    Math.max(1, maxConcurrency()));
+                    missing, index -> translate(request.single(textUnits.get(index))), Math.max(1, maxConcurrency()));
             for (int i = 0; i < missing.size(); i++) {
                 results[missing.get(i)] = retried.get(i);
             }
         }
-        return List.of(results);
+        return new TextTranslationResult.Batch(List.of(results));
     }
 
     private static boolean isUsable(
-            TextTranslationRequest.TextUnit textUnit, TextTranslationResult.TextTranslation translation) {
-        if (translation == null) {
+            TextTranslationRequest.TextUnit textUnit, TextTranslationResult.TranslatedText translatedText) {
+        if (translatedText == null) {
             return false;
         }
         var source = textUnit.content();
-        return !translation.translation().isBlank() || source == null || source.isBlank();
+        return !translatedText.translatedContent().isBlank() || source == null || source.isBlank();
     }
 
-    protected abstract TextTranslationResult.TextTranslation doTranslate(TextTranslationRequest request);
+    protected abstract TextTranslationResult.TranslatedText doTranslate(TextTranslationRequest.Single request);
 
-    protected List<TextTranslationResult.TextTranslation> doTranslateBatch(TextTranslationBatchRequest request) {
-        var translations = new ArrayList<TextTranslationResult.TextTranslation>(
+    protected List<TextTranslationResult.TranslatedText> doTranslateBatch(TextTranslationRequest.Batch request) {
+        var translations = new ArrayList<TextTranslationResult.TranslatedText>(
                 request.textUnits().size());
         for (var textUnit : request.textUnits()) {
             try {
-                translations.add(doTranslate(new TextTranslationRequest.Standard(
-                        textUnit,
-                        request.targetLanguage(),
-                        request.translationContext(),
-                        request.translationGlossary())));
+                translations.add(doTranslate(request.single(textUnit)));
             } catch (Exception e) {
                 LOGGER.warn("Batch item failed for text unit [id={}]: {}", textUnit.id(), e.getMessage());
             }

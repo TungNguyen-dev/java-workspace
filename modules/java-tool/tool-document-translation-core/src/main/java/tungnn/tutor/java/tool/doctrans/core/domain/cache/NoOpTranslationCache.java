@@ -1,13 +1,12 @@
-package tungnn.tutor.java.tool.doctrans.core.infra.translator.text.memory;
+package tungnn.tutor.java.tool.doctrans.core.domain.cache;
 
 import java.util.Optional;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
 
-public final class NoOpTextTranslationMemory implements TextTranslationMemory {
-    public static final NoOpTextTranslationMemory INSTANCE = new NoOpTextTranslationMemory();
+public final class NoOpTranslationCache implements TranslationCache {
+    public static final NoOpTranslationCache INSTANCE = new NoOpTranslationCache();
 
-    private NoOpTextTranslationMemory() {}
+    private NoOpTranslationCache() {}
 
     @Override
     public Optional<String> find(LanguageCode targetLanguage, String sourceText) {

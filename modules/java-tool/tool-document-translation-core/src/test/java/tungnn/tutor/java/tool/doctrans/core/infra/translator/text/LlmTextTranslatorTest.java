@@ -13,15 +13,14 @@ import org.junit.jupiter.api.Test;
 import tungnn.tutor.java.ai.client.LlmClient;
 import tungnn.tutor.java.ai.config.LlmProvider;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
 
 class LlmTextTranslatorTest {
 
-    private static TextTranslationRequest request(String content) {
+    private static TextTranslationRequest.Single request(String content) {
         var textUnit = new TextTranslationRequest.TextUnit("unit-1", content);
-        return new TextTranslationRequest.Standard(textUnit, LanguageCode.VI, null, null);
+        return new TextTranslationRequest.Single(textUnit, LanguageCode.VI, null, null);
     }
 
     private static LlmClient llmClient() {
@@ -43,11 +42,11 @@ class LlmTextTranslatorTest {
         var result = translator.translate(request("本品用于治疗高血压。"));
 
         assertThat(result).isInstanceOf(TextTranslationResult.Success.class);
-        var translation = ((TextTranslationResult.Success) result).translation();
-        assertThat(translation.id()).isEqualTo("unit-1");
-        assertThat(translation.original()).isEqualTo("本品用于治疗高血压。");
-        assertThat(translation.translation()).isEqualTo("Thuốc này dùng để điều trị cao huyết áp.");
-        assertThat(translation.languageCode()).isEqualTo(LanguageCode.VI);
+        var translatedText = ((TextTranslationResult.Success) result).translatedText();
+        assertThat(translatedText.id()).isEqualTo("unit-1");
+        assertThat(translatedText.sourceContent()).isEqualTo("本品用于治疗高血压。");
+        assertThat(translatedText.translatedContent()).isEqualTo("Thuốc này dùng để điều trị cao huyết áp.");
+        assertThat(translatedText.targetLanguage()).isEqualTo(LanguageCode.VI);
     }
 
     @Test
@@ -66,8 +65,8 @@ class LlmTextTranslatorTest {
 
         var result = translator.translate(request("Hello"));
 
-        var translation = ((TextTranslationResult.Success) result).translation();
-        assertThat(translation.translation()).isEqualTo("Xin chào");
+        var translatedText = ((TextTranslationResult.Success) result).translatedText();
+        assertThat(translatedText.translatedContent()).isEqualTo("Xin chào");
     }
 
     @Test
@@ -90,16 +89,16 @@ class LlmTextTranslatorTest {
         assertThat(result).isInstanceOf(TextTranslationResult.Failure.class);
     }
 
-    private static TextTranslationBatchRequest batchRequest(String... contents) {
+    private static TextTranslationRequest.Batch batchRequest(String... contents) {
         var units = new java.util.ArrayList<TextTranslationRequest.TextUnit>();
         for (int i = 0; i < contents.length; i++) {
             units.add(new TextTranslationRequest.TextUnit("u" + i, contents[i]));
         }
-        return new TextTranslationBatchRequest(units, LanguageCode.VI, null, null);
+        return new TextTranslationRequest.Batch(units, LanguageCode.VI, null, null);
     }
 
-    private static String translationOf(TextTranslationResult result) {
-        return ((TextTranslationResult.Success) result).translation().translation();
+    private static String translationOf(TextTranslationResult.Single result) {
+        return ((TextTranslationResult.Success) result).translatedText().translatedContent();
     }
 
     @Test
@@ -112,7 +111,8 @@ class LlmTextTranslatorTest {
 
         var results = new LlmTextTranslator(llmClient).translateBatch(batchRequest("一", "二"));
 
-        assertThat(results.stream().map(LlmTextTranslatorTest::translationOf)).containsExactly("Một", "Hai");
+        assertThat(results.results().stream().map(LlmTextTranslatorTest::translationOf))
+                .containsExactly("Một", "Hai");
         verify(llmClient, times(1)).chat(anyString(), anyString());
     }
 
@@ -124,16 +124,8 @@ class LlmTextTranslatorTest {
 
         var results = new LlmTextTranslator(llmClient).translateBatch(batchRequest("一", "二"));
 
-        assertThat(results.stream().map(LlmTextTranslatorTest::translationOf)).containsExactly("Dịch đơn", "Dịch đơn");
-    }
-
-    @Test
-    void defaultBatchPolicyShouldDependOnProvider() {
-        assertThat(LlmTextTranslator.defaultBatchPolicy(LlmProvider.OLLAMA).maxUnits())
-                .isEqualTo(5);
-        assertThat(LlmTextTranslator.defaultBatchPolicy(LlmProvider.GOOGLE_GENAI)
-                        .maxUnits())
-                .isEqualTo(20);
+        assertThat(results.results().stream().map(LlmTextTranslatorTest::translationOf))
+                .containsExactly("Dịch đơn", "Dịch đơn");
     }
 
     @Test

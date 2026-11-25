@@ -13,6 +13,8 @@ import java.util.function.UnaryOperator;
 import tungnn.tutor.java.ai.config.LlmClientProperties;
 import tungnn.tutor.java.ai.config.LlmProvider;
 import tungnn.tutor.java.ai.util.LlmClientUtils;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchOverride;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchPolicy;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.text.DummyTextTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.text.LlmTextTranslator;
@@ -98,10 +100,8 @@ final class TranslatorFactory {
             LlmClientProperties props = LlmClientProperties.fromEnv(provider, withModel);
             var client = LlmClientUtils.create(props);
             Integer concurrency = parseInt(lookup.apply(ENV_MAX_CONCURRENCY));
-            Integer batchUnits = parseInt(lookup.apply(ENV_MAX_BATCH_UNITS));
-            Integer batchChars = parseInt(lookup.apply(ENV_MAX_BATCH_CHARS));
             try {
-                return LlmTextTranslator.create(client, concurrency, batchUnits, batchChars);
+                return LlmTextTranslator.create(client, concurrency);
             } catch (IllegalArgumentException e) {
                 throw new ToolException("Invalid translator settings: " + e.getMessage());
             }
@@ -111,6 +111,18 @@ final class TranslatorFactory {
                     + ". Set the environment variable or add it to the file "
                     + configFile.toAbsolutePath());
         }
+    }
+
+    TextTranslationBatchOverride batchOverride() throws ToolException {
+        UnaryOperator<String> lookup = lookup();
+        var override = new TextTranslationBatchOverride(
+                parseInt(lookup.apply(ENV_MAX_BATCH_UNITS)), parseInt(lookup.apply(ENV_MAX_BATCH_CHARS)));
+        try {
+            override.applyTo(new TextTranslationBatchPolicy(1, 1));
+        } catch (IllegalArgumentException e) {
+            throw new ToolException("Invalid batch settings: " + e.getMessage());
+        }
+        return override;
     }
 
     private UnaryOperator<String> lookup() {

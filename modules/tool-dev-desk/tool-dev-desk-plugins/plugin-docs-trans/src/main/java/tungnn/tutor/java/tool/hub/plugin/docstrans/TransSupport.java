@@ -8,14 +8,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
-import tungnn.tutor.java.tool.doctrans.core.infra.translator.text.memory.CsvFileTextTranslationMemory;
+import tungnn.tutor.java.tool.doctrans.core.domain.cache.TranslationCache;
+import tungnn.tutor.java.tool.doctrans.core.infra.cache.CsvFileTranslationCache;
 import tungnn.tutor.java.tool.hub.api.ToolContext;
 import tungnn.tutor.java.tool.hub.api.ToolException;
 
 final class TransSupport {
     static final String LANGUAGE_TYPE;
-    private static final Map<Path, TextTranslationMemory> MEMORIES = new ConcurrentHashMap<>();
+    private static final Map<Path, TranslationCache> MEMORIES = new ConcurrentHashMap<>();
 
     static {
         StringBuilder sb = new StringBuilder("enum:");
@@ -51,9 +51,9 @@ final class TransSupport {
                 : Path.of(System.getProperty("java.io.tmpdir"), "docs-trans");
     }
 
-    static TextTranslationMemory memory(ToolContext ctx) {
+    static TranslationCache memory(ToolContext ctx) {
         Path dir = dataDir(ctx).resolve("memory").toAbsolutePath().normalize();
-        return MEMORIES.computeIfAbsent(dir, CsvFileTextTranslationMemory::new);
+        return MEMORIES.computeIfAbsent(dir, CsvFileTranslationCache::new);
     }
 
     static LanguageCode language(Object value) throws ToolException {

@@ -52,6 +52,52 @@ class TextUnitBatchUtilsTest {
     }
 
     @Test
+    void shouldPackSmallSegmentsIntoOneChunk() {
+        var segments = List.of(List.of(unit("a", 1), unit("b", 1)), List.of(unit("c", 1)));
+
+        var chunks = TextUnitBatchUtils.chunkSegments(segments, new TextTranslationBatchPolicy(10, 1000));
+
+        assertThat(ids(chunks)).containsExactly(List.of("a", "b", "c"));
+    }
+
+    @Test
+    void shouldNeverSplitSegmentThatFits() {
+        var segments = List.of(List.of(unit("a", 1)), List.of(unit("b", 1), unit("c", 1)), List.of(unit("d", 1)));
+
+        var chunks = TextUnitBatchUtils.chunkSegments(segments, new TextTranslationBatchPolicy(2, 1000));
+
+        assertThat(ids(chunks)).containsExactly(List.of("a"), List.of("b", "c"), List.of("d"));
+    }
+
+    @Test
+    void shouldStartNewChunkWhenSegmentExceedsRemainingChars() {
+        var segments = List.of(List.of(unit("a", 40), unit("b", 40)), List.of(unit("c", 40)));
+
+        var chunks = TextUnitBatchUtils.chunkSegments(segments, new TextTranslationBatchPolicy(10, 300));
+
+        assertThat(ids(chunks)).containsExactly(List.of("a", "b"), List.of("c"));
+    }
+
+    @Test
+    void shouldSplitOversizedSegmentInOrderAndStartNextSegmentFresh() {
+        var segments = List.of(
+                List.of(unit("a", 1)), List.of(unit("x", 1), unit("y", 1), unit("z", 1)), List.of(unit("d", 1)));
+
+        var chunks = TextUnitBatchUtils.chunkSegments(segments, new TextTranslationBatchPolicy(2, 1000));
+
+        assertThat(ids(chunks)).containsExactly(List.of("a"), List.of("x", "y"), List.of("z"), List.of("d"));
+    }
+
+    @Test
+    void shouldIgnoreEmptySegments() {
+        var segments = List.of(List.<TextTranslationRequest.TextUnit>of(), List.of(unit("a", 1)));
+
+        var chunks = TextUnitBatchUtils.chunkSegments(segments, new TextTranslationBatchPolicy(5, 1000));
+
+        assertThat(ids(chunks)).containsExactly(List.of("a"));
+    }
+
+    @Test
     void singlePolicyShouldYieldOneUnitPerChunk() {
         var units = List.of(unit("a", 5), unit("b", 5), unit("c", 5));
 

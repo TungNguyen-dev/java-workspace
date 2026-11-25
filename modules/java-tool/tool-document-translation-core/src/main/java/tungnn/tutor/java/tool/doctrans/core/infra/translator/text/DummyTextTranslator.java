@@ -6,10 +6,10 @@ import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
 
 public class DummyTextTranslator extends AbstractTextTranslator {
     @Override
-    protected TextTranslationResult.TextTranslation doTranslate(TextTranslationRequest request) {
+    protected TextTranslationResult.TranslatedText doTranslate(TextTranslationRequest.Single request) {
         var textUnit = request.textUnit();
         var translatedContent = String.format("[DUMMY - %s] %s", request.targetLanguage(), textUnit.content());
-        return new TextTranslationResult.TextTranslation(
+        return new TextTranslationResult.TranslatedText(
                 textUnit.id(), textUnit.content(), translatedContent, request.targetLanguage());
     }
 }

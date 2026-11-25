@@ -10,20 +10,36 @@ import tungnn.tutor.java.infra.document.adapter.markdown.MarkdownDocumentUtils;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.AbstractDocumentTranslator;
+import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentSegment;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTextBlock;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslationRequest;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchOverride;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchPolicy;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.domain.cache.TranslationCache;
 
 public class MarkdownDocumentTranslator extends AbstractDocumentTranslator<MarkdownElement.MarkdownDocument> {
+    private static final TextTranslationBatchPolicy DEFAULT_BATCH_POLICY = new TextTranslationBatchPolicy(20, 3000);
     private final Map<MarkdownBlock, DocumentTextBlock> blockMapping = new IdentityHashMap<>();
 
-    public MarkdownDocumentTranslator(TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-        super(textTranslator, textTranslationMemory);
+    public MarkdownDocumentTranslator(TextTranslator textTranslator, TranslationCache textTranslationCache) {
+        super(textTranslator, textTranslationCache);
+    }
+
+    public MarkdownDocumentTranslator(
+            TextTranslator textTranslator,
+            TranslationCache textTranslationCache,
+            TextTranslationBatchOverride batchOverride) {
+        super(textTranslator, textTranslationCache, batchOverride);
     }
 
     @Override
-    protected MarkdownElement.MarkdownDocument openDocument(DocumentTranslationRequest request) {
+    protected TextTranslationBatchPolicy defaultBatchPolicy() {
+        return DEFAULT_BATCH_POLICY;
+    }
+
+    @Override
+    protected MarkdownElement.MarkdownDocument openDocument(DocumentTranslationRequest.Single request) {
         try {
             blockMapping.clear();
             return MarkdownDocumentUtils.readDocument(request.documentSource().path());
@@ -33,22 +49,33 @@ public class MarkdownDocumentTranslator extends AbstractDocumentTranslator<Markd
     }
 
     @Override
-    protected List<DocumentTextBlock> collectTextBlock(MarkdownElement.MarkdownDocument document) {
-        var textBlocks = new ArrayList<DocumentTextBlock>();
+    protected List<DocumentSegment> collectSegments(MarkdownElement.MarkdownDocument document) {
+        var segments = new ArrayList<DocumentSegment>();
+        var current = new ArrayList<DocumentTextBlock>();
         for (var block : document.blocks()) {
             DocumentTextBlock textBlock;
             if (block instanceof MarkdownBlock.Heading heading) {
+                // A heading opens a new segment: it stays together with the paragraphs under it.
+                flush(segments, current);
                 textBlock = new HeadingTextBlock(heading);
-                textBlocks.add(textBlock);
+                current.add(textBlock);
                 blockMapping.put(heading, textBlock);
             } else if (block instanceof MarkdownBlock.Paragraph paragraph) {
                 textBlock = new ParagraphTextBlock(paragraph);
-                textBlocks.add(textBlock);
+                current.add(textBlock);
                 blockMapping.put(paragraph, textBlock);
             }
             // CodeBlock and other elements are preserved intact (source code is not translated)
         }
-        return textBlocks;
+        flush(segments, current);
+        return segments;
+    }
+
+    private static void flush(List<DocumentSegment> segments, List<DocumentTextBlock> current) {
+        if (!current.isEmpty()) {
+            segments.add(new DocumentSegment(current));
+            current.clear();
+        }
     }
 
     @Override

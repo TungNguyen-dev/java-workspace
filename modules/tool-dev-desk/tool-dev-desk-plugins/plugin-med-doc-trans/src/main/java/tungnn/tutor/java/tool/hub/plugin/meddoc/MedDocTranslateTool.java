@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.pf4j.Extension;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
@@ -18,13 +19,15 @@ import tungnn.tutor.java.tool.hub.api.ToolExtension;
 import tungnn.tutor.java.tool.hub.api.ToolFile;
 import tungnn.tutor.java.tool.hub.api.ToolLayout;
 import tungnn.tutor.java.tool.hub.api.ToolResult;
-import tungnn.tutor.java.tool.meddoc.core.MedDocTranslationRequest;
-import tungnn.tutor.java.tool.meddoc.core.MedDocTranslationService;
+import tungnn.tutor.java.tool.meddoc.core.service.MedDocTranslationRequest;
+import tungnn.tutor.java.tool.meddoc.core.service.MedDocTranslationService;
+import tungnn.tutor.java.tool.meddoc.core.service.Step;
 
 @Extension
 public class MedDocTranslateTool implements ToolExtension {
 
     private static final String DOCX_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    private static final String MARKDOWN_TYPE = "text/markdown";
     private static final List<String> SUPPORTED = List.of(".docx", ".md", ".markdown", ".txt");
     private static final String LANGUAGE_TYPE = languageType();
 
@@ -100,7 +103,30 @@ public class MedDocTranslateTool implements ToolExtension {
                         factory().defaultProvider()),
                 new ParamSpec("model", "string", false, "Model (empty = default)"),
                 new ParamSpec(
-                        "refineVietnamese", "boolean", false, "Reformat Vietnamese output (formula tables, headings)", "true"));
+                        "refineVietnamese",
+                        "boolean",
+                        false,
+                        "Restructure the source (headings, sections) and reformat Vietnamese output",
+                        "true"),
+                new ParamSpec(
+                        "steps", "string", false, "Steps to run, comma separated (empty = all): " + Step.validNames()));
+    }
+
+    private static Set<Step> parseSteps(Object value, boolean refine) throws ToolException {
+        try {
+            var text = value == null ? "" : value.toString();
+            Set<Step> steps = text.isBlank() ? Step.all() : Step.parse(text);
+            if (!refine) {
+                steps.remove(Step.REFINE_SOURCE);
+                steps.remove(Step.REFINE_TARGET);
+            }
+            if (steps.isEmpty()) {
+                throw new IllegalArgumentException("No steps left to run");
+            }
+            return steps;
+        } catch (IllegalArgumentException e) {
+            throw new ToolException(e.getMessage(), e);
+        }
     }
 
     @Override
@@ -117,9 +143,12 @@ public class MedDocTranslateTool implements ToolExtension {
         } catch (IllegalArgumentException e) {
             throw new ToolException("Unsupported language: " + in.get("targetLang"), e);
         }
-        String provider = in.get("provider") == null ? factory().defaultProvider() : in.get("provider").toString();
+        String provider = in.get("provider") == null
+                ? factory().defaultProvider()
+                : in.get("provider").toString();
         String model = in.get("model") == null ? null : in.get("model").toString();
         boolean refine = Boolean.TRUE.equals(in.get("refineVietnamese"));
+        Set<Step> steps = parseSteps(in.get("steps"), refine);
 
         Path data = dataDir(ctx);
         Path jobDir = data.resolve("jobs").resolve(UUID.randomUUID().toString());
@@ -131,12 +160,12 @@ public class MedDocTranslateTool implements ToolExtension {
             Path input = jobDir.resolve(safeFileName(file.filename()));
             Files.write(input, file.content());
             var service = new MedDocTranslationService(factory().create(provider, model));
-            var report = service.run(
-                    new MedDocTranslationRequest(input, target, jobDir.resolve("out"), data.resolve("memory"), refine));
-            byte[] docx = Files.readAllBytes(report.outputDocx());
+            var report = service.run(new MedDocTranslationRequest(input, target, data.resolve("runs"), steps));
+            var output = report.outputDocx() != null ? report.outputDocx() : report.finalFile();
+            var contentType = report.outputDocx() != null ? DOCX_TYPE : MARKDOWN_TYPE;
             return new ToolResult(
                     true,
-                    new ToolFile(report.outputDocx().getFileName().toString(), DOCX_TYPE, docx),
+                    new ToolFile(output.getFileName().toString(), contentType, Files.readAllBytes(output)),
                     report.render());
         } catch (ToolException e) {
             throw e;

@@ -14,7 +14,7 @@ class MedDocTranslateToolTest {
 
     @Test
     void shouldExposeFileLanguageAndProviderParams() {
-        assertThat(tool.params()).extracting(p -> p.name()).contains("file", "targetLang", "provider", "refineVietnamese");
+        assertThat(tool.params()).extracting(p -> p.name()).contains("file", "targetLang", "provider", "refineVietnamese", "steps");
     }
 
     @Test

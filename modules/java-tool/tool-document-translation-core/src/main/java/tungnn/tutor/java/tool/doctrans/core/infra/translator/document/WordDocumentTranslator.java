@@ -10,18 +10,35 @@ import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import tungnn.tutor.java.infra.document.utils.DocumentSemanticUnitCollector;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.AbstractDocumentTranslator;
+import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentSegment;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTextBlock;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslationRequest;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchOverride;
+import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchPolicy;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.domain.cache.TranslationCache;
 
 public class WordDocumentTranslator extends AbstractDocumentTranslator<XWPFDocument> {
-    public WordDocumentTranslator(TextTranslator textTranslator, TextTranslationMemory textTranslationMemory) {
-        super(textTranslator, textTranslationMemory);
+    private static final TextTranslationBatchPolicy DEFAULT_BATCH_POLICY = new TextTranslationBatchPolicy(20, 3000);
+
+    public WordDocumentTranslator(TextTranslator textTranslator, TranslationCache textTranslationCache) {
+        super(textTranslator, textTranslationCache);
+    }
+
+    public WordDocumentTranslator(
+            TextTranslator textTranslator,
+            TranslationCache textTranslationCache,
+            TextTranslationBatchOverride batchOverride) {
+        super(textTranslator, textTranslationCache, batchOverride);
     }
 
     @Override
-    protected XWPFDocument openDocument(DocumentTranslationRequest request) {
+    protected TextTranslationBatchPolicy defaultBatchPolicy() {
+        return DEFAULT_BATCH_POLICY;
+    }
+
+    @Override
+    protected XWPFDocument openDocument(DocumentTranslationRequest.Single request) {
         try {
             return new XWPFDocument(
                     Files.newInputStream(request.documentSource().path()));
@@ -31,17 +48,49 @@ public class WordDocumentTranslator extends AbstractDocumentTranslator<XWPFDocum
     }
 
     @Override
-    protected List<DocumentTextBlock> collectTextBlock(XWPFDocument document) {
-        List<DocumentTextBlock> textBlocks = new ArrayList<>();
-        // 1. Paragraphs
-        DocumentSemanticUnitCollector.collectParagraphs(document).stream()
-                .map(ParagraphDocumentTextBlock::new)
-                .forEach(textBlocks::add);
-        // 2. Table Cells
-        DocumentSemanticUnitCollector.collectTableCells(document).stream()
-                .map(TableCellDocumentTextBlock::new)
-                .forEach(textBlocks::add);
-        return textBlocks;
+    protected List<DocumentSegment> collectSegments(XWPFDocument document) {
+        var segments = new ArrayList<DocumentSegment>();
+        var current = new ArrayList<DocumentTextBlock>();
+        // 1. Paragraphs: a segment ends when the container changes or a heading starts a new section
+        Object currentContainer = null;
+        for (var paragraph : DocumentSemanticUnitCollector.collectParagraphs(document)) {
+            var container = containerOf(paragraph);
+            if (!current.isEmpty() && (container != currentContainer || isHeading(paragraph))) {
+                flush(segments, current);
+            }
+            current.add(new ParagraphDocumentTextBlock(paragraph));
+            currentContainer = container;
+        }
+        flush(segments, current);
+        // 2. Table cells: one segment per table row
+        Object currentRow = null;
+        for (var cell : DocumentSemanticUnitCollector.collectTableCells(document)) {
+            var row = cell.getTableRow();
+            if (!current.isEmpty() && row != currentRow) {
+                flush(segments, current);
+            }
+            current.add(new TableCellDocumentTextBlock(cell));
+            currentRow = row;
+        }
+        flush(segments, current);
+        return segments;
+    }
+
+    private static Object containerOf(XWPFParagraph paragraph) {
+        var body = paragraph.getBody();
+        return body instanceof XWPFTableCell cell ? cell.getTableRow() : body;
+    }
+
+    private static boolean isHeading(XWPFParagraph paragraph) {
+        var styleId = paragraph.getStyleID();
+        return styleId != null && styleId.regionMatches(true, 0, "Heading", 0, "Heading".length());
+    }
+
+    private static void flush(List<DocumentSegment> segments, List<DocumentTextBlock> current) {
+        if (!current.isEmpty()) {
+            segments.add(new DocumentSegment(current));
+            current.clear();
+        }
     }
 
     @Override

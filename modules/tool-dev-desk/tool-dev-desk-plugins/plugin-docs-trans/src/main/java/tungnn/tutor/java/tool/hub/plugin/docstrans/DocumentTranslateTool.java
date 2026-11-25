@@ -10,14 +10,14 @@ import java.util.UUID;
 import org.pf4j.Extension;
 import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslationResult;
 import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationMemory;
+import tungnn.tutor.java.tool.doctrans.core.domain.cache.TranslationCache;
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.ExcelDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.MarkdownDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.SlideShowDocumentTranslator;
 import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.WordDocumentTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infra.translator.text.memory.NoOpTextTranslationMemory;
+import tungnn.tutor.java.tool.doctrans.core.domain.cache.NoOpTranslationCache;
 import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationService;
-import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationServiceImpl;
+import tungnn.tutor.java.tool.doctrans.core.service.DefaultDocumentTranslationService;
 import tungnn.tutor.java.tool.hub.api.ParamSpec;
 import tungnn.tutor.java.tool.hub.api.ToolContext;
 import tungnn.tutor.java.tool.hub.api.ToolDescriptor;
@@ -158,25 +158,26 @@ public class DocumentTranslateTool implements ToolExtension {
         try {
             return TransSupport.withPluginClassLoader(() -> {
                 var translator = new TrackingTextTranslator(factory().create(provider, model));
-                TextTranslationMemory memory =
-                        useMemory ? TransSupport.memory(ctx) : NoOpTextTranslationMemory.INSTANCE;
-                DocumentTranslationService service = new DocumentTranslationServiceImpl(
-                        new WordDocumentTranslator(translator, memory),
-                        new ExcelDocumentTranslator(translator, memory),
-                        new SlideShowDocumentTranslator(translator, memory),
-                        new MarkdownDocumentTranslator(translator, memory));
+                TranslationCache memory =
+                        useMemory ? TransSupport.memory(ctx) : NoOpTranslationCache.INSTANCE;
+                var batchOverride = factory().batchOverride();
+                DocumentTranslationService service = new DefaultDocumentTranslationService(
+                        new WordDocumentTranslator(translator, memory, batchOverride),
+                        new ExcelDocumentTranslator(translator, memory, batchOverride),
+                        new SlideShowDocumentTranslator(translator, memory, batchOverride),
+                        new MarkdownDocumentTranslator(translator, memory, batchOverride));
 
                 Files.createDirectories(jobDir);
                 Path input = jobDir.resolve(safeFileName(file.filename()));
                 Files.write(input, Objects.requireNonNull(file.content(), "File content cannot be null"));
 
-                DocumentTranslationResult result = service.translateDocument(input, target.name());
+                DocumentTranslationResult result = service.translate(input, target.name());
                 return switch (result) {
                     case DocumentTranslationResult.Failure f ->
                         throw new ToolException(
                                 "Translation failed: " + f.error().message());
                     case DocumentTranslationResult.Success s ->
-                        toResult(ctx, s.translation().path(), ext, translator, provider, target, start);
+                        toResult(ctx, s.translatedDocument().path(), ext, translator, provider, target, start);
                 };
             });
         } finally {

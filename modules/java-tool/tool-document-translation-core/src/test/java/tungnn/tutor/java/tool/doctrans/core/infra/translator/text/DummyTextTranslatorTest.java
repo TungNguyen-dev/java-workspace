@@ -15,7 +15,7 @@ class DummyTextTranslatorTest {
     void shouldTranslateTextSuccessfully() {
         // Given
         var textUnit = new TextTranslationRequest.TextUnit("unit-1", "Hello World");
-        var request = new TextTranslationRequest.Standard(textUnit, LanguageCode.EN, null, null);
+        var request = new TextTranslationRequest.Single(textUnit, LanguageCode.EN, null, null);
 
         // When
         var result = translator.translate(request);
@@ -24,9 +24,9 @@ class DummyTextTranslatorTest {
         assertThat(result).isInstanceOf(TextTranslationResult.Success.class);
         var successResult = (TextTranslationResult.Success) result;
 
-        assertThat(successResult.translation().id()).isEqualTo("unit-1");
-        assertThat(successResult.translation().original()).isEqualTo("Hello World");
-        assertThat(successResult.translation().translation()).isEqualTo("[DUMMY - EN] Hello World");
-        assertThat(successResult.translation().languageCode()).isEqualTo(LanguageCode.EN);
+        assertThat(successResult.translatedText().id()).isEqualTo("unit-1");
+        assertThat(successResult.translatedText().sourceContent()).isEqualTo("Hello World");
+        assertThat(successResult.translatedText().translatedContent()).isEqualTo("[DUMMY - EN] Hello World");
+        assertThat(successResult.translatedText().targetLanguage()).isEqualTo(LanguageCode.EN);
     }
 }

@@ -63,14 +63,14 @@ public class TextTranslateTool implements ToolExtension {
                 }
             }
             var translator = f.create(provider, TransSupport.str(in.get("model")));
-            var request = new TextTranslationRequest.Standard(
+            var request = new TextTranslationRequest.Single(
                     new TextTranslationRequest.TextUnit(UUID.randomUUID().toString(), text), target, null, null);
             return switch (translator.translate(request)) {
                 case TextTranslationResult.Failure fail ->
                     throw new ToolException(
                             "Translation failed: " + fail.error().message());
                 case TextTranslationResult.Success ok -> {
-                    String translated = ok.translation().translation();
+                    String translated = ok.translatedText().translatedContent();
                     if (memory != null && translated != null && !translated.isBlank()) {
                         memory.save(target, text, translated);
                     }
