@@ -38,7 +38,10 @@ public final class MarkdownActions {
     private static final Pattern LIST_NUMBER = Pattern.compile("^(\\d{1,2})\\s*[.．]\\s*(?=\\D)");
     private static final Pattern ENUMERATION_NUMBER = Pattern.compile("^(\\d{1,2})、\\s*");
     private static final Pattern CHAPTER_NAME = Pattern.compile("^[^\\d\\s，。,;；.．、][^，。,;；]{0,30}$");
+    private static final Pattern SECTION_LINE = Pattern.compile("^第[一二三四五六七八九十百\\d]+[章节節]");
+    private static final String HAN_GAP = "(?<=\\p{IsHan})\\s+(?=\\p{IsHan})";
     private static final int MAX_OBJECTIVE_LENGTH = 80;
+    private static final int MIN_BROKEN_LENGTH = 20;
 
     private MarkdownActions() {}
 
@@ -318,6 +321,10 @@ public final class MarkdownActions {
     }
 
     public static MarkdownAction sectionHeading(Pattern prefix, int level) {
+        return sectionHeading(prefix, level, next -> null);
+    }
+
+    public static MarkdownAction sectionHeading(Pattern prefix, int level, Function<String, String> titleFromNext) {
         if (level < 1 || level > 6) {
             throw new IllegalArgumentException("level must be 1..6");
         }
@@ -331,13 +338,124 @@ public final class MarkdownActions {
                 if (!m.find()) {
                     continue;
                 }
-                var title = raw.substring(m.end()).replaceAll("\\s+", " ").strip();
+                var title = raw.substring(m.end())
+                        .replaceAll("\\s+", " ")
+                        .replaceAll(HAN_GAP, "")
+                        .strip();
+                var hint = titleFromNext.apply(nextNonBlankText(blocks, i + 1));
+                if (hint != null && (title.isEmpty() || (hint.length() > title.length() && hint.startsWith(title)))) {
+                    title = hint;
+                }
                 if (!title.isEmpty()) {
                     blocks.set(i, new Heading(level, title));
                 }
             }
             return blocks;
         });
+    }
+
+    public static MarkdownAction stripBold() {
+        return edit(blocks -> {
+            blocks.replaceAll(block -> switch (block) {
+                case Heading(int level, String text) ->
+                    new Heading(level, text.replace("**", "").strip());
+                case Paragraph(String text)
+                when text.strip().startsWith("**") ->
+                    new Paragraph(text.replace("**", "").strip());
+                default -> block;
+            });
+            return blocks;
+        });
+    }
+
+    public static MarkdownAction mergeBrokenParagraphs() {
+        return edit(blocks -> {
+            for (int i = 0; i < blocks.size(); i++) {
+                if (!(blocks.get(i) instanceof Paragraph(String first)) || !canContinue(first)) {
+                    continue;
+                }
+                var merged = first.strip();
+                while (canContinue(merged)) {
+                    int next = i + 1;
+                    while (next < blocks.size() && blocks.get(next) instanceof Paragraph(String t) && t.isBlank()) {
+                        next++;
+                    }
+                    if (next >= blocks.size()
+                            || !(blocks.get(next) instanceof Paragraph(String tail))
+                            || !continuesSentence(tail)) {
+                        break;
+                    }
+                    merged += tail.strip();
+                    blocks.subList(i + 1, next + 1).clear();
+                }
+                blocks.set(i, new Paragraph(merged));
+            }
+            return blocks;
+        });
+    }
+
+    public static MarkdownAction bookTitleToParen(int level) {
+        if (level < 1 || level > 6) {
+            throw new IllegalArgumentException("level must be 1..6");
+        }
+        return edit(blocks -> {
+            for (int i = 0; i < blocks.size(); i++) {
+                if (!(blocks.get(i) instanceof Heading(int level1, String text)) || level1 != level) {
+                    continue;
+                }
+                int open = text.indexOf('《');
+                if (open < 0) {
+                    continue;
+                }
+                var head = normalizeTitle(text.substring(0, open));
+                var book = normalizeTitle(text.substring(open).replace("《", " ").replace("》", ""));
+                if (!head.isEmpty() && !book.isEmpty()) {
+                    blocks.set(i, new Heading(level, head + " (" + book + ")"));
+                }
+            }
+            return blocks;
+        });
+    }
+
+    private static String nextNonBlankText(List<MarkdownBlock> blocks, int from) {
+        for (int i = from; i < blocks.size(); i++) {
+            if (!(blocks.get(i) instanceof Paragraph(String text))) {
+                return null;
+            }
+            if (!text.isBlank()) {
+                return normalizeTitle(text);
+            }
+        }
+        return null;
+    }
+
+    private static boolean canContinue(String text) {
+        var s = text.strip();
+        if (s.length() < MIN_BROKEN_LENGTH || isStructural(s)) {
+            return false;
+        }
+        int last = s.codePointBefore(s.length());
+        return isHan(last) || last == '，' || last == '、' || last == '；';
+    }
+
+    private static boolean continuesSentence(String text) {
+        var s = text.strip();
+        if (s.isEmpty() || isStructural(s) || NUMBERED_START.matcher(s).find()) {
+            return false;
+        }
+        int first = s.codePointAt(0);
+        return isHan(first) || first == '，' || first == '、';
+    }
+
+    private static boolean isStructural(String s) {
+        return s.startsWith("【")
+                || s.startsWith("#")
+                || s.startsWith("|")
+                || SECTION_LINE.matcher(s).find();
+    }
+
+    private static boolean isHan(int codePoint) {
+        return Character.UnicodeScript.of(codePoint) == Character.UnicodeScript.HAN;
     }
 
     public static MarkdownAction transformSection(String headingText, int level, UnaryOperator<String> transformer) {

@@ -22,6 +22,7 @@ public final class MedRefinePipeline {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MedRefinePipeline.class);
     private static final Pattern SECTION_PREFIX = Pattern.compile("^第[一二三四五六七八九十百\\d]+[节節]\\s*");
+    private static final Pattern CATEGORY_LEAD = Pattern.compile("^(\\p{IsHan}{1,8})剂[，,]");
     private static final Map<String, String> VI_LABELS = Map.of(
             "组成", "Thành phần",
             "用法", "Cách dùng",
@@ -29,7 +30,9 @@ public final class MedRefinePipeline {
             "主治", "Chủ trị",
             "方解", "Giải nghĩa bài thuốc",
             "运用", "Vận dụng lâm sàng",
-            "附方", "Phụ phương");
+            "附方", "Phụ phương",
+            "文献摘要", "Văn hiến trích yếu",
+            "病案", "Bệnh án");
 
     private MedRefinePipeline() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
@@ -37,6 +40,7 @@ public final class MedRefinePipeline {
 
     public static MarkdownPipeline chineseSource(List<String> skipped) {
         return new MarkdownPipeline()
+                .step("Remove bold markers", MarkdownActions.stripBold())
                 .step(
                         "Turn the chapter title into a heading",
                         required(skipped, "chapter title heading", MarkdownActions.chapterTitle(1)))
@@ -45,7 +49,7 @@ public final class MedRefinePipeline {
                         safe(skipped, "learning objectives", MarkdownActions.removeNumberedAfterHeading(1)))
                 .step(
                         "Turn '第N节 ...' paragraphs into headings and drop the prefix",
-                        required(skipped, "section headings", MarkdownActions.sectionHeading(SECTION_PREFIX, 2)))
+                        required(skipped, "section headings", MarkdownActions.sectionHeading(SECTION_PREFIX, 2, MedRefinePipeline::categoryTitle)))
                 .step(
                         "Remove empty paragraphs",
                         MarkdownActions.removeIf(
@@ -55,7 +59,18 @@ public final class MedRefinePipeline {
                         required(skipped, "formula name headings", MarkdownActions.headingBeforeLabel("组成", 3)))
                 .step(
                         "Turn '【...】' paragraphs into heading + content",
-                        required(skipped, "bracket headings", MarkdownActions.bracketHeading(4)));
+                        required(skipped, "bracket headings", MarkdownActions.bracketHeading(4)))
+                .step(
+                        "Join paragraphs split across pages",
+                        safe(skipped, "split paragraphs", MarkdownActions.mergeBrokenParagraphs()));
+    }
+
+    private static String categoryTitle(String next) {
+        if (next == null) {
+            return null;
+        }
+        var m = CATEGORY_LEAD.matcher(next);
+        return m.find() ? m.group(1) : null;
     }
 
     public static MarkdownPipeline vietnamese(
@@ -74,6 +89,7 @@ public final class MedRefinePipeline {
 
         return new MarkdownPipeline()
                 .step("Set the Vietnamese section labels from the source headings", labels)
+                .step("Remove bold markers", MarkdownActions.stripBold())
                 .step(
                         "Add '## Đại cương' after the '#' header",
                         safe(
@@ -87,6 +103,7 @@ public final class MedRefinePipeline {
                         "Remove empty paragraphs",
                         MarkdownActions.removeIf(
                                 b -> b instanceof MarkdownBlock.Paragraph(String text) && text.isBlank()))
+                .step("'###' header: turn 《book》 into (book)", MarkdownActions.bookTitleToParen(3))
                 .step(
                         "'###' header: upper-case the main name, title-case the text in parentheses",
                         safe(skipped, "formula name headings", MarkdownActions.headingMainUpperParenTitle(3)))

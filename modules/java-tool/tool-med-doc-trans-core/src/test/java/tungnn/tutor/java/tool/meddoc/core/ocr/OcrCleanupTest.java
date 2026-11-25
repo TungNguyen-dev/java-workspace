@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -44,5 +46,27 @@ class OcrCleanupTest {
 
         assertThat(result.document().blocks()).containsExactly(new Paragraph("甲甲甲"), new Paragraph("乙乙乙"));
         assertThat(result.fixes()).isEmpty();
+    }
+
+    @Test
+    void shouldSendDuplicateTextsToTheLlmOnce() {
+        var llm = mock(LlmClient.class);
+        when(llm.chat(anyString(), anyString())).thenAnswer(i -> ((String) i.getArgument(1)).replace("运周", "运用"));
+        var doc = new MarkdownDocument(List.of(
+                new Paragraph("【运周】"),
+                new Heading(4, "【运周】"),
+                new Paragraph("【运周】"),
+                new Paragraph("石膏一两")));
+
+        var result = new OcrCleanup(llm, 1).clean(doc);
+
+        verify(llm, times(2)).chat(anyString(), anyString());
+        assertThat(result.document().blocks())
+                .containsExactly(
+                        new Paragraph("【运用】"),
+                        new Heading(4, "【运用】"),
+                        new Paragraph("【运用】"),
+                        new Paragraph("石膏一两"));
+        assertThat(result.fixes()).extracting(OcrFix::blockIndex).containsExactly(0, 1, 2);
     }
 }

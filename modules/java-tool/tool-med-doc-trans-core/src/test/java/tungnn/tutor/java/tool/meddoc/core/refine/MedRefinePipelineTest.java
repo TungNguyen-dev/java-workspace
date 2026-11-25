@@ -80,4 +80,35 @@ class MedRefinePipelineTest {
                         .apply(translated))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void shouldStructureBoldSourceWithSectionsAndSplitParagraphs() {
+        var doc = new MarkdownDocument(List.of(
+                new Paragraph("第七章"),
+                new Paragraph("**补益剂**"),
+                new Paragraph("通过在直接补益的基础上辅之以间接补益，以更好地达到"),
+                new Paragraph("补益虚损的目的。"),
+                new Paragraph("**第一节**"),
+                new Paragraph("补气剂，适用于气虚证，症见倦怠乏力。"),
+                new Paragraph("归脾汤《正体类要》"),
+                new Paragraph("**【组成】白术** 当归"),
+                new Paragraph("**【运用】**"),
+                new Paragraph("1、本方是常用方。")));
+        var skipped = new ArrayList<String>();
+
+        var result = MedRefinePipeline.chineseSource(skipped).run(doc);
+
+        assertThat(result.blocks())
+                .containsExactly(
+                        new Heading(1, "第七章 补益剂"),
+                        new Paragraph("通过在直接补益的基础上辅之以间接补益，以更好地达到补益虚损的目的。"),
+                        new Heading(2, "补气"),
+                        new Paragraph("补气剂，适用于气虚证，症见倦怠乏力。"),
+                        new Heading(3, "归脾汤《正体类要》"),
+                        new Heading(4, "组成"),
+                        new Paragraph("白术 当归"),
+                        new Heading(4, "运用"),
+                        new Paragraph("1、本方是常用方。"));
+        assertThat(skipped).isEmpty();
+    }
 }

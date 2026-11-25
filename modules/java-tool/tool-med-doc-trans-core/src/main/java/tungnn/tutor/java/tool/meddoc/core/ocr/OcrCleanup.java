@@ -1,6 +1,8 @@
 package tungnn.tutor.java.tool.meddoc.core.ocr;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -46,21 +48,34 @@ public class OcrCleanup {
         for (int i = 0; i < blocks.size(); i++) {
             if (!MarkdownActions.textOf(blocks.get(i)).isBlank() && isTextBlock(blocks.get(i))) indexes.add(i);
         }
-        LOGGER.info("OCR cleanup: {} of {} blocks sent to the LLM", indexes.size(), blocks.size());
+        var groups = new LinkedHashMap<String, List<Integer>>();
+        for (int i : indexes) {
+            groups.computeIfAbsent(MarkdownActions.textOf(blocks.get(i)), k -> new ArrayList<>())
+                    .add(i);
+        }
+        LOGGER.info(
+                "OCR cleanup: {} of {} blocks sent to the LLM as {} unique texts",
+                indexes.size(),
+                blocks.size(),
+                groups.size());
 
-        var cleaned = ConcurrentUtils.executeConcurrently(indexes, i -> cleanBlock(blocks.get(i)), maxConcurrency);
+        var texts = new ArrayList<>(groups.keySet());
+        var fixedTexts = ConcurrentUtils.executeConcurrently(texts, this::fixText, maxConcurrency);
 
         var out = new ArrayList<MarkdownBlock>(blocks);
         var fixes = new ArrayList<OcrFix>();
-        for (int k = 0; k < indexes.size(); k++) {
-            int i = indexes.get(k);
-            var after = cleaned.get(k);
-            var before = blocks.get(i);
-            if (!after.equals(before)) {
-                out.set(i, after);
-                fixes.add(new OcrFix(i, MarkdownActions.textOf(before), MarkdownActions.textOf(after)));
+        for (int k = 0; k < texts.size(); k++) {
+            var fixed = fixedTexts.get(k);
+            for (int i : groups.get(texts.get(k))) {
+                var before = blocks.get(i);
+                var after = withText(before, fixed);
+                if (!after.equals(before)) {
+                    out.set(i, after);
+                    fixes.add(new OcrFix(i, MarkdownActions.textOf(before), fixed));
+                }
             }
         }
+        fixes.sort(Comparator.comparingInt(OcrFix::blockIndex));
         return new Result(new MarkdownDocument(out), fixes);
     }
 
@@ -68,19 +83,22 @@ public class OcrCleanup {
         return block instanceof Heading || block instanceof Paragraph;
     }
 
-    private MarkdownBlock cleanBlock(MarkdownBlock block) {
-        var text = MarkdownActions.textOf(block);
+    private static MarkdownBlock withText(MarkdownBlock block, String text) {
+        return switch (block) {
+            case Heading h -> new Heading(h.level(), text);
+            default -> new Paragraph(text);
+        };
+    }
+
+    private String fixText(String text) {
         try {
             var fixed = LlmOutputUtils.clean(llmClient.chat(systemPrompt, text));
             // an empty answer would silently drop the block, so keep the original instead
-            if (fixed == null || fixed.isBlank()) return block;
-            return switch (block) {
-                case Heading h -> new Heading(h.level(), fixed.strip());
-                default -> new Paragraph(fixed.strip());
-            };
+            if (fixed == null || fixed.isBlank()) return text;
+            return fixed.strip();
         } catch (RuntimeException e) {
             LOGGER.warn("OCR cleanup failed for a block, keeping the original text: {}", e.getMessage());
-            return block;
+            return text;
         }
     }
 
