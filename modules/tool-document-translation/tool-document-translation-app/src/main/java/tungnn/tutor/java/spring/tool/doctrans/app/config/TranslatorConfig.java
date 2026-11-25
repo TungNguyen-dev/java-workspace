@@ -53,10 +53,12 @@ public record TranslatorConfig(@DefaultValue("google-genai") String provider, Ma
             @DefaultValue("120") int timeoutSeconds,
             @DefaultValue("0") int maxRetries,
             Integer maxConcurrency,
+            Integer maxBatchUnits,
+            Integer maxBatchChars,
             Map<String, String> extra) {
 
         static LlmSettings empty() {
-            return new LlmSettings(null, null, null, null, null, 120, 0, null, null);
+            return new LlmSettings(null, null, null, null, null, 120, 0, null, null, null, null);
         }
 
         public LlmClientProperties toProperties(LlmProvider provider) {

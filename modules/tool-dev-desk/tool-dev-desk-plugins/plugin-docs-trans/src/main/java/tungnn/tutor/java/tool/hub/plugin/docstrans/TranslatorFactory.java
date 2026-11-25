@@ -38,6 +38,8 @@ final class TranslatorFactory {
 
     private static final String ENV_DEFAULT_PROVIDER = "DOCTRANS_TRANSLATOR_PROVIDER";
     private static final String ENV_MAX_CONCURRENCY = "DOCTRANS_MAX_CONCURRENCY";
+    private static final String ENV_MAX_BATCH_UNITS = "DOCTRANS_MAX_BATCH_UNITS";
+    private static final String ENV_MAX_BATCH_CHARS = "DOCTRANS_MAX_BATCH_CHARS";
 
     private final Path configFile;
 
@@ -96,7 +98,13 @@ final class TranslatorFactory {
             LlmClientProperties props = LlmClientProperties.fromEnv(provider, withModel);
             var client = LlmClientUtils.create(props);
             Integer concurrency = parseInt(lookup.apply(ENV_MAX_CONCURRENCY));
-            return concurrency == null ? new LlmTextTranslator(client) : new LlmTextTranslator(client, concurrency);
+            Integer batchUnits = parseInt(lookup.apply(ENV_MAX_BATCH_UNITS));
+            Integer batchChars = parseInt(lookup.apply(ENV_MAX_BATCH_CHARS));
+            try {
+                return LlmTextTranslator.create(client, concurrency, batchUnits, batchChars);
+            } catch (IllegalArgumentException e) {
+                throw new ToolException("Invalid translator settings: " + e.getMessage());
+            }
         } catch (IllegalArgumentException e) {
             throw new ToolException("Incomplete LLM configuration: "
                     + e.getMessage()

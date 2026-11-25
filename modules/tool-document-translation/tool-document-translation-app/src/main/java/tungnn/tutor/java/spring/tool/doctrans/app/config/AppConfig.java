@@ -40,10 +40,9 @@ public class AppConfig {
         var properties = translatorConfig.llmClientProperties();
         LOGGER.info("Using LLM text translator: {}", properties);
         var llmClient = LlmClientUtils.create(properties);
-        var maxConcurrency = translatorConfig.llmSettings().maxConcurrency();
-        return maxConcurrency == null
-                ? new LlmTextTranslator(llmClient)
-                : new LlmTextTranslator(llmClient, maxConcurrency);
+        var settings = translatorConfig.llmSettings();
+        return LlmTextTranslator.create(
+                llmClient, settings.maxConcurrency(), settings.maxBatchUnits(), settings.maxBatchChars());
     }
 
     @Bean
