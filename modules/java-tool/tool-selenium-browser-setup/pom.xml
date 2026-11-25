@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>tungnn.tutor.java.tool</groupId>
+        <artifactId>java-tool</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>tool-selenium-browser-setup</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>tungnn.tutor.java</groupId>
+            <artifactId>java-lib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tungnn.tutor.java.infra</groupId>
+            <artifactId>java-selenium</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

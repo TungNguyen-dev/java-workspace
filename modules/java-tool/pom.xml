@@ -152,6 +152,7 @@
         <module>tool-crawler-core</module>
         <module>tool-document-translation-core</module>
         <module>tool-med-doc-trans-core</module>
+        <module>tool-selenium-browser-setup</module>
     </modules>
 
     <dependencies>
