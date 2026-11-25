@@ -1,10 +1,12 @@
-package tungnn.tutor.java.tool.meddoc.core;
+package tungnn.tutor.java.tool.meddoc.core.markdown;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
@@ -30,6 +32,13 @@ public final class MarkdownActions {
     private static final Pattern NAME_PREFIX =
             Pattern.compile("^\\s*(?:\\d+\\.\\s*)?([^:：(（\\n]+?)\\s*([(（][^)）]*[)）])?\\s*[:：]\\s*");
     private static final Pattern BRACKET_TITLE = Pattern.compile("(?s)^(?:【([^】]+)】|\\[([^\\]]+)\\](?!\\())\\s*(.*)$");
+    private static final Pattern CHAPTER_ALONE = Pattern.compile("^第[一二三四五六七八九十百\\d]+章$");
+    private static final Pattern CHAPTER_WITH_TITLE = Pattern.compile("^第[一二三四五六七八九十百\\d]+章\\s*\\S.*$");
+    private static final Pattern NUMBERED_START = Pattern.compile("^(\\d{1,2})\\s*[.．、]\\s*(?=\\D)");
+    private static final Pattern LIST_NUMBER = Pattern.compile("^(\\d{1,2})\\s*[.．]\\s*(?=\\D)");
+    private static final Pattern ENUMERATION_NUMBER = Pattern.compile("^(\\d{1,2})、\\s*");
+    private static final Pattern CHAPTER_NAME = Pattern.compile("^[^\\d\\s，。,;；.．、][^，。,;；]{0,30}$");
+    private static final int MAX_OBJECTIVE_LENGTH = 80;
 
     private MarkdownActions() {}
 
@@ -305,6 +314,10 @@ public final class MarkdownActions {
     }
 
     public static MarkdownAction muc(int level) {
+        return sectionHeading(MUC_PREFIX, level);
+    }
+
+    public static MarkdownAction sectionHeading(Pattern prefix, int level) {
         if (level < 1 || level > 6) {
             throw new IllegalArgumentException("level must be 1..6");
         }
@@ -314,7 +327,7 @@ public final class MarkdownActions {
                     continue;
                 }
                 var raw = Normalizer.normalize(text, Normalizer.Form.NFC).strip();
-                var m = MUC_PREFIX.matcher(raw);
+                var m = prefix.matcher(raw);
                 if (!m.find()) {
                     continue;
                 }
@@ -328,6 +341,14 @@ public final class MarkdownActions {
     }
 
     public static MarkdownAction transformSection(String headingText, int level, UnaryOperator<String> transformer) {
+        return transformSection(headingText, level, transformer, null);
+    }
+
+    public static MarkdownAction transformSection(
+            String headingText,
+            int level,
+            UnaryOperator<String> transformer,
+            BiConsumer<String, RuntimeException> onError) {
         if (level < 1 || level > 6) {
             throw new IllegalArgumentException("level must be 1..6");
         }
@@ -355,7 +376,18 @@ public final class MarkdownActions {
                 if (content.isEmpty()) {
                     out.addAll(section);
                 } else {
-                    var result = transformer.apply(content);
+                    String result;
+                    try {
+                        result = transformer.apply(content);
+                    } catch (RuntimeException e) {
+                        if (onError == null) {
+                            throw e;
+                        }
+                        onError.accept(parentTitle(out, level), e);
+                        out.addAll(section);
+                        i = end;
+                        continue;
+                    }
                     var newBlocks = result == null || result.isBlank()
                             ? section
                             : MarkdownDocumentUtils.parse(result.strip()).blocks();
@@ -368,9 +400,27 @@ public final class MarkdownActions {
     }
 
     public static MarkdownAction llmSection(String headingText, int level, LlmClient llmClient, String systemPrompt) {
+        return llmSection(headingText, level, llmClient, systemPrompt, null);
+    }
+
+    public static MarkdownAction llmSection(
+            String headingText,
+            int level,
+            LlmClient llmClient,
+            String systemPrompt,
+            BiConsumer<String, RuntimeException> onError) {
         Objects.requireNonNull(llmClient, "llmClient must not be null");
         return transformSection(
-                headingText, level, content -> LlmOutputUtils.clean(llmClient.chat(systemPrompt, content)));
+                headingText, level, content -> LlmOutputUtils.clean(llmClient.chat(systemPrompt, content)), onError);
+    }
+
+    private static String parentTitle(List<MarkdownBlock> blocks, int level) {
+        for (int i = blocks.size() - 1; i >= 0; i--) {
+            if (blocks.get(i) instanceof Heading h && h.level() < level) {
+                return normalizeTitle(h.text());
+            }
+        }
+        return "";
     }
 
     public static MarkdownAction fixHeadingName(int level) {
@@ -461,7 +511,154 @@ public final class MarkdownActions {
     }
 
     public static MarkdownAction thanhPhan(int level, boolean numbered) {
-        return headingBefore(Pattern.compile("^【\\s*Thành phần\\s*】"), level, numbered);
+        return headingBeforeLabel("Thành phần", level, numbered);
+    }
+
+    public static MarkdownAction headingBeforeLabel(String label, int level) {
+        return headingBeforeLabel(label, level, false);
+    }
+
+    public static MarkdownAction headingBeforeLabel(String label, int level, boolean numbered) {
+        return headingBefore(Pattern.compile("^【\\s*" + Pattern.quote(label) + "\\s*】"), level, numbered);
+    }
+
+    public static MarkdownAction chapterTitle(int level) {
+        if (level < 1 || level > 6) {
+            throw new IllegalArgumentException("level must be 1..6");
+        }
+        return edit(blocks -> {
+            int first = nextNonBlankParagraph(blocks, 0);
+            if (first < 0) {
+                return blocks;
+            }
+            var title = normalizeTitle(textOf(blocks.get(first)));
+            if (CHAPTER_ALONE.matcher(title).matches()) {
+                int second = nextNonBlankParagraph(blocks, first + 1);
+                var name = second < 0 ? "" : normalizeTitle(textOf(blocks.get(second)));
+                if (second < 0 || !CHAPTER_NAME.matcher(name).matches()) {
+                    blocks.set(first, new Heading(level, title));
+                    return blocks;
+                }
+                blocks.subList(first, second + 1).clear();
+                blocks.add(first, new Heading(level, title + " " + name));
+            } else if (CHAPTER_WITH_TITLE.matcher(title).matches()) {
+                blocks.set(first, new Heading(level, title));
+            }
+            return blocks;
+        });
+    }
+
+    public static MarkdownAction removeNumberedAfterHeading(int level) {
+        if (level < 1 || level > 6) {
+            throw new IllegalArgumentException("level must be 1..6");
+        }
+        return edit(blocks -> {
+            int heading = -1;
+            for (int i = 0; i < blocks.size() && heading < 0; i++) {
+                if (blocks.get(i) instanceof Heading h && h.level() == level) {
+                    heading = i;
+                }
+            }
+            if (heading < 0) {
+                return blocks;
+            }
+            int last = heading;
+            int expected = 1;
+            for (int k = heading + 1; k < blocks.size(); k++) {
+                var block = blocks.get(k);
+                if (block instanceof Paragraph(String t) && t.isBlank()) {
+                    continue;
+                }
+                if (block instanceof OrderedList) {
+                    last = k;
+                    break;
+                }
+                // Only a short run numbered 1, 2, 3... counts as learning objectives; anything else is real content.
+                if (!(block instanceof Paragraph(String t))
+                        || t.strip().length() > MAX_OBJECTIVE_LENGTH
+                        || numberOf(t) != expected) {
+                    break;
+                }
+                expected++;
+                last = k;
+            }
+            if (last > heading) {
+                blocks.subList(heading + 1, last + 1).clear();
+            }
+            return blocks;
+        });
+    }
+
+    public static MarkdownAction relabelHeadings(MarkdownDocument source, int level, Map<String, String> labels) {
+        Objects.requireNonNull(source, "source must not be null");
+        Objects.requireNonNull(labels, "labels must not be null");
+        var sourceHeadings = source.blocks().stream()
+                .filter(Heading.class::isInstance)
+                .map(Heading.class::cast)
+                .toList();
+        return edit(blocks -> {
+            var positions = new ArrayList<Integer>();
+            for (int i = 0; i < blocks.size(); i++) {
+                if (blocks.get(i) instanceof Heading) {
+                    positions.add(i);
+                }
+            }
+            if (positions.size() != sourceHeadings.size()) {
+                throw new IllegalStateException("Heading count differs from the source: %d vs %d"
+                        .formatted(positions.size(), sourceHeadings.size()));
+            }
+            for (int k = 0; k < positions.size(); k++) {
+                if (((Heading) blocks.get(positions.get(k))).level()
+                        != sourceHeadings.get(k).level()) {
+                    throw new IllegalStateException(
+                            "Heading %d has a different level than in the source".formatted(k + 1));
+                }
+            }
+            for (int k = 0; k < positions.size(); k++) {
+                var sourceHeading = sourceHeadings.get(k);
+                var label = labels.get(normalizeTitle(sourceHeading.text()));
+                if (sourceHeading.level() == level && label != null) {
+                    blocks.set(positions.get(k), new Heading(level, label));
+                }
+            }
+            return blocks;
+        });
+    }
+
+    // "1. text" would be parsed back as an ordered list, whose items the translator skips; "1、text" stays a paragraph.
+    public static MarkdownAction listNumbersToEnumerationMark() {
+        return edit(blocks -> {
+            blocks.replaceAll(block -> block instanceof Paragraph(String text)
+                    ? new Paragraph(LIST_NUMBER.matcher(text).replaceFirst("$1、"))
+                    : block);
+            return blocks;
+        });
+    }
+
+    public static MarkdownAction enumerationMarkToListNumber() {
+        return edit(blocks -> {
+            blocks.replaceAll(block -> block instanceof Paragraph(String text)
+                    ? new Paragraph(ENUMERATION_NUMBER.matcher(text).replaceFirst("$1. "))
+                    : block);
+            return blocks;
+        });
+    }
+
+    private static int numberOf(String text) {
+        var m = NUMBERED_START.matcher(text.strip());
+        return m.find() ? Integer.parseInt(m.group(1)) : -1;
+    }
+
+    private static int nextNonBlankParagraph(List<MarkdownBlock> blocks, int from) {
+        for (int i = from; i < blocks.size(); i++) {
+            if (!(blocks.get(i) instanceof Paragraph(String text))) {
+                return -1;
+            }
+            if (!text.isBlank()) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     public static MarkdownAction bracketHeading(int level) {

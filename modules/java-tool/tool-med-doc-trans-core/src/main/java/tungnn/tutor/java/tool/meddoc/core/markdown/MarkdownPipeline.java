@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.meddoc.core;
+package tungnn.tutor.java.tool.meddoc.core.markdown;
 
 import java.util.ArrayList;
 import java.util.List;

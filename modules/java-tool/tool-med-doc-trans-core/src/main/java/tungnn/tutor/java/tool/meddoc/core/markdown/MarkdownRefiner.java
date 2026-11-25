@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.meddoc.core;
+package tungnn.tutor.java.tool.meddoc.core.markdown;
 
 import static java.util.stream.Collectors.joining;
 

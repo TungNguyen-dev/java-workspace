@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.meddoc.core;
+package tungnn.tutor.java.tool.meddoc.core.inspect;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

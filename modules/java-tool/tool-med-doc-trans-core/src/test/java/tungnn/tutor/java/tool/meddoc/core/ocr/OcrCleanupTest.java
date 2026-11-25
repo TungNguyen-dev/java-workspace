@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.meddoc.core;
+package tungnn.tutor.java.tool.meddoc.core.ocr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

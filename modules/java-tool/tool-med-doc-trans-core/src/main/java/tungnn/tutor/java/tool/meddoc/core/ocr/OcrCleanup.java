@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.meddoc.core;
+package tungnn.tutor.java.tool.meddoc.core.ocr;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +13,8 @@ import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
+import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownActions;
+import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownRefiner;
 
 public class OcrCleanup {
 
@@ -36,7 +38,8 @@ public class OcrCleanup {
 
     public Result clean(MarkdownDocument source) {
         var normalized = MarkdownActions.normalize(MarkdownRefiner.forSource()).apply(source);
-        var structured = MarkdownActions.orderedListToParagraphs(true).apply(normalized);
+        var numbered = MarkdownActions.orderedListToParagraphs(true).apply(normalized);
+        var structured = MarkdownActions.listNumbersToEnumerationMark().apply(numbered);
         var blocks = structured.blocks();
 
         var indexes = new ArrayList<Integer>();

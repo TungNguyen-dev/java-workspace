@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.meddoc.core;
+package tungnn.tutor.java.tool.meddoc.core.source;
 
 import java.io.IOException;
 import java.nio.file.Path;

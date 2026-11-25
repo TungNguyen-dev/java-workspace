@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.meddoc.core;
+package tungnn.tutor.java.tool.meddoc.core.inspect;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,6 +23,10 @@ public final class SuspiciousTextUtils {
 
     private SuspiciousTextUtils() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
+    }
+
+    public static boolean containsHan(String text) {
+        return HAN.matcher(text).find();
     }
 
     public static List<Suspect> scanSource(MarkdownDocument doc) {
