@@ -12,7 +12,7 @@ public enum LlmProvider {
             .baseUrl("https://api.anthropic.com")
             .model("claude-sonnet-5-5")),
     GOOGLE_GENAI(ProviderSpec.nativeApi("GEMINI")
-            .model("gemini-2.5-flash")
+            .model("gemini-3.8-flash")
             .modelEnv("GEMINI_LLM_MODEL")
             .extraEnv(LlmClientProperties.EXTRA_PROJECT, "GOOGLE_CLOUD_PROJECT")
             .extraEnv(LlmClientProperties.EXTRA_LOCATION, "GOOGLE_CLOUD_LOCATION")),

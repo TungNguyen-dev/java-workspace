@@ -26,7 +26,7 @@ doctrans:
       gemini:
         # base-url left blank -> Google GenAI SDK default endpoint
         api-key: ${GEMINI_API_KEY:}
-        model: ${GEMINI_LLM_MODEL:gemini-2.5-flash}       # gemini-2.5-flash | gemini-2.5-pro | ...
+        model: ${GEMINI_LLM_MODEL:gemini-3.8-flash}       # gemini-3.8-flash | gemini-2.5-pro | ...
         temperature: 0
         timeout-seconds: 120
         max-retries: 2

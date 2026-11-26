@@ -134,9 +134,20 @@ public final class LlmMarkdownTranslator {
             success.incrementAndGet();
             return blocks;
         } catch (RuntimeException e) {
-            recordFailure(chunk, e.getMessage());
+            recordFailure(chunk, describe(e));
             return chunk.blocks();
         }
+    }
+
+    private static String describe(Throwable error) {
+        var parts = new ArrayList<String>();
+        for (Throwable t = error; t != null && parts.size() < 5; t = t.getCause() == t ? null : t.getCause()) {
+            var text = t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage();
+            if (parts.isEmpty() || !parts.getLast().equals(text)) {
+                parts.add(text);
+            }
+        }
+        return String.join(" <- caused by: ", parts);
     }
 
     private void checkHeadings(Chunk chunk, List<MarkdownBlock> translated) {
