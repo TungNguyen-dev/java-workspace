@@ -7,7 +7,6 @@ import tungnn.tutor.java.selenium.pool.WebDriverPool;
 import tungnn.tutor.java.selenium.pool.WebDriverPoolConfig;
 import tungnn.tutor.java.tool.crawler.service.WebCrawlService;
 import tungnn.tutor.java.tool.crawler.service.DefaultWebCrawlService;
-import tungnn.tutor.java.tool.crawler.service.WebCrawlOptions;
 import tungnn.tutor.java.tool.crawler.core.WebCrawlerRegistry;
 
 @Configuration
@@ -22,6 +21,6 @@ public class AppConfig {
 
     @Bean
     public WebCrawlService webCrawlService(WebDriverPool driverPool) {
-        return new DefaultWebCrawlService(driverPool, WebCrawlerRegistry.defaults(), WebCrawlOptions.defaults());
+        return new DefaultWebCrawlService(driverPool, WebCrawlerRegistry.defaults(), DefaultWebCrawlService.Options.defaults());
     }
 }

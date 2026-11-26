@@ -7,7 +7,6 @@ import tungnn.tutor.java.tool.crawler.app.config.CrawlerConfig;
 import tungnn.tutor.java.tool.crawler.app.service.CrawlerServiceImpl;
 import tungnn.tutor.java.tool.crawler.app.service.ObsidianServiceImpl;
 import tungnn.tutor.java.tool.crawler.service.DefaultWebCrawlService;
-import tungnn.tutor.java.tool.crawler.service.WebCrawlOptions;
 import tungnn.tutor.java.tool.crawler.core.WebCrawlerRegistry;
 
 public class CrawlApplication {
@@ -21,7 +20,7 @@ public class CrawlApplication {
 
         try (var driverPool = new GenericWebDriverPool(WebDriverPoolConfig.fromEnv().withMaxTotal(DRIVER_COUNT));
                 var crawlService = new DefaultWebCrawlService(
-                        driverPool, WebCrawlerRegistry.defaults(), WebCrawlOptions.defaults())) {
+                        driverPool, WebCrawlerRegistry.defaults(), DefaultWebCrawlService.Options.defaults())) {
             var crawlerService = new CrawlerServiceImpl(crawlService);
             new CrawlerRunner(crawlerService, new ObsidianServiceImpl(config), config).run();
         }

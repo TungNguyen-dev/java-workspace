@@ -9,7 +9,7 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import tungnn.tutor.java.tool.crawler.app.model.CrawlCourseRequest;
 import tungnn.tutor.java.tool.crawler.app.model.CrawlCourseResult;
-import tungnn.tutor.java.tool.crawler.core.WebCrawlRequest;
+import tungnn.tutor.java.tool.crawler.core.WebCrawler;
 import tungnn.tutor.java.tool.crawler.service.WebCrawlService;
 
 @Service
@@ -32,7 +32,7 @@ public class CrawlerServiceImpl implements CrawlerService {
 
         var flatRequests = urlsPerCourse.stream()
                 .flatMap(List::stream)
-                .map(WebCrawlRequest.PageUrl::new)
+                .map(WebCrawler.Request.PageUrl::new)
                 .toList();
         var flatResults = webCrawlService.crawlAll(flatRequests);
 
