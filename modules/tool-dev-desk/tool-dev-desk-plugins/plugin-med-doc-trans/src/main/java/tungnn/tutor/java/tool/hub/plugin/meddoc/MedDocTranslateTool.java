@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.pf4j.Extension;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.hub.api.ParamSpec;
 import tungnn.tutor.java.tool.hub.api.ToolContext;
 import tungnn.tutor.java.tool.hub.api.ToolDescriptor;
@@ -118,6 +118,7 @@ public class MedDocTranslateTool implements ToolExtension {
             Set<Step> steps = text.isBlank() ? Step.all() : Step.parse(text);
             if (!refine) {
                 steps.remove(Step.REFINE_SOURCE);
+                steps.remove(Step.EDIT);
                 steps.remove(Step.REFINE_TARGET);
             }
             if (steps.isEmpty()) {
