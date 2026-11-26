@@ -11,13 +11,17 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import tungnn.tutor.java.selenium.pool.WebDriverPool;
 import tungnn.tutor.java.tool.browsersetup.core.BrowserSetupPage;
+import tungnn.tutor.java.tool.browsersetup.core.WindowBounds;
 import tungnn.tutor.java.tool.browsersetup.service.BrowserSetupService;
 
 class BrowserSetupServiceTest {
@@ -179,5 +183,51 @@ class BrowserSetupServiceTest {
         service.close();
 
         assertThat(pool.events).containsExactly("return", "return", "close");
+    }
+
+    @Test
+    void windowsAreTiledAcrossTheScreen() {
+        var pool = new RecordingPool(4);
+        var pages = List.of(BrowserSetupPage.of("a", "https://a.test"));
+        var screen = Optional.of(new WindowBounds(0, 25, 1440, 875));
+
+        new BrowserSetupService(pool, pages, screen).openAllPages();
+
+        var cells = List.of(
+                new WindowBounds(0, 25, 720, 437),
+                new WindowBounds(720, 25, 720, 437),
+                new WindowBounds(0, 462, 720, 437),
+                new WindowBounds(720, 462, 720, 437));
+        for (var cell : cells) {
+            var matching = pool.borrowed.stream()
+                    .filter(d -> {
+                        try {
+                            verify(d.manage().window()).setPosition(new Point(cell.x(), cell.y()));
+                            verify(d.manage().window()).setSize(new Dimension(cell.width(), cell.height()));
+                            return true;
+                        } catch (AssertionError e) {
+                            return false;
+                        }
+                    })
+                    .count();
+            assertThat(matching).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void windowArrangementFailureDoesNotBlockPages() {
+        var pool = new RecordingPool(1);
+        pool.driverFactory = () -> {
+            var driver = mock(WebDriver.class, RETURNS_DEEP_STUBS);
+            when(driver.manage().window()).thenThrow(new WebDriverException("no window"));
+            return driver;
+        };
+        var pages = List.of(BrowserSetupPage.of("a", "https://a.test"));
+
+        var report = new BrowserSetupService(pool, pages, Optional.of(new WindowBounds(0, 0, 800, 600)))
+                .openAllPages();
+
+        assertThat(report.hasFailures()).isFalse();
+        verify(pool.borrowed.getFirst().navigate()).to("https://a.test");
     }
 }

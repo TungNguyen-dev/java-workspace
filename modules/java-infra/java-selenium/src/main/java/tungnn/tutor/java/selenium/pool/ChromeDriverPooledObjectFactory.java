@@ -38,7 +38,6 @@ public class ChromeDriverPooledObjectFactory extends BasePooledObjectFactory<Web
         try {
             var driver = new ChromeDriver(
                     ChromeDriverUtils.buildOptions(new ChromeDriverConfig(profile, false, false, config.headless())));
-            ChromeDriverUtils.removeWebdriverAttribute(driver);
             driverProfiles.put(driver, profile);
             return driver;
         } catch (RuntimeException e) {

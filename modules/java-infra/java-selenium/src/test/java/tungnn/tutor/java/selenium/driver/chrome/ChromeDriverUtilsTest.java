@@ -57,6 +57,20 @@ class ChromeDriverUtilsTest {
     }
 
     @Test
+    void shouldReduceAutomationFingerprint() {
+        var options = ChromeDriverUtils.buildOptions(ChromeDriverUtils.ChromeDriverConfig.defaults());
+
+        var chromeOptions = chromeOptions(options);
+
+        assertThat(chromeOptions.get("args"))
+                .asInstanceOf(org.assertj.core.api.InstanceOfAssertFactories.list(String.class))
+                .contains("--disable-blink-features=AutomationControlled");
+        assertThat(chromeOptions)
+                .containsEntry("excludeSwitches", java.util.List.of("enable-automation"))
+                .containsEntry("useAutomationExtension", false);
+    }
+
+    @Test
     void shouldUseDefaultChromeBinary() {
         var options = ChromeDriverUtils.buildOptions(ChromeDriverUtils.ChromeDriverConfig.defaults());
 
@@ -139,7 +153,10 @@ class ChromeDriverUtilsTest {
 
             assertThat(chromeOptions.get("args"))
                     .asInstanceOf(org.assertj.core.api.InstanceOfAssertFactories.list(String.class))
-                    .contains("--user-data-dir=" + profilePath.toAbsolutePath(), "--profile-directory=Default");
+                    .contains(
+                            "--user-data-dir=" + profilePath.toAbsolutePath(),
+                            "--profile-directory=Default",
+                            "--hide-crash-restore-bubble");
         } finally {
             deleteDirectory(
                     ChromeDriverUtils.PROFILE_ROOT_DIR.resolve(profileName).normalize());

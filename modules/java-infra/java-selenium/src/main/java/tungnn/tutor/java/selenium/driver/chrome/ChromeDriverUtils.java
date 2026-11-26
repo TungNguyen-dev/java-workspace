@@ -111,6 +111,10 @@ public final class ChromeDriverUtils {
         // Default browser language.
         options.addArguments("--lang=en-US");
 
+        options.addArguments("--disable-blink-features=AutomationControlled");
+        options.setExperimentalOption("excludeSwitches", List.of("enable-automation"));
+        options.setExperimentalOption("useAutomationExtension", false);
+
         // INFO:
         // Container/CI environments may require additional Chrome arguments,
         // such as --no-sandbox and --disable-dev-shm-usage.
@@ -128,20 +132,12 @@ public final class ChromeDriverUtils {
         // -------------------------------------------------------------------------
 
         if (config.profileName() != null && !config.profileName().isBlank()) {
-            var profilePath = PROFILE_ROOT_DIR.resolve(config.profileName()).normalize();
-
-            if (!profilePath.startsWith(PROFILE_ROOT_DIR) || profilePath.equals(PROFILE_ROOT_DIR)) {
-                throw new IllegalArgumentException("Invalid Chrome profile name: " + config.profileName());
-            }
-
-            try {
-                Files.createDirectories(profilePath);
-            } catch (IOException e) {
-                throw new UncheckedIOException("Failed to create profile directory: " + profilePath, e);
-            }
+            var profilePath = resolveProfilePath(config.profileName());
+            ChromeProfileUtils.resetSessionState(profilePath);
 
             options.addArguments("--user-data-dir=" + profilePath.toAbsolutePath());
             options.addArguments("--profile-directory=Default");
+            options.addArguments("--hide-crash-restore-bubble");
         }
 
         // -------------------------------------------------------------------------
@@ -162,6 +158,21 @@ public final class ChromeDriverUtils {
         }
 
         return options;
+    }
+
+    public static Path resolveProfilePath(String profileName) {
+        var profilePath = PROFILE_ROOT_DIR.resolve(profileName).normalize();
+
+        if (!profilePath.startsWith(PROFILE_ROOT_DIR) || profilePath.equals(PROFILE_ROOT_DIR)) {
+            throw new IllegalArgumentException("Invalid Chrome profile name: " + profileName);
+        }
+
+        try {
+            Files.createDirectories(profilePath);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to create profile directory: " + profilePath, e);
+        }
+        return profilePath;
     }
 
     public static ChromeOptions buildOptions(String profileName) {

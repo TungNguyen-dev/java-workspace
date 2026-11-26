@@ -14,6 +14,8 @@ import tungnn.tutor.java.selenium.browser.WindowUtils;
 import tungnn.tutor.java.selenium.pool.WebDriverPool;
 import tungnn.tutor.java.tool.browsersetup.core.BrowserSetupPage;
 import tungnn.tutor.java.tool.browsersetup.core.SetupReport;
+import tungnn.tutor.java.tool.browsersetup.core.WindowBounds;
+import tungnn.tutor.java.tool.browsersetup.utils.WindowLayoutUtils;
 
 public class BrowserSetupService implements AutoCloseable {
 
@@ -21,12 +23,18 @@ public class BrowserSetupService implements AutoCloseable {
 
     private final WebDriverPool pool;
     private final List<BrowserSetupPage> pages;
+    private final Optional<WindowBounds> screen;
     private final List<WebDriver> borrowedDrivers = new CopyOnWriteArrayList<>();
     private boolean closed;
 
     public BrowserSetupService(WebDriverPool pool, List<BrowserSetupPage> pages) {
+        this(pool, pages, Optional.empty());
+    }
+
+    public BrowserSetupService(WebDriverPool pool, List<BrowserSetupPage> pages, Optional<WindowBounds> screen) {
         this.pool = Objects.requireNonNull(pool, "pool must not be null");
         this.pages = List.copyOf(Objects.requireNonNull(pages, "pages must not be null"));
+        this.screen = Objects.requireNonNull(screen, "screen must not be null");
     }
 
     public SetupReport openAllPages() {
@@ -36,7 +44,10 @@ public class BrowserSetupService implements AutoCloseable {
 
         var driverOpened = ConcurrentUtils.executeConcurrently(driverIndexes, driverIndex -> {
             var driver = borrowDriver(driverIndex, driverFailures);
-            driver.ifPresent(d -> openPagesOnDriver(driverIndex, d, pageFailures));
+            driver.ifPresent(d -> {
+                arrangeWindow(driverIndex, d);
+                openPagesOnDriver(driverIndex, d, pageFailures);
+            });
             return driver.isPresent();
         });
 
@@ -55,6 +66,18 @@ public class BrowserSetupService implements AutoCloseable {
             driverFailures.add(new SetupReport.DriverFailure(driverIndex, e));
             return Optional.empty();
         }
+    }
+
+    private void arrangeWindow(int driverIndex, WebDriver driver) {
+        screen.ifPresent(bounds -> {
+            try {
+                var cell = WindowLayoutUtils.grid(bounds, pool.size(), driverIndex);
+                WindowUtils.setWindowPosition(driver, cell.x(), cell.y());
+                WindowUtils.setWindowSize(driver, cell.width(), cell.height());
+            } catch (RuntimeException e) {
+                LOGGER.log(System.Logger.Level.WARNING, "Unable to arrange the window of driver " + driverIndex, e);
+            }
+        });
     }
 
     private void openPagesOnDriver(int driverIndex, WebDriver driver, List<SetupReport.PageFailure> pageFailures) {
