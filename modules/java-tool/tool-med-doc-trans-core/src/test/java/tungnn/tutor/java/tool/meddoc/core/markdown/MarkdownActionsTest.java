@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
-import tungnn.tutor.java.ai.client.LlmClient;
+import tungnn.tutor.java.tool.meddoc.core.llm.MarkdownChat;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.ListItem;
@@ -66,7 +66,7 @@ class MarkdownActionsTest {
 
     @Test
     void shouldKeepAFailingSectionAndStillTransformTheOthers() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString()))
                 .thenThrow(new IllegalStateException("timeout"))
                 .thenReturn("đã xử lý");

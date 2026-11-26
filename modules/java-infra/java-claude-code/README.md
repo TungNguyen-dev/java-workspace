@@ -115,3 +115,9 @@ ANTHROPIC_API_KEY=... mvn -pl java-claude-code -Dtest=ClaudeLiveIT -Dsurefire.fa
 ## Not covered yet
 
 Message batches, the Files API, Managed Agents and server-side refusal fallbacks.
+
+## Claude Code CLI (no API key)
+
+`cli.ClaudeCliUtils.ask(system, user, ClaudeCliOptions)` runs `claude -p` once and returns a `ClaudeCliResult` (text, stop reason, cost, tokens). It uses the Claude Code login instead of `ANTHROPIC_API_KEY`. The call runs in an empty directory with no tools, MCP servers, slash commands or user settings, and fails with `ClaudeException` on a non-zero exit, an error result, truncation at `max_tokens` or a timeout.
+
+`ClaudeCliOptions.fromEnv()` reads `CLAUDE_CLI_PATH`, `CLAUDE_CLI_MODEL` (default `sonnet`), `CLAUDE_CLI_EFFORT` (default `medium`) and `CLAUDE_CLI_TIMEOUT_SECONDS` (default 600).

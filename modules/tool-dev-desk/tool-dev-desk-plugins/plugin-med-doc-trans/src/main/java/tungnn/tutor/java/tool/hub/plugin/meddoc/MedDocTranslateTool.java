@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -20,6 +21,8 @@ import tungnn.tutor.java.tool.hub.api.ToolFile;
 import tungnn.tutor.java.tool.hub.api.ToolLayout;
 import tungnn.tutor.java.tool.hub.api.ToolResult;
 import tungnn.tutor.java.tool.meddoc.core.service.MedDocTranslationRequest;
+import tungnn.tutor.java.tool.meddoc.core.llm.StepChat;
+import tungnn.tutor.java.tool.meddoc.core.llm.StepChats;
 import tungnn.tutor.java.tool.meddoc.core.service.MedDocTranslationService;
 import tungnn.tutor.java.tool.meddoc.core.service.Step;
 
@@ -160,7 +163,18 @@ public class MedDocTranslateTool implements ToolExtension {
             Files.createDirectories(jobDir);
             Path input = jobDir.resolve(safeFileName(file.filename()));
             Files.write(input, file.content());
-            var service = new MedDocTranslationService(factory().create(provider, model));
+            var clients = new EnumMap<Step, StepChat>(Step.class);
+            boolean claude = "anthropic".equalsIgnoreCase(provider);
+            for (Step step : Step.values()) {
+                // The translate chat is needed whenever edit is selected, to apply the "Claude skips edit" rule
+                boolean needed = steps.contains(step)
+                        || (step == Step.TRANSLATE && steps.contains(Step.EDIT));
+                if (step.usesLlm() && needed) {
+                    var client = factory().create(provider, model);
+                    clients.put(step, StepChat.of((system, user) -> client.chat(system, user), claude));
+                }
+            }
+            var service = new MedDocTranslationService(StepChats.of(clients::get));
             var report = service.run(new MedDocTranslationRequest(input, target, data.resolve("runs"), steps));
             var output = report.outputDocx() != null ? report.outputDocx() : report.finalFile();
             var contentType = report.outputDocx() != null ? DOCX_TYPE : MARKDOWN_TYPE;

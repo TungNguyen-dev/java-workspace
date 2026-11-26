@@ -14,6 +14,7 @@ public final class SuspiciousTextUtils {
     private static final Pattern DOSE_UNIT = Pattern.compile("[钱两斤升斗克]");
     private static final Pattern NUMBER = Pattern.compile("[\\d一二三四五六七八九十百半]");
     private static final Pattern STRAY = Pattern.compile("[\\u3040-\\u30FF\\uFFFD]");
+    private static final Pattern OLD_FORMULA_WORD = Pattern.compile("(?iu)(?<!\\p{L})tễ(?!\\p{L})");
     private static final Pattern HAN = Pattern.compile("\\p{IsHan}");
     private static final Pattern SEGMENT_SPLIT = Pattern.compile("[；;。]");
     private static final Pattern HERB_NAME = Pattern.compile("^[\\s、，,]*([\\p{IsHan}]{2,5}?)(?=[\\d一二三四五六七八九十半（(，, ]|$)");
@@ -62,6 +63,9 @@ public final class SuspiciousTextUtils {
                     };
             if (HAN.matcher(text).find()) {
                 suspects.add(new Suspect(i, "Chinese text remains after translation", excerpt(text)));
+            }
+            if (target == LanguageCode.VI && OLD_FORMULA_WORD.matcher(text).find()) {
+                suspects.add(new Suspect(i, "Contains 'tễ', use 'bài thuốc' instead", excerpt(text)));
             }
         }
         return suspects;

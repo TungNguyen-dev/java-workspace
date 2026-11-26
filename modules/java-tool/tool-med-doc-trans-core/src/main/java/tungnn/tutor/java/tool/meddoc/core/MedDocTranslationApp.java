@@ -3,26 +3,34 @@ package tungnn.tutor.java.tool.meddoc.core;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
-import tungnn.tutor.java.ai.config.LlmProvider;
-import tungnn.tutor.java.ai.util.LlmClientUtils;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateException;
+import tungnn.tutor.java.tool.meddoc.core.llm.ChatSpec;
+import tungnn.tutor.java.tool.meddoc.core.llm.ChatSpecUtils;
+import tungnn.tutor.java.tool.meddoc.core.llm.StepChats;
 import tungnn.tutor.java.tool.meddoc.core.service.MedDocTranslationRequest;
 import tungnn.tutor.java.tool.meddoc.core.service.MedDocTranslationService;
 import tungnn.tutor.java.tool.meddoc.core.service.Step;
 
 public class MedDocTranslationApp {
 
-    private static final String ENV_PROVIDER = "DOCTRANS_TRANSLATOR_PROVIDER";
     private static final String USAGE =
             "Usage: MedDocTranslationApp <input.docx|md|txt> [--lang VI] [--out dir] [--steps %s] [--no-refine]"
-                    .formatted(Step.validNames().replace(", ", ","));
+                            .formatted(Step.validNames().replace(", ", ","))
+                    + " [--llm <ocr|translate|edit|refine-target|default>=<claude-cli[:model][@effort]|provider[:model]>]...";
+
+    record Args(MedDocTranslationRequest request, Map<String, String> llm) {}
 
     static void main(String[] args) throws IOException {
-        MedDocTranslationRequest request;
+        Args parsed;
+        Map<Step, ChatSpec> specs;
         try {
-            request = parse(args);
+            parsed = parse(args);
+            specs = ChatSpecUtils.resolve(parsed.llm(), System::getenv);
         } catch (IllegalArgumentException e) {
             System.err.println(e.getMessage());
             System.err.println(USAGE);
@@ -30,10 +38,8 @@ public class MedDocTranslationApp {
             return;
         }
 
-        var providerName = System.getenv(ENV_PROVIDER);
-        var provider =
-                providerName == null || providerName.isBlank() ? LlmProvider.DEEPSEEK : LlmProvider.from(providerName);
-        var service = new MedDocTranslationService(LlmClientUtils.fromEnv(provider));
+        var service = new MedDocTranslationService(StepChats.of(specs, System::getenv));
+        var request = parsed.request();
         try {
             var report = service.run(request);
             System.out.println(report.render());
@@ -43,10 +49,13 @@ public class MedDocTranslationApp {
             }
             System.err.println(e.getMessage());
             System.exit(1);
+        } catch (IllegalArgumentException e) {
+            System.err.println(e.getMessage());
+            System.exit(1);
         }
     }
 
-    static MedDocTranslationRequest parse(String[] args) {
+    static Args parse(String[] args) {
         if (args.length < 1) {
             throw new IllegalArgumentException("Missing input file");
         }
@@ -55,12 +64,14 @@ public class MedDocTranslationApp {
         var out = source.toAbsolutePath().getParent();
         Set<Step> steps = Step.all();
         var refine = true;
+        var llm = new LinkedHashMap<String, String>();
         for (int i = 1; i < args.length; i++) {
             switch (args[i]) {
                 case "--lang" -> lang = parseLanguage(value(args, ++i, "--lang"));
                 case "--out" -> out = Path.of(value(args, ++i, "--out"));
                 case "--steps" -> steps = Step.parse(value(args, ++i, "--steps"));
                 case "--no-refine" -> refine = false;
+                case "--llm" -> addLlm(llm, value(args, ++i, "--llm"));
                 default -> throw new IllegalArgumentException("Unknown option: " + args[i]);
             }
         }
@@ -72,7 +83,18 @@ public class MedDocTranslationApp {
                 throw new IllegalArgumentException("--no-refine leaves no step to run");
             }
         }
-        return new MedDocTranslationRequest(source, lang, out, steps);
+        return new Args(new MedDocTranslationRequest(source, lang, out, steps), llm);
+    }
+
+    private static void addLlm(Map<String, String> llm, String assignment) {
+        var separator = assignment.indexOf('=');
+        if (separator < 1) {
+            throw new IllegalArgumentException("Option --llm needs <step>=<spec>, got '" + assignment + "'");
+        }
+        var key = assignment.substring(0, separator).strip().toLowerCase(Locale.ROOT);
+        var spec = assignment.substring(separator + 1).strip();
+        ChatSpecUtils.checkOverride(key, spec);
+        llm.put(key, spec);
     }
 
     private static String value(String[] args, int index, String option) {

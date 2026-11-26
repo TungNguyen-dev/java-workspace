@@ -14,7 +14,7 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import tungnn.tutor.java.ai.client.LlmClient;
+import tungnn.tutor.java.tool.meddoc.core.llm.MarkdownChat;
 import tungnn.tutor.java.ai.util.LlmOutputUtils;
 import tungnn.tutor.java.infra.document.adapter.markdown.MarkdownDocumentUtils;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
@@ -521,19 +521,19 @@ public final class MarkdownActions {
         });
     }
 
-    public static MarkdownAction llmSection(String headingText, int level, LlmClient llmClient, String systemPrompt) {
-        return llmSection(headingText, level, llmClient, systemPrompt, null);
+    public static MarkdownAction llmSection(String headingText, int level, MarkdownChat chat, String systemPrompt) {
+        return llmSection(headingText, level, chat, systemPrompt, null);
     }
 
     public static MarkdownAction llmSection(
             String headingText,
             int level,
-            LlmClient llmClient,
+            MarkdownChat chat,
             String systemPrompt,
             BiConsumer<String, RuntimeException> onError) {
-        Objects.requireNonNull(llmClient, "llmClient must not be null");
+        Objects.requireNonNull(chat, "chat must not be null");
         return transformSection(
-                headingText, level, content -> LlmOutputUtils.clean(llmClient.chat(systemPrompt, content)), onError);
+                headingText, level, content -> LlmOutputUtils.clean(chat.chat(systemPrompt, content)), onError);
     }
 
     private static String parentTitle(List<MarkdownBlock> blocks, int level) {

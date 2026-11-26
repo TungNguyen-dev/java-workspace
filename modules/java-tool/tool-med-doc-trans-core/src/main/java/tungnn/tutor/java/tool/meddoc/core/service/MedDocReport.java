@@ -24,7 +24,8 @@ public record MedDocReport(
         List<String> skippedRefineSteps,
         List<String> translationWarnings,
         List<Suspect> suspects,
-        List<GateResult> gates) {
+        List<GateResult> gates,
+        List<String> llmUsage) {
 
     private static final int MAX_FIX_EXAMPLES = 10;
     private static final int MAX_SUSPECTS = 50;
@@ -73,6 +74,10 @@ public record MedDocReport(
         sb.append("\n## Quality gates\n\n");
         if (gates.isEmpty()) sb.append("None.\n");
         gates.forEach(g -> sb.append("- ").append(g.render()).append('\n'));
+
+        sb.append("\n## LLM usage\n\n");
+        if (llmUsage.isEmpty()) sb.append("None.\n");
+        llmUsage.forEach(line -> sb.append("- ").append(line).append('\n'));
 
         sb.append("\n## OCR fix examples\n\n");
         if (ocrFixes.isEmpty()) sb.append("None.\n");

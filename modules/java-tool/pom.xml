@@ -60,6 +60,22 @@
             </dependency>
             <dependency>
                 <groupId>tungnn.tutor.java.infra</groupId>
+                <artifactId>java-claude-code</artifactId>
+                <version>${java-infra.version}</version>
+                <exclusions>
+                    <!-- Leave the logging implementation to Spring Boot / the main app -->
+                    <exclusion>
+                        <groupId>org.apache.logging.log4j</groupId>
+                        <artifactId>log4j-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.logging.log4j</groupId>
+                        <artifactId>log4j-slf4j2-impl</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>tungnn.tutor.java.infra</groupId>
                 <artifactId>java-csv</artifactId>
                 <version>${java-infra.version}</version>
                 <exclusions>

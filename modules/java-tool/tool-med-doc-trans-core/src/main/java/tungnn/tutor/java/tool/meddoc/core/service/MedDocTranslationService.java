@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -15,12 +16,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tungnn.tutor.java.ai.client.LlmClient;
 import tungnn.tutor.java.infra.document.adapter.markdown.MarkdownDocumentUtils;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 import tungnn.tutor.java.infra.document.converter.MarkdownDocxConverterUtils;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.gate.GatePolicy;
+import tungnn.tutor.java.tool.meddoc.core.llm.StepChats;
 import tungnn.tutor.java.tool.meddoc.core.gate.GateResult;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateException;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateUtils;
@@ -42,19 +43,68 @@ public class MedDocTranslationService {
             LanguageCode.JA, "tieng_Nhat",
             LanguageCode.ZH, "tieng_Trung");
 
-    private final LlmClient llmClient;
+    private final StepChats chats;
     private final GatePolicy gatePolicy;
 
-    public MedDocTranslationService(LlmClient llmClient) {
-        this(llmClient, GatePolicy.defaults());
+    public MedDocTranslationService(StepChats chats) {
+        this(chats, GatePolicy.defaults());
     }
 
-    public MedDocTranslationService(LlmClient llmClient, GatePolicy gatePolicy) {
-        this.llmClient = Objects.requireNonNull(llmClient, "llmClient must not be null");
+    public MedDocTranslationService(StepChats chats, GatePolicy gatePolicy) {
+        this.chats = Objects.requireNonNull(chats, "chats must not be null");
         this.gatePolicy = Objects.requireNonNull(gatePolicy, "gatePolicy must not be null");
     }
 
-    public MedDocReport run(MedDocTranslationRequest request) throws IOException {
+    private LlmMarkdownTranslator translatorFor(MedDocTranslationRequest request) {
+        if (!request.runs(Step.TRANSLATE)) {
+            // Only its counters are read when the translate step is not selected
+            return LlmMarkdownTranslator.of(
+                    (system, user) -> {
+                        throw new IllegalStateException("The translate step is not selected");
+                    },
+                    1);
+        }
+        var chat = chats.forStep(Step.TRANSLATE);
+        return chat.maxConcurrency() == null
+                ? new LlmMarkdownTranslator(chat.chat())
+                : LlmMarkdownTranslator.of(chat.chat(), chat.maxConcurrency());
+    }
+
+    private LlmMarkdownTranslator editorFor(MedDocTranslationRequest request) {
+        if (!request.runs(Step.EDIT)) {
+            return null;
+        }
+        var chat = chats.forStep(Step.EDIT);
+        return LlmMarkdownTranslator.editor(
+                chat.chat(),
+                chat.maxConcurrency() == null ? LlmMarkdownTranslator.DEFAULT_CONCURRENCY : chat.maxConcurrency());
+    }
+
+    private OcrCleanup ocrFor() {
+        var chat = chats.forStep(Step.OCR);
+        return chat.maxConcurrency() == null
+                ? new OcrCleanup(chat.chat())
+                : new OcrCleanup(chat.chat(), chat.maxConcurrency());
+    }
+
+    private MedDocTranslationRequest applyClaudeRule(MedDocTranslationRequest request, List<String> skipped) {
+        if (!request.runs(Step.EDIT) || !chats.usesClaude(Step.TRANSLATE)) {
+            return request;
+        }
+        var remaining = EnumSet.copyOf(request.steps());
+        remaining.remove(Step.EDIT);
+        if (remaining.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "The edit step is skipped because the translation uses Claude, nothing is left to run");
+        }
+        LOGGER.warn("[edit] Skipped: the translation step uses Claude");
+        skipped.add("edit: skipped because the translation uses Claude");
+        return request.withSteps(remaining);
+    }
+
+    public MedDocReport run(MedDocTranslationRequest requested) throws IOException {
+        var skipped = new CopyOnWriteArrayList<String>();
+        var request = applyClaudeRule(requested, skipped);
         Files.createDirectories(request.outputDir());
         var runDir = createRunDir(request.outputDir());
         var base = SourceDocumentUtils.baseName(request.source());
@@ -62,9 +112,8 @@ public class MedDocTranslationService {
         var steps = request.steps();
         LOGGER.info("Run folder: {} (steps: {})", runDir, steps);
 
-        var translator = new LlmMarkdownTranslator(llmClient);
-        var editor = LlmMarkdownTranslator.editor(llmClient);
-        var skipped = new CopyOnWriteArrayList<String>();
+        var translator = translatorFor(request);
+        var editor = editorFor(request);
         var suspects = new ArrayList<Suspect>();
         var gates = new ArrayList<GateResult>();
         var refineTargetFailures = new AtomicInteger();
@@ -82,11 +131,12 @@ public class MedDocTranslationService {
 
             if (request.runs(Step.OCR)) {
                 LOGGER.info("[ocr] Normalizing and fixing OCR errors");
-                var cleanup = new OcrCleanup(llmClient).clean(doc);
+                var cleanup = ocrFor().clean(doc);
                 fixes = cleanup.fixes();
                 var beforeOcr = doc;
                 doc = cleanup.document();
                 current = writeStep(runDir, "02_ocr.md", doc);
+                logUsage(Step.OCR);
                 check(gates, runDir, QualityGateUtils.ocr(beforeOcr, doc, gatePolicy));
             }
             if (request.runs(Step.OCR) || request.runs(Step.REFINE_SOURCE) || request.runs(Step.TRANSLATE)) {
@@ -107,6 +157,7 @@ public class MedDocTranslationService {
                 LOGGER.info("[translate] Translating to {}", target.languageName());
                 var beforeTranslate = doc;
                 doc = translator.translate(doc, target);
+                logUsage(Step.TRANSLATE);
                 current = writeStep(runDir, "04_translated.md", doc);
                 boolean relabelFollows =
                         request.runs(Step.REFINE_TARGET) && target == LanguageCode.VI && chineseSource != null;
@@ -128,6 +179,7 @@ public class MedDocTranslationService {
                     LOGGER.info("[edit] Editing the Vietnamese text into a friendlier style");
                     var beforeEdit = doc;
                     doc = editor.edit(doc);
+                    logUsage(Step.EDIT);
                     current = writeStep(runDir, "05_edited.md", doc);
                     if (editor.firstError() != null) {
                         skipped.add("edit: %d sections kept as translated, first error: %s"
@@ -147,8 +199,9 @@ public class MedDocTranslationService {
                 if (target == LanguageCode.VI) {
                     LOGGER.info("[refine-target] Refining the Vietnamese text");
                     var beforeRefineTarget = doc;
-                    doc = MedRefinePipeline.vietnamese(llmClient, skipped, chineseSource, refineTargetFailures)
+                    doc = MedRefinePipeline.vietnamese(chats.forStep(Step.REFINE_TARGET).chat(), skipped, chineseSource, refineTargetFailures)
                             .run(doc);
+                    logUsage(Step.REFINE_TARGET);
                     current = writeStep(runDir, "06_refined.md", doc);
                     check(
                             gates,
@@ -171,7 +224,8 @@ public class MedDocTranslationService {
             }
         } catch (IOException | RuntimeException e) {
             var failureReport =
-                    writeFailureReport(runDir, base, request, translator, fixes, skipped, suspects, gates, current, e);
+                    writeFailureReport(
+                    runDir, base, request, translator, fixes, skipped, suspects, gates, current, chats.usageLines(), e);
             if (e instanceof QualityGateException gateFailure) {
                 throw gateFailure.withReport(failureReport);
             }
@@ -193,9 +247,17 @@ public class MedDocTranslationService {
                 List.copyOf(skipped),
                 translator.warnings(),
                 suspects,
-                List.copyOf(gates));
+                List.copyOf(gates),
+                chats.usageLines());
         Files.writeString(runDir.resolve("report.md"), report.render(), StandardCharsets.UTF_8);
         return report;
+    }
+
+    private void logUsage(Step step) {
+        var line = chats.usageLine(step);
+        if (line != null) {
+            LOGGER.info("Usage {}", line);
+        }
     }
 
     private static void check(List<GateResult> gates, Path runDir, GateResult result) {
@@ -223,6 +285,7 @@ public class MedDocTranslationService {
             List<Suspect> suspects,
             List<GateResult> gates,
             Path current,
+            List<String> llmUsage,
             Exception failure) {
         var report = new MedDocReport(
                 base,
@@ -239,7 +302,8 @@ public class MedDocTranslationService {
                 List.copyOf(skipped),
                 translator.warnings(),
                 suspects,
-                List.copyOf(gates));
+                List.copyOf(gates),
+                llmUsage);
         var rendered = report.render();
         try {
             Files.writeString(runDir.resolve("report.md"), rendered, StandardCharsets.UTF_8);

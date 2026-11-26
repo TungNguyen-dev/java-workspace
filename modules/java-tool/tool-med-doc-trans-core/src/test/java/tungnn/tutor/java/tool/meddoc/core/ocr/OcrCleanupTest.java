@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import tungnn.tutor.java.ai.client.LlmClient;
+import tungnn.tutor.java.tool.meddoc.core.llm.MarkdownChat;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
@@ -19,7 +19,7 @@ class OcrCleanupTest {
 
     @Test
     void shouldApplyLlmFixAndRecordIt() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> ((String) i.getArgument(1)).replace("请热", "清热"));
         var doc = new MarkdownDocument(List.of(new Heading(1, "请热剂"), new Paragraph("石膏一两")));
 
@@ -36,7 +36,7 @@ class OcrCleanupTest {
 
     @Test
     void shouldKeepOriginalWhenLlmFailsOrReturnsEmpty() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), any()))
                 .thenThrow(new IllegalStateException("boom"))
                 .thenReturn("");
@@ -50,7 +50,7 @@ class OcrCleanupTest {
 
     @Test
     void shouldSendDuplicateTextsToTheLlmOnce() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> ((String) i.getArgument(1)).replace("运周", "运用"));
         var doc = new MarkdownDocument(List.of(
                 new Paragraph("【运周】"),

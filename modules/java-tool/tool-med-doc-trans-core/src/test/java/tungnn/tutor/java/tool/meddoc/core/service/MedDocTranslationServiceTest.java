@@ -15,18 +15,21 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import tungnn.tutor.java.ai.client.LlmClient;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.gate.GatePolicy;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateException;
+import tungnn.tutor.java.tool.meddoc.core.llm.MarkdownChat;
+import tungnn.tutor.java.tool.meddoc.core.llm.StepChat;
+import tungnn.tutor.java.tool.meddoc.core.llm.StepChats;
+import tungnn.tutor.java.tool.meddoc.core.translator.LlmMarkdownTranslator;
 
 class MedDocTranslationServiceTest {
 
     @TempDir
     Path dir;
 
-    private static LlmClient llm(UnaryOperator<String> ocr, UnaryOperator<String> translate) {
-        var llm = mock(LlmClient.class);
+    private static MarkdownChat llm(UnaryOperator<String> ocr, UnaryOperator<String> translate) {
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> {
             String system = i.getArgument(0);
             String user = i.getArgument(1);
@@ -38,10 +41,18 @@ class MedDocTranslationServiceTest {
         return llm;
     }
 
-    private static MedDocTranslationService lenient(LlmClient llm) {
+    private static StepChats chats(MarkdownChat chat) {
+        return StepChats.of(step -> StepChat.of(chat));
+    }
+
+    private static MedDocTranslationService service(MarkdownChat chat) {
+        return new MedDocTranslationService(chats(chat));
+    }
+
+    private static MedDocTranslationService lenient(MarkdownChat llm) {
         var defaults = GatePolicy.defaults();
         return new MedDocTranslationService(
-                llm,
+                chats(llm),
                 new GatePolicy(
                         defaults.minSourceHan(),
                         defaults.minOcrHanRetention(),
@@ -61,7 +72,8 @@ class MedDocTranslationServiceTest {
     void shouldWriteOneNumberedFilePerSelectedStep() throws IOException {
         var source = dir.resolve("chuong1.md");
         Files.writeString(source, "# 请热剂\n\n本方用于气分热盛证。\n");
-        var service = lenient(llm(text -> text.replace("请", "清"), text -> text.replace("清热剂", "Thanh nhiệt tễ")));
+        var service =
+                lenient(llm(text -> text.replace("请", "清"), text -> text.replace("清热剂", "Bài thuốc thanh nhiệt")));
 
         var report = service.run(request(source, LanguageCode.VI, EnumSet.of(Step.OCR, Step.TRANSLATE, Step.EXPORT)));
 
@@ -75,23 +87,25 @@ class MedDocTranslationServiceTest {
                 .containsExactlyInAnyOrder(
                         "01_source.md", "02_ocr.md", "04_translated.md", "07_chuong1_tieng_Viet.docx", "report.md");
         assertThat(runDir.resolve("02_ocr.md")).content().contains("清热剂");
-        assertThat(runDir.resolve("04_translated.md")).content().contains("Thanh nhiệt tễ");
+        assertThat(runDir.resolve("04_translated.md")).content().contains("Bài thuốc thanh nhiệt");
         assertThat(report.ocrFixes()).hasSize(1);
         assertThat(report.translatedSections()).isEqualTo(1);
         assertThat(report.failedSections()).isZero();
         assertThat(report.render())
                 .contains("Target language: Vietnamese")
                 .contains("Steps: ocr, translate, export")
-                .contains("Run folder: " + runDir);
+                .contains("Run folder: " + runDir)
+                .contains("## LLM usage")
+                .contains("None.");
     }
 
     @Test
     void shouldStructureTranslateAndRelabelWithAllSteps() throws IOException {
         var source = dir.resolve("chuong2.md");
         Files.writeString(source, "第三章\n\n和解剂\n\n小柴胡汤\n\n【组成】柴胡半斤\n");
-        var service = new MedDocTranslationService(llm(
+        var service = service(llm(
                 text -> text,
-                text -> text.replace("第三章 和解剂", "Chương 3 Hòa giải tễ")
+                text -> text.replace("第三章 和解剂", "Chương 3 Bài thuốc hòa giải")
                         .replace("小柴胡汤", "Tiểu sài hồ thang")
                         .replace("组成", "Thành phần bài thuốc")
                         .replace("柴胡半斤", "Sài hồ nửa cân")));
@@ -113,14 +127,14 @@ class MedDocTranslationServiceTest {
     void shouldEditTheTranslationWithTheEditPrompt() throws IOException {
         var source = dir.resolve("chuong12.md");
         Files.writeString(source, "# 清热剂\n\n本方用于气分热盛证。\n");
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> {
             String system = i.getArgument(0);
             String user = i.getArgument(1);
             if (system.contains("biên tập viên")) {
-                return user.replace("Thanh nhiệt tễ", "Thanh nhiệt tễ (đã biên tập)");
+                return user.replace("Bài thuốc thanh nhiệt", "Bài thuốc thanh nhiệt (đã biên tập)");
             }
-            return user.replace("清热剂", "Thanh nhiệt tễ");
+            return user.replace("清热剂", "Bài thuốc thanh nhiệt");
         });
         var service = lenient(llm);
 
@@ -129,7 +143,7 @@ class MedDocTranslationServiceTest {
         var runDir = singleRunDir();
         assertThat(fileNames(runDir))
                 .containsExactlyInAnyOrder("01_source.md", "04_translated.md", "05_edited.md", "report.md");
-        assertThat(runDir.resolve("05_edited.md")).content().contains("Thanh nhiệt tễ (đã biên tập)");
+        assertThat(runDir.resolve("05_edited.md")).content().contains("Bài thuốc thanh nhiệt (đã biên tập)");
         assertThat(report.finalFile()).hasFileName("05_edited.md");
         assertThat(report.render()).contains("PASS edit");
     }
@@ -151,16 +165,17 @@ class MedDocTranslationServiceTest {
     void shouldStopBeforeRefineTargetWhenTheEditFailsTheGate() throws IOException {
         var source = dir.resolve("chuong14.md");
         Files.writeString(source, "# 清热剂\n\n本方用于气分热盛证。\n");
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> {
             String system = i.getArgument(0);
             String user = i.getArgument(1);
             if (system.contains("biên tập viên")) {
                 return user + "\n\n## Thêm tiêu đề";
             }
-            return user.replace("清热剂", "Thanh nhiệt tễ").replace("本方用于气分热盛证。", "Dùng cho chứng khí phận nhiệt thịnh.");
+            return user.replace("清热剂", "Bài thuốc thanh nhiệt")
+                    .replace("本方用于气分热盛证。", "Dùng cho chứng khí phận nhiệt thịnh.");
         });
-        var service = new MedDocTranslationService(llm);
+        var service = service(llm);
 
         assertThatThrownBy(() -> service.run(
                         request(source, LanguageCode.VI, EnumSet.of(Step.TRANSLATE, Step.EDIT, Step.REFINE_TARGET))))
@@ -175,7 +190,7 @@ class MedDocTranslationServiceTest {
     void shouldRunOnlyTheSelectedStepsOnAnExistingMarkdown() throws IOException {
         var source = dir.resolve("chuong3.md");
         Files.writeString(source, "# 清热剂\n\n本方用于气分热盛证。\n");
-        var service = lenient(llm(text -> text, text -> text.replace("清热剂", "Thanh nhiệt tễ")));
+        var service = lenient(llm(text -> text, text -> text.replace("清热剂", "Bài thuốc thanh nhiệt")));
 
         var report = service.run(request(source, LanguageCode.VI, EnumSet.of(Step.TRANSLATE)));
 
@@ -190,7 +205,7 @@ class MedDocTranslationServiceTest {
     void shouldExportTheLastWrittenMarkdown() throws IOException {
         var source = dir.resolve("chuong4.md");
         Files.writeString(source, "# 请热剂\n\n本方用于气分热盛证。\n");
-        var service = new MedDocTranslationService(llm(text -> text.replace("请", "清"), text -> text));
+        var service = service(llm(text -> text.replace("请", "清"), text -> text));
 
         var report = service.run(request(source, LanguageCode.VI, EnumSet.of(Step.OCR, Step.EXPORT)));
 
@@ -203,7 +218,7 @@ class MedDocTranslationServiceTest {
     void shouldReportMissingChineseSourceWhenRefiningTheTargetAlone() throws IOException {
         var source = dir.resolve("chuong5.md");
         Files.writeString(source, "# Chương 3\n\n#### Thành phần\n\nSài hồ nửa cân\n");
-        var service = new MedDocTranslationService(llm(text -> text, text -> text));
+        var service = service(llm(text -> text, text -> text));
 
         var report = service.run(request(source, LanguageCode.VI, EnumSet.of(Step.REFINE_TARGET)));
 
@@ -246,7 +261,7 @@ class MedDocTranslationServiceTest {
     void shouldWriteAReportEvenWhenTheRunFails() throws IOException {
         var source = dir.resolve("chuong8.pdf");
         Files.writeString(source, "not a supported source");
-        var service = new MedDocTranslationService(llm(text -> text, text -> text));
+        var service = service(llm(text -> text, text -> text));
 
         assertThatThrownBy(() -> service.run(request(source, LanguageCode.VI, EnumSet.copyOf(Step.all()))))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -276,7 +291,7 @@ class MedDocTranslationServiceTest {
     void shouldStopBeforeTheNextStepWhenTranslationFailsTheGate() throws IOException {
         var source = dir.resolve("chuong10.md");
         Files.writeString(source, "# 标题\n\n本方用于气分热盛证。\n");
-        var service = new MedDocTranslationService(llm(text -> text, text -> {
+        var service = service(llm(text -> text, text -> {
             throw new IllegalStateException("boom");
         }));
 
@@ -299,7 +314,7 @@ class MedDocTranslationServiceTest {
         var source = dir.resolve("chuong11.md");
         Files.writeString(source, "# 清热剂\n\n本方用于气分热盛证。\n");
         var llm = llm(text -> "Day la ban dich tieng Viet", text -> text);
-        var service = new MedDocTranslationService(llm);
+        var service = service(llm);
 
         assertThatThrownBy(() -> service.run(request(source, LanguageCode.VI, EnumSet.copyOf(Step.all()))))
                 .isInstanceOf(QualityGateException.class)
@@ -320,5 +335,92 @@ class MedDocTranslationServiceTest {
         try (Stream<Path> children = Files.list(runDir)) {
             return children.map(p -> p.getFileName().toString()).toList();
         }
+    }
+
+    @Test
+    void shouldCreateOnlyTheChatsOfTheSelectedSteps() throws IOException {
+        var source = dir.resolve("book.md");
+        Files.writeString(source, "# 章\n\n甲药\n");
+        var requested = new java.util.concurrent.CopyOnWriteArrayList<Step>();
+        var chats = StepChats.of(step -> {
+            requested.add(step);
+            return StepChat.of((system, user) -> user.replace("甲", "A"));
+        });
+        var defaults = GatePolicy.defaults();
+        var service = new MedDocTranslationService(
+                chats,
+                new GatePolicy(
+                        defaults.minSourceHan(),
+                        defaults.minOcrHanRetention(),
+                        defaults.minRefineSourceHanRetention(),
+                        Integer.MAX_VALUE,
+                        defaults.minBlockRatio(),
+                        defaults.maxBlockRatio(),
+                        1.0,
+                        defaults.maxRefineTargetLlmFailures()));
+
+        var report = service.run(request(source, LanguageCode.VI, EnumSet.of(Step.TRANSLATE)));
+
+        assertThat(report.runDir().resolve("04_translated.md")).exists();
+        assertThat(requested).containsExactly(Step.TRANSLATE);
+    }
+
+    private static GatePolicy lenientPolicy() {
+        var defaults = GatePolicy.defaults();
+        return new GatePolicy(
+                defaults.minSourceHan(),
+                defaults.minOcrHanRetention(),
+                defaults.minRefineSourceHanRetention(),
+                Integer.MAX_VALUE,
+                defaults.minBlockRatio(),
+                defaults.maxBlockRatio(),
+                1.0,
+                defaults.maxRefineTargetLlmFailures());
+    }
+
+    private static StepChats recording(List<Step> requested, boolean claudeTranslate) {
+        return StepChats.of(step -> {
+            requested.add(step);
+            return StepChat.of((system, user) -> user, step == Step.TRANSLATE && claudeTranslate);
+        });
+    }
+
+    @Test
+    void shouldSkipTheEditStepWhenTheTranslationUsesClaude() throws IOException {
+        var source = dir.resolve("claude.md");
+        Files.writeString(source, "# 章\n\n甲药\n");
+        var requested = new java.util.concurrent.CopyOnWriteArrayList<Step>();
+        var service = new MedDocTranslationService(recording(requested, true), lenientPolicy());
+
+        var report = service.run(request(source, LanguageCode.VI, EnumSet.of(Step.TRANSLATE, Step.EDIT)));
+
+        assertThat(requested).containsExactly(Step.TRANSLATE);
+        assertThat(fileNames(singleRunDir())).doesNotContain("05_edited.md");
+        assertThat(report.skippedRefineSteps()).anyMatch(s -> s.contains("edit: skipped"));
+        assertThat(report.render()).contains("Steps: translate").doesNotContain("edit,");
+    }
+
+    @Test
+    void shouldFailWhenOnlyTheSkippedEditStepWasRequested() throws IOException {
+        var source = dir.resolve("claude-only-edit.md");
+        Files.writeString(source, "# Chương 1\n\nNội dung\n");
+        var service = new MedDocTranslationService(recording(new java.util.ArrayList<>(), true), lenientPolicy());
+
+        assertThatThrownBy(() -> service.run(request(source, LanguageCode.VI, EnumSet.of(Step.EDIT))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("nothing is left to run");
+    }
+
+    @Test
+    void shouldStillRunTheEditStepWhenTheTranslationDoesNotUseClaude() throws IOException {
+        var source = dir.resolve("other.md");
+        Files.writeString(source, "# Chương 1\n\nNội dung\n");
+        var requested = new java.util.concurrent.CopyOnWriteArrayList<Step>();
+        var service = new MedDocTranslationService(recording(requested, false), lenientPolicy());
+
+        service.run(request(source, LanguageCode.VI, EnumSet.of(Step.EDIT)));
+
+        assertThat(requested).contains(Step.EDIT);
+        assertThat(fileNames(singleRunDir())).contains("05_edited.md");
     }
 }

@@ -24,6 +24,23 @@ public enum Step {
         return cliName;
     }
 
+    public boolean usesLlm() {
+        return this == OCR || this == TRANSLATE || this == EDIT || this == REFINE_TARGET;
+    }
+
+    public String envName() {
+        return name();
+    }
+
+    public static Step byCliName(String name) {
+        var normalized = name == null ? "" : name.strip().toLowerCase(Locale.ROOT);
+        return Arrays.stream(values())
+                .filter(step -> step.cliName.equals(normalized))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Unknown step '" + normalized + "'. Valid steps: " + validNames()));
+    }
+
     public static Set<Step> all() {
         return EnumSet.allOf(Step.class);
     }

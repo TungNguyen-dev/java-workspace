@@ -102,7 +102,7 @@ class QualityGateUtilsTest {
     @Test
     void translateShouldFailOnFailedSectionsOrLeftoverChinese() {
         var before = doc("# 清热剂\n\n本方用于气分热盛证。");
-        var good = doc("# Thanh nhiệt tễ\n\nBài này dùng cho chứng khí phận nhiệt thịnh.");
+        var good = doc("# Bài thuốc thanh nhiệt\n\nBài này dùng cho chứng khí phận nhiệt thịnh.");
         assertThat(QualityGateUtils.translate(before, good, LanguageCode.VI, 0, List.of(), false, POLICY)
                         .passed())
                 .isTrue();
@@ -120,7 +120,7 @@ class QualityGateUtilsTest {
     @Test
     void translateShouldOnlyBlockOnHeadingWarningsWhenRelabelFollows() {
         var before = doc("# 清热剂\n\n本方用于气分热盛证。");
-        var good = doc("# Thanh nhiệt tễ\n\nBài này dùng cho chứng khí phận nhiệt thịnh.");
+        var good = doc("# Bài thuốc thanh nhiệt\n\nBài này dùng cho chứng khí phận nhiệt thịnh.");
         var warnings = List.of("section 1: heading levels changed");
         assertThat(QualityGateUtils.translate(before, good, LanguageCode.VI, 0, warnings, false, POLICY)
                         .passed())

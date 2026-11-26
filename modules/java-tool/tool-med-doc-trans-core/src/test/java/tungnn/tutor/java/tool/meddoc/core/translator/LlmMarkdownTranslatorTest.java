@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import tungnn.tutor.java.ai.client.LlmClient;
+import tungnn.tutor.java.tool.meddoc.core.llm.MarkdownChat;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
@@ -24,7 +24,7 @@ class LlmMarkdownTranslatorTest {
 
     @Test
     void shouldSendOneCallPerSectionAndKeepTheOrder() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString()))
                 .thenAnswer(i -> ((String) i.getArgument(1)).replace("甲", "A").replace("乙", "B"));
         var translator = new LlmMarkdownTranslator(llm);
@@ -55,7 +55,7 @@ class LlmMarkdownTranslatorTest {
 
     @Test
     void shouldSplitALongSectionBetweenBlocks() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> i.getArgument(1));
         var translator = new LlmMarkdownTranslator(llm, 1, 20);
         var source = doc(new Heading(2, "节"), new Paragraph("一二三四五六七八九十"), new Paragraph("甲乙丙丁戊己庚辛壬癸"));
@@ -68,7 +68,7 @@ class LlmMarkdownTranslatorTest {
 
     @Test
     void shouldTranslateAWholePrescriptionInOneCall() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> i.getArgument(1));
         var translator = new LlmMarkdownTranslator(llm, 1, 20);
         var source = doc(
@@ -88,7 +88,7 @@ class LlmMarkdownTranslatorTest {
 
     @Test
     void shouldSplitAnOversizedPrescriptionAtSubHeadings() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> i.getArgument(1));
         var translator = new LlmMarkdownTranslator(llm, 1, 4000, 25);
         var source = doc(
@@ -110,7 +110,7 @@ class LlmMarkdownTranslatorTest {
 
     @Test
     void shouldSendAnOversizedSubSectionWhole() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> i.getArgument(1));
         var translator = new LlmMarkdownTranslator(llm, 1, 4000, 10);
         var source = doc(
@@ -127,7 +127,7 @@ class LlmMarkdownTranslatorTest {
 
     @Test
     void shouldKeepTheOriginalSectionWhenTheCallFailsOrIsEmpty() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> {
             String text = i.getArgument(1);
             if (text.contains("甲")) {
@@ -148,7 +148,7 @@ class LlmMarkdownTranslatorTest {
 
     @Test
     void shouldWarnWhenTheHeadingLevelsChange() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenReturn("## A方\n\nA药");
         var translator = new LlmMarkdownTranslator(llm);
 
@@ -160,7 +160,7 @@ class LlmMarkdownTranslatorTest {
 
     @Test
     void shouldReturnListNumbersAsPlainParagraphs() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenReturn("1. Chứng thiếu dương\n\n2、Hàn nhiệt");
         var translator = new LlmMarkdownTranslator(llm);
 
@@ -172,7 +172,7 @@ class LlmMarkdownTranslatorTest {
 
     @Test
     void shouldEditWithTheEditPromptAndKeepTheOrder() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString()))
                 .thenAnswer(i -> ((String) i.getArgument(1)).replace("cho nên", "vì vậy"));
         var editor = LlmMarkdownTranslator.editor(llm);
@@ -192,7 +192,7 @@ class LlmMarkdownTranslatorTest {
 
     @Test
     void shouldKeepTheTranslatedSectionWhenTheEditFails() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenThrow(new IllegalStateException("boom"));
         var editor = LlmMarkdownTranslator.editor(llm);
         var source = doc(new Heading(3, "Bạch hổ thang"), new Paragraph("Nhiệt thịnh."));
@@ -205,7 +205,7 @@ class LlmMarkdownTranslatorTest {
 
     @Test
     void shouldPutTheTargetLanguageInTheSystemPrompt() {
-        var llm = mock(LlmClient.class);
+        var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> i.getArgument(1));
         var translator = new LlmMarkdownTranslator(llm);
 
@@ -216,5 +216,15 @@ class LlmMarkdownTranslatorTest {
                         org.mockito.ArgumentMatchers.argThat(
                                 p -> p.contains("English") && !p.contains("{targetLanguage}")),
                         anyString());
+    }
+
+    @Test
+    void shouldTranslateThroughAnyMarkdownChat() {
+        var translator = LlmMarkdownTranslator.of((system, user) -> user.replace("甲", "A"), 1);
+
+        var result = translator.translate(doc(new Heading(1, "章"), new Paragraph("甲药")), LanguageCode.VI);
+
+        assertThat(result.blocks()).containsExactly(new Heading(1, "章"), new Paragraph("A药"));
+        assertThat(translator.successCount()).isEqualTo(1);
     }
 }

@@ -10,7 +10,7 @@ import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tungnn.tutor.java.ai.client.LlmClient;
+import tungnn.tutor.java.tool.meddoc.core.llm.MarkdownChat;
 import tungnn.tutor.java.core.lib.io.resource.ResourceUtils;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
@@ -90,7 +90,7 @@ public final class MedRefinePipeline {
     }
 
     public static MarkdownPipeline vietnamese(
-            LlmClient llmClient, List<String> skipped, MarkdownDocument source, AtomicInteger llmFailures) {
+            MarkdownChat chat, List<String> skipped, MarkdownDocument source, AtomicInteger llmFailures) {
         var ingredientsPrompt = ResourceUtils.getResourceAsString("prompts/refine-ingredients-table.md");
         var variantFormulasPrompt = ResourceUtils.getResourceAsString("prompts/refine-variant-formulas.md");
         var usagePrompt = ResourceUtils.getResourceAsString("prompts/refine-usage-instructions.md");
@@ -131,7 +131,7 @@ public final class MedRefinePipeline {
                                 MarkdownActions.llmSection(
                                         "Thành phần",
                                         4,
-                                        llmClient,
+                                        chat,
                                         ingredientsPrompt,
                                         sectionErrors(skipped, llmFailures, "Thành phần table"))))
                 .step(
@@ -142,7 +142,7 @@ public final class MedRefinePipeline {
                                 MarkdownActions.llmSection(
                                         "Phụ phương",
                                         4,
-                                        llmClient,
+                                        chat,
                                         variantFormulasPrompt,
                                         sectionErrors(skipped, llmFailures, "Phụ phương normalize"))))
                 .step(
@@ -156,7 +156,7 @@ public final class MedRefinePipeline {
                                 MarkdownActions.llmSection(
                                         "Cách dùng",
                                         4,
-                                        llmClient,
+                                        chat,
                                         usagePrompt,
                                         sectionErrors(skipped, llmFailures, "Cách dùng rewrite"))))
                 .step(

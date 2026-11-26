@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tungnn.tutor.java.ai.client.LlmClient;
 import tungnn.tutor.java.ai.util.LlmOutputUtils;
 import tungnn.tutor.java.core.lib.io.resource.ResourceUtils;
 import tungnn.tutor.java.core.lib.multithread.ConcurrentUtils;
@@ -19,6 +18,7 @@ import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Hea
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
+import tungnn.tutor.java.tool.meddoc.core.llm.MarkdownChat;
 import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownActions;
 
 public final class LlmMarkdownTranslator {
@@ -34,7 +34,7 @@ public final class LlmMarkdownTranslator {
     private static final int MAX_SECTION_LEVEL = 3;
     private static final int PRESCRIPTION_LEVEL = 3;
 
-    private final LlmClient llmClient;
+    private final MarkdownChat chat;
     private final String promptTemplate;
     private final int maxConcurrency;
     private final int maxChunkChars;
@@ -44,38 +44,38 @@ public final class LlmMarkdownTranslator {
     private final AtomicReference<String> firstError = new AtomicReference<>();
     private final List<String> warnings = new CopyOnWriteArrayList<>();
 
-    public LlmMarkdownTranslator(LlmClient llmClient) {
-        this(llmClient, DEFAULT_CONCURRENCY, DEFAULT_MAX_CHUNK_CHARS);
+    public LlmMarkdownTranslator(MarkdownChat chat) {
+        this(chat, DEFAULT_CONCURRENCY, DEFAULT_MAX_CHUNK_CHARS);
     }
 
-    public LlmMarkdownTranslator(LlmClient llmClient, int maxConcurrency, int maxChunkChars) {
-        this(llmClient, maxConcurrency, maxChunkChars, DEFAULT_MAX_PRESCRIPTION_CHARS);
+    public LlmMarkdownTranslator(MarkdownChat chat, int maxConcurrency, int maxChunkChars) {
+        this(chat, maxConcurrency, maxChunkChars, DEFAULT_MAX_PRESCRIPTION_CHARS);
     }
 
-    public LlmMarkdownTranslator(LlmClient llmClient, int maxConcurrency, int maxChunkChars, int maxPrescriptionChars) {
-        this(llmClient, PROMPT_RESOURCE, maxConcurrency, maxChunkChars, maxPrescriptionChars);
+    public LlmMarkdownTranslator(MarkdownChat chat, int maxConcurrency, int maxChunkChars, int maxPrescriptionChars) {
+        this(chat, PROMPT_RESOURCE, maxConcurrency, maxChunkChars, maxPrescriptionChars);
+    }
+
+    public static LlmMarkdownTranslator of(MarkdownChat chat, int maxConcurrency) {
+        return new LlmMarkdownTranslator(chat, maxConcurrency, DEFAULT_MAX_CHUNK_CHARS);
     }
 
     private LlmMarkdownTranslator(
-            LlmClient llmClient,
-            String promptResource,
-            int maxConcurrency,
-            int maxChunkChars,
-            int maxPrescriptionChars) {
-        this.llmClient = Objects.requireNonNull(llmClient, "llmClient must not be null");
+            MarkdownChat chat, String promptResource, int maxConcurrency, int maxChunkChars, int maxPrescriptionChars) {
+        this.chat = Objects.requireNonNull(chat, "chat must not be null");
         this.promptTemplate = ResourceUtils.getResourceAsString(promptResource);
         this.maxConcurrency = Math.max(1, maxConcurrency);
         this.maxChunkChars = Math.max(1, maxChunkChars);
         this.maxPrescriptionChars = Math.max(1, maxPrescriptionChars);
     }
 
-    public static LlmMarkdownTranslator editor(LlmClient llmClient) {
+    public static LlmMarkdownTranslator editor(MarkdownChat chat) {
+        return editor(chat, DEFAULT_CONCURRENCY);
+    }
+
+    public static LlmMarkdownTranslator editor(MarkdownChat chat, int maxConcurrency) {
         return new LlmMarkdownTranslator(
-                llmClient,
-                EDIT_PROMPT_RESOURCE,
-                DEFAULT_CONCURRENCY,
-                DEFAULT_MAX_CHUNK_CHARS,
-                DEFAULT_MAX_PRESCRIPTION_CHARS);
+                chat, EDIT_PROMPT_RESOURCE, maxConcurrency, DEFAULT_MAX_CHUNK_CHARS, DEFAULT_MAX_PRESCRIPTION_CHARS);
     }
 
     public MarkdownDocument translate(MarkdownDocument source, LanguageCode target) {
@@ -122,7 +122,7 @@ public final class LlmMarkdownTranslator {
             return chunk.blocks();
         }
         try {
-            var answer = LlmOutputUtils.clean(llmClient.chat(prompt, text));
+            var answer = LlmOutputUtils.clean(chat.chat(prompt, text));
             var blocks = answer == null || answer.isBlank()
                     ? List.<MarkdownBlock>of()
                     : MarkdownDocumentUtils.parse(answer).blocks();

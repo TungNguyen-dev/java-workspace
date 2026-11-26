@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tungnn.tutor.java.ai.client.LlmClient;
+import tungnn.tutor.java.tool.meddoc.core.llm.MarkdownChat;
 import tungnn.tutor.java.ai.util.LlmOutputUtils;
 import tungnn.tutor.java.core.lib.io.resource.ResourceUtils;
 import tungnn.tutor.java.core.lib.multithread.ConcurrentUtils;
@@ -24,16 +24,16 @@ public class OcrCleanup {
     private static final String PROMPT_RESOURCE = "prompts/ocr-correct-chinese.md";
     private static final int DEFAULT_CONCURRENCY = 5;
 
-    private final LlmClient llmClient;
+    private final MarkdownChat chat;
     private final String systemPrompt;
     private final int maxConcurrency;
 
-    public OcrCleanup(LlmClient llmClient) {
-        this(llmClient, DEFAULT_CONCURRENCY);
+    public OcrCleanup(MarkdownChat chat) {
+        this(chat, DEFAULT_CONCURRENCY);
     }
 
-    public OcrCleanup(LlmClient llmClient, int maxConcurrency) {
-        this.llmClient = Objects.requireNonNull(llmClient, "llmClient must not be null");
+    public OcrCleanup(MarkdownChat chat, int maxConcurrency) {
+        this.chat = Objects.requireNonNull(chat, "chat must not be null");
         this.systemPrompt = ResourceUtils.getResourceAsString(PROMPT_RESOURCE);
         this.maxConcurrency = Math.max(1, maxConcurrency);
     }
@@ -92,7 +92,7 @@ public class OcrCleanup {
 
     private String fixText(String text) {
         try {
-            var fixed = LlmOutputUtils.clean(llmClient.chat(systemPrompt, text));
+            var fixed = LlmOutputUtils.clean(chat.chat(systemPrompt, text));
             // an empty answer would silently drop the block, so keep the original instead
             if (fixed == null || fixed.isBlank()) return text;
             return fixed.strip();

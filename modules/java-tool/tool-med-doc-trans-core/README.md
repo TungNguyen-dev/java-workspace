@@ -2,7 +2,7 @@
 
 Translates Traditional Chinese Medicine documents, such as textbooks scanned from print and OCR'd, from Chinese into a target language (Vietnamese by default). It writes a DOCX and a report that lists what was fixed, what was skipped and what still looks suspicious.
 
-Every step talks to the LLM through `LlmClient` (`java-ai`) directly; DOCX ↔ Markdown conversion comes from `java-document`. The module only uses `tool-document-translation-core` for `LanguageCode`: the translation is not done by its `TextTranslator`, and there is no translation cache for now.
+Every LLM step (`ocr`, `translate`, `edit`, `refine-target`) gets its own chat backend, an `LlmClient` (`java-ai`) or the Claude Code CLI (see [Choosing the LLM per step](#choosing-the-llm-per-step)); DOCX ↔ Markdown conversion comes from `java-document`. The module only uses `tool-document-translation-core` for `LanguageCode`: the translation is not done by its `TextTranslator`, and there is no translation cache for now.
 
 ## Workflow
 
@@ -141,7 +141,7 @@ Each run creates its own folder `<out>/<yyyyMMdd_HHmmss>/` (a suffix `_1`, `_2`,
 | `05_edited.md` | `edit` | Translation after the style edit |
 | `06_refined.md` | `refine-target` | Translation after the Vietnamese refine |
 | `07_<name>_<suffix>.docx` | `export` | Final DOCX. Suffix: `tieng_Viet` (VI), `tieng_Anh` (EN), `tieng_Nhat` (JA), `tieng_Trung` (ZH) |
-| `report.md` | always | Report: steps, quality gate results, run folder, target language, sections translated and failed, OCR fixes, skipped refine steps, translation warnings and suspicious text. Each suspect names the file its block number refers to. When the run fails, the report is still written with `Output: none` and the error |
+| `report.md` | always | Report: steps, quality gate results, run folder, target language, sections translated and failed, OCR fixes, skipped refine steps, translation warnings and suspicious text (for the target `VI`, this includes any remaining `tễ`, which should read `bài thuốc`). Each suspect names the file its block number refers to. When the run fails, the report is still written with `Output: none` and the error |
 
 The numbers are fixed per step, so a step that did not run leaves a gap.
 
@@ -293,3 +293,33 @@ Add a step in `MedRefinePipeline.vietnamese`:
 ```
 
 For an LLM-based step, use `MarkdownActions.llmSection(headingText, level, llmClient, prompt, onError)` with a new prompt file in `prompts/`.
+
+## Choosing the LLM per step
+
+Each LLM step has its own client, and you choose the backend and the model of each one. The spec is `<backend>[:<model>]`, plus an optional `@<effort>` (`low`, `medium`, `high`, `xhigh` or `max`) for `claude-cli` only, where the backend is `claude-cli` (the `claude -p` command line, which uses a Claude Code login and no API key) or a `java-ai` provider such as `deepseek`, `anthropic`, `openai` or `ollama`. The model is everything after the first `:`, so `ollama:qwen3:8b` is the model `qwen3:8b`. Without a model, the default of the backend is used. The `@<effort>` suffix wins over `CLAUDE_CLI_EFFORT`, so `claude-cli:sonnet@low` and `claude-cli@low` set the effort of one step.
+
+```
+java -jar tool-med-doc-trans-core-*-all.jar book.docx \
+    --llm default=deepseek --llm translate=claude-cli:sonnet@medium --llm edit=gemini
+DOCTRANS_LLM_TRANSLATE=claude-cli:sonnet java -jar ... book.md --steps translate,export
+```
+
+Per step, the first value found wins: `--llm <step>=<spec>`, then `DOCTRANS_LLM_<STEP>` (`OCR`, `TRANSLATE`, `EDIT`, `REFINE_TARGET`), then the default. The default is `--llm default=<spec>`, then `DOCTRANS_LLM_DEFAULT`, then `DOCTRANS_TRANSLATOR_PROVIDER`, then `deepseek`. `refine-source` and `export` do not use an LLM and cannot be configured.
+
+When the `translate` step uses Claude (`claude-cli` or the `anthropic` provider), the `edit` step is always skipped, even when it is selected with `--steps` or configured with `--llm edit=...`. This rule has priority over every other setting, applies whatever the steps of the run are, and is written in the skipped list of `report.md`. Running only `--steps edit` in that case fails because nothing is left to run.
+
+A client is created only when its step runs, so a missing API key only matters for the steps that need it. With `--steps translate,export --llm translate=claude-cli`, no API key is needed at all.
+
+Claude CLI calls run in an empty working directory with no tools, MCP servers, slash commands or user settings, so `CLAUDE.md` files and hooks do not reach the prompt. Every section is one call: the prompt is the system prompt, the Markdown section goes through stdin, and the reply is read from the JSON output.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `CLAUDE_CLI_PATH` | `claude` | Path of the executable, needed when it is not on the `PATH` (IDE launches on macOS) |
+| `CLAUDE_CLI_MODEL` | `sonnet` | Model when the spec has none |
+| `CLAUDE_CLI_EFFORT` | `medium` | `low`, `medium`, `high`, `xhigh` or `max` |
+| `CLAUDE_CLI_TIMEOUT_SECONDS` | `600` | Timeout of one call, the process is killed after it |
+| `DOCTRANS_CLAUDE_CLI_CONCURRENCY` | `2` | Parallel Claude CLI calls; keep it low for subscription rate limits |
+
+Each run lists the calls, cost and tokens (input, cache, output, thinking) of every `claude-cli` step in the `## LLM usage` section of `report.md` and in the log. A real section measured on `sonnet` with `medium` effort costs about a third of `opus` with `high` effort and uses no thinking tokens.
+
+A failed call (usage limit, timeout, refusal, truncation at `max_tokens`) is a failed section: the original text is kept and the quality gate of that step stops the run.

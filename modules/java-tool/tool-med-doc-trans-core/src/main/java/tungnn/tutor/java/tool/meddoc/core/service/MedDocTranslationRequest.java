@@ -20,6 +20,10 @@ public record MedDocTranslationRequest(Path source, LanguageCode targetLanguage,
         steps = selected;
     }
 
+    public MedDocTranslationRequest withSteps(Set<Step> newSteps) {
+        return new MedDocTranslationRequest(source, targetLanguage, outputDir, newSteps);
+    }
+
     public boolean runs(Step step) {
         return steps.contains(step);
     }
