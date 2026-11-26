@@ -2,9 +2,9 @@ package tungnn.tutor.java.tool.hub.plugin.docstrans;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationRequest;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationResult;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.text.TextTranslationRequest;
+import tungnn.tutor.java.tool.doctrans.core.text.TextTranslationResult;
+import tungnn.tutor.java.tool.doctrans.core.text.TextTranslator;
 
 final class TrackingTextTranslator implements TextTranslator {
     private final TextTranslator delegate;

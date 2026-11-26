@@ -1,5 +1,6 @@
 package tungnn.tutor.java.tool.hub.plugin.docstrans;
 
+import tungnn.tutor.java.tool.doctrans.core.text.TextTranslationRequest;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -13,11 +14,9 @@ import java.util.function.UnaryOperator;
 import tungnn.tutor.java.ai.config.LlmClientProperties;
 import tungnn.tutor.java.ai.config.LlmProvider;
 import tungnn.tutor.java.ai.util.LlmClientUtils;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchOverride;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchPolicy;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infra.translator.text.DummyTextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infra.translator.text.LlmTextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.text.TextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.text.impl.DummyTextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.text.impl.LlmTextTranslator;
 import tungnn.tutor.java.tool.hub.api.ToolException;
 
 final class TranslatorFactory {
@@ -113,12 +112,12 @@ final class TranslatorFactory {
         }
     }
 
-    TextTranslationBatchOverride batchOverride() throws ToolException {
+    TextTranslationRequest.BatchOverride batchOverride() throws ToolException {
         UnaryOperator<String> lookup = lookup();
-        var override = new TextTranslationBatchOverride(
+        var override = new TextTranslationRequest.BatchOverride(
                 parseInt(lookup.apply(ENV_MAX_BATCH_UNITS)), parseInt(lookup.apply(ENV_MAX_BATCH_CHARS)));
         try {
-            override.applyTo(new TextTranslationBatchPolicy(1, 1));
+            override.applyTo(new TextTranslationRequest.BatchPolicy(1, 1));
         } catch (IllegalArgumentException e) {
             throw new ToolException("Invalid batch settings: " + e.getMessage());
         }

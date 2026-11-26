@@ -7,9 +7,9 @@ import java.util.Comparator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
-import tungnn.tutor.java.tool.doctrans.core.domain.cache.TranslationCache;
-import tungnn.tutor.java.tool.doctrans.core.infra.cache.CsvFileTranslationCache;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.cache.TranslationCache;
+import tungnn.tutor.java.tool.doctrans.core.cache.CsvFileTranslationCache;
 import tungnn.tutor.java.tool.hub.api.ToolContext;
 import tungnn.tutor.java.tool.hub.api.ToolException;
 
