@@ -53,3 +53,30 @@ Use the `-all` jar (the shaded executable one). Run from the repo root; `tools/r
 | `WEBDRIVER_CHROME_BINARY_PATH` | Chrome for Testing in `~/.data/selenium/chrome` | Chrome binary (use regular Chrome if Google still rejects sign-in) |
 | `WEBDRIVER_CHROME_DRIVER_PATH` | `~/.data/selenium/chrome/chromedriver-mac-x64/chromedriver` | ChromeDriver, must match the Chrome major version |
 | `WEBDRIVER_CHROME_PROFILE_ROOT_DIR` | `~/.data/selenium/chrome/chrome-profiles` | Where profiles are stored |
+
+## Run tool-med-doc-trans-core
+
+```bash
+mvn -pl modules/java-tool/tool-med-doc-trans-core -am clean package -DskipTests
+
+cp modules/java-tool/tool-med-doc-trans-core/target/tool-med-doc-trans-core-0.0.1-SNAPSHOT-all.jar tools/bin/
+
+tools/run-jar.sh tool-med-doc-trans-core-0.0.1-SNAPSHOT-all "storage/tool-med-doc-trans-core/Chương 7 Bổ ích.docx"
+tools/run-jar.sh tool-med-doc-trans-core-0.0.1-SNAPSHOT-all "storage/tool-med-doc-trans-core/Chương 7 Bổ ích.docx" --steps refine-source
+```
+
+Use the `-all` jar (the shaded executable one). Run from the repo root so relative paths resolve from there; `tools/run-jar.sh` loads `dev.env` the same way as above, and `caffeinate` keeps the Mac awake during a long run. The result goes to `<out>/<yyyyMMdd_HHmmss>/` (next to the input file without `--out`).
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `--lang` | `VI` | Target language code (`VI`, `EN`, `JA`, `ZH`, ...) |
+| `--out` | folder of the input file | Directory that holds the run folders |
+| `--steps` | all steps | Comma separated: `ocr,refine-source,translate,edit,refine-target,export` |
+| `--no-refine` | refine on | Removes `refine-source`, `edit` and `refine-target` |
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `DOCTRANS_TRANSLATOR_PROVIDER` | `deepseek` | LLM provider |
+| Provider key, e.g. `DEEPSEEK_API_KEY` | none | API key; required even for `--steps export` |
+
+Details of each step: `modules/java-tool/tool-med-doc-trans-core/README.md`.
