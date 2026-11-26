@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.crawler.core.domain;
+package tungnn.tutor.java.tool.crawler.core;
 
 public interface WebCrawler {
 

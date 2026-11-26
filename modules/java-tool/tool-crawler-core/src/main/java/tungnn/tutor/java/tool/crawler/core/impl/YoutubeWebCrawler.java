@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.crawler.core.infra.crawler;
+package tungnn.tutor.java.tool.crawler.core.impl;
 
 import java.util.stream.Collectors;
 import org.openqa.selenium.By;
@@ -7,7 +7,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import tungnn.tutor.java.selenium.element.ElementActions;
 import tungnn.tutor.java.selenium.element.ElementFinder;
 import tungnn.tutor.java.selenium.wait.Waits;
-import tungnn.tutor.java.tool.crawler.core.domain.AbstractWebCrawler;
+import tungnn.tutor.java.tool.crawler.core.AbstractWebCrawler;
 
 public class YoutubeWebCrawler extends AbstractWebCrawler {
 

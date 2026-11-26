@@ -1,13 +1,16 @@
-package tungnn.tutor.java.tool.crawler.core.infra.registry;
-
-import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlRequest;
-import tungnn.tutor.java.tool.crawler.core.infra.crawler.*;
+package tungnn.tutor.java.tool.crawler.core;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Predicate;
+import tungnn.tutor.java.tool.crawler.core.impl.AwsDocSdkWebCrawler;
+import tungnn.tutor.java.tool.crawler.core.impl.CourseraWebCrawler;
+import tungnn.tutor.java.tool.crawler.core.impl.GenericWebCrawler;
+import tungnn.tutor.java.tool.crawler.core.impl.JavaJlsWebCrawler;
+import tungnn.tutor.java.tool.crawler.core.impl.SpringDocWebCrawler;
+import tungnn.tutor.java.tool.crawler.core.impl.YoutubeWebCrawler;
 
 public class WebCrawlerRegistry {
 

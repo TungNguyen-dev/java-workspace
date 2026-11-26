@@ -1,11 +1,9 @@
-package tungnn.tutor.java.tool.crawler.core.infra.registry;
+package tungnn.tutor.java.tool.crawler.core;
 
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import org.openqa.selenium.WebDriver;
-import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlRequest;
-import tungnn.tutor.java.tool.crawler.core.domain.WebCrawler;
 
 public record WebCrawlerSpec(
         String name,

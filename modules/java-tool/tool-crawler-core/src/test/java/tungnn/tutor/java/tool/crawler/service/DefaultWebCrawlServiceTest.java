@@ -1,15 +1,15 @@
-package tungnn.tutor.java.tool.crawler.core.service;
+package tungnn.tutor.java.tool.crawler.service;
 
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.NoSuchSessionException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import tungnn.tutor.java.selenium.pool.WebDriverPool;
-import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlRequest;
-import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlResult;
-import tungnn.tutor.java.tool.crawler.core.domain.WebCrawler;
-import tungnn.tutor.java.tool.crawler.core.infra.registry.WebCrawlerRegistry;
-import tungnn.tutor.java.tool.crawler.core.infra.registry.WebCrawlerSpec;
+import tungnn.tutor.java.tool.crawler.core.WebCrawlRequest;
+import tungnn.tutor.java.tool.crawler.core.WebCrawlResult;
+import tungnn.tutor.java.tool.crawler.core.WebCrawler;
+import tungnn.tutor.java.tool.crawler.core.WebCrawlerRegistry;
+import tungnn.tutor.java.tool.crawler.core.WebCrawlerSpec;
 
 import java.time.Duration;
 import java.util.ArrayList;

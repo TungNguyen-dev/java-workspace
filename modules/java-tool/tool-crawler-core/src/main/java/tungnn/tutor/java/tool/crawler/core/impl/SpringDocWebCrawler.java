@@ -1,4 +1,4 @@
-package tungnn.tutor.java.tool.crawler.core.infra.crawler;
+package tungnn.tutor.java.tool.crawler.core.impl;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -13,7 +13,7 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import tungnn.tutor.java.selenium.element.ElementFinder;
 import tungnn.tutor.java.selenium.element.ElementInfo;
-import tungnn.tutor.java.tool.crawler.core.domain.AbstractWebCrawler;
+import tungnn.tutor.java.tool.crawler.core.AbstractWebCrawler;
 
 public class SpringDocWebCrawler extends AbstractWebCrawler {
 
