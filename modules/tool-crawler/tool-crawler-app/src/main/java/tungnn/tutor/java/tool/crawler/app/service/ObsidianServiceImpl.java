@@ -12,7 +12,7 @@ import tungnn.tutor.java.core.lib.io.filesystem.FileUtils;
 import tungnn.tutor.java.tool.crawler.app.config.CrawlerConfig;
 import tungnn.tutor.java.tool.crawler.app.model.CrawlCourseResult;
 import tungnn.tutor.java.tool.crawler.app.model.ObsidianNote;
-import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlResult;
+import tungnn.tutor.java.tool.crawler.core.WebCrawlResult;
 
 @Service
 public class ObsidianServiceImpl implements ObsidianService {

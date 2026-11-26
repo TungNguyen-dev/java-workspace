@@ -6,9 +6,9 @@ import tungnn.tutor.java.core.lib.io.filesystem.FileNameUtils;
 import tungnn.tutor.java.core.lib.io.filesystem.FileUtils;
 import tungnn.tutor.java.selenium.driver.chrome.ChromeDriverUtils;
 import tungnn.tutor.java.tool.crawler.app.model.ObsidianNote;
-import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlRequest;
-import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlResult;
-import tungnn.tutor.java.tool.crawler.core.infra.crawler.AwsDocSdkWebCrawler;
+import tungnn.tutor.java.tool.crawler.core.WebCrawlRequest;
+import tungnn.tutor.java.tool.crawler.core.WebCrawlResult;
+import tungnn.tutor.java.tool.crawler.core.impl.AwsDocSdkWebCrawler;
 
 public class CrawlAwsDocSdkApp {
 

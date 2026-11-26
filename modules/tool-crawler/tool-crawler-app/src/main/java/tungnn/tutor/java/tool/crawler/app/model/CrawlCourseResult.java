@@ -3,7 +3,7 @@ package tungnn.tutor.java.tool.crawler.app.model;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
-import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlResult;
+import tungnn.tutor.java.tool.crawler.core.WebCrawlResult;
 
 public record CrawlCourseResult(Set<Course> courses) {
 

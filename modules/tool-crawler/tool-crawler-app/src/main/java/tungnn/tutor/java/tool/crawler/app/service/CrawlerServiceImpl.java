@@ -9,8 +9,8 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import tungnn.tutor.java.tool.crawler.app.model.CrawlCourseRequest;
 import tungnn.tutor.java.tool.crawler.app.model.CrawlCourseResult;
-import tungnn.tutor.java.tool.crawler.core.domain.WebCrawlRequest;
-import tungnn.tutor.java.tool.crawler.core.service.WebCrawlService;
+import tungnn.tutor.java.tool.crawler.core.WebCrawlRequest;
+import tungnn.tutor.java.tool.crawler.service.WebCrawlService;
 
 @Service
 public class CrawlerServiceImpl implements CrawlerService {
