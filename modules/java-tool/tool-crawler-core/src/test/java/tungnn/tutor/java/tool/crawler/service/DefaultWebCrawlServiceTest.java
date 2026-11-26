@@ -5,11 +5,8 @@ import org.openqa.selenium.NoSuchSessionException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import tungnn.tutor.java.selenium.pool.WebDriverPool;
-import tungnn.tutor.java.tool.crawler.core.WebCrawlRequest;
-import tungnn.tutor.java.tool.crawler.core.WebCrawlResult;
 import tungnn.tutor.java.tool.crawler.core.WebCrawler;
 import tungnn.tutor.java.tool.crawler.core.WebCrawlerRegistry;
-import tungnn.tutor.java.tool.crawler.core.WebCrawlerSpec;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -24,7 +21,7 @@ import static org.mockito.Mockito.mock;
 
 class DefaultWebCrawlServiceTest {
 
-    private static final WebCrawlOptions OPTIONS = new WebCrawlOptions(2, Duration.ZERO);
+    private static final DefaultWebCrawlService.Options OPTIONS = new DefaultWebCrawlService.Options(2, Duration.ZERO);
 
     private final FakeDriverPool driverPool = new FakeDriverPool();
 
@@ -34,7 +31,7 @@ class DefaultWebCrawlServiceTest {
             var results = service.crawlAll(pages("a", "b", "a", "c"));
 
             assertThat(results)
-                    .extracting(r -> ((WebCrawlResult.Success) r).url())
+                    .extracting(r -> ((WebCrawler.Result.Success) r).url())
                     .containsExactly("a", "b", "a", "c");
             assertThat(driverPool.returned).hasSize(4);
             assertThat(driverPool.invalidated).isEmpty();
@@ -45,12 +42,12 @@ class DefaultWebCrawlServiceTest {
     void deadSessionInvalidatesDriverAndRetries() {
         var calls = new AtomicInteger();
         WebCrawler crawler = request -> calls.getAndIncrement() == 0
-                ? new WebCrawlResult.Failure(request.url(), new NoSuchSessionException("gone"))
+                ? new WebCrawler.Result.Failure(request.url(), new NoSuchSessionException("gone"))
                 : success(request.url());
         try (var service = serviceWith(_ -> crawler, 5)) {
-            var result = service.crawl(new WebCrawlRequest.PageUrl("a"));
+            var result = service.crawl(new WebCrawler.Request.PageUrl("a"));
 
-            assertThat(result).isInstanceOf(WebCrawlResult.Success.class);
+            assertThat(result).isInstanceOf(WebCrawler.Result.Success.class);
             assertThat(calls).hasValue(2);
             assertThat(driverPool.invalidated).hasSize(1);
             assertThat(driverPool.returned).hasSize(1);
@@ -62,12 +59,12 @@ class DefaultWebCrawlServiceTest {
         var calls = new AtomicInteger();
         WebCrawler crawler = request -> {
             calls.incrementAndGet();
-            return new WebCrawlResult.Failure(request.url(), new TimeoutException("slow"));
+            return new WebCrawler.Result.Failure(request.url(), new TimeoutException("slow"));
         };
         try (var service = serviceWith(_ -> crawler, 5)) {
-            var result = service.crawl(new WebCrawlRequest.PageUrl("a"));
+            var result = service.crawl(new WebCrawler.Request.PageUrl("a"));
 
-            assertThat(result).isInstanceOf(WebCrawlResult.Failure.class);
+            assertThat(result).isInstanceOf(WebCrawler.Result.Failure.class);
             assertThat(calls).hasValue(1);
             assertThat(driverPool.invalidated).isEmpty();
             assertThat(driverPool.returned).hasSize(1);
@@ -80,40 +77,40 @@ class DefaultWebCrawlServiceTest {
         try (var service = serviceWith(_ -> request -> success(request.url()), 5)) {
             var results = service.crawlAll(pages("a", "b"));
 
-            assertThat(results).hasSize(2).allSatisfy(r -> assertThat(r).isInstanceOf(WebCrawlResult.Failure.class));
+            assertThat(results).hasSize(2).allSatisfy(r -> assertThat(r).isInstanceOf(WebCrawler.Result.Failure.class));
         }
     }
 
     @Test
     void nullRequestAndNullUrlReturnFailure() {
         try (var service = serviceWith(_ -> request -> success(request.url()), 5)) {
-            assertThat(service.crawl(null)).isInstanceOf(WebCrawlResult.Failure.class);
-            assertThat(service.crawl(new WebCrawlRequest.PageUrl(null))).isInstanceOf(WebCrawlResult.Failure.class);
+            assertThat(service.crawl(null)).isInstanceOf(WebCrawler.Result.Failure.class);
+            assertThat(service.crawl(new WebCrawler.Request.PageUrl(null))).isInstanceOf(WebCrawler.Result.Failure.class);
         }
     }
 
     @Test
     void crawlAllTurnsNullElementIntoFailure() {
         try (var service = serviceWith(_ -> request -> success(request.url()), 5)) {
-            var results = service.crawlAll(Arrays.asList(new WebCrawlRequest.PageUrl("a"), null));
+            var results = service.crawlAll(Arrays.asList(new WebCrawler.Request.PageUrl("a"), null));
 
             assertThat(results).hasSize(2);
-            assertThat(results.get(0)).isInstanceOf(WebCrawlResult.Success.class);
-            assertThat(results.get(1)).isInstanceOf(WebCrawlResult.Failure.class);
+            assertThat(results.get(0)).isInstanceOf(WebCrawler.Result.Success.class);
+            assertThat(results.get(1)).isInstanceOf(WebCrawler.Result.Failure.class);
         }
     }
 
     @Test
     void unregisteredSpecStillGetsPermit() {
-        var spec = new WebCrawlerSpec("ghost", _ -> true, _ -> request -> success(request.url()), 1);
+        var spec = new WebCrawlerRegistry.Spec("ghost", _ -> true, _ -> request -> success(request.url()), 1);
         var registry = new WebCrawlerRegistry(List.of(), spec) {
             @Override
-            public WebCrawlerSpec resolve(WebCrawlRequest request) {
-                return new WebCrawlerSpec("other", _ -> true, _ -> r -> success(r.url()), 1);
+            public WebCrawlerRegistry.Spec resolve(WebCrawler.Request request) {
+                return new WebCrawlerRegistry.Spec("other", _ -> true, _ -> r -> success(r.url()), 1);
             }
         };
         try (var service = new DefaultWebCrawlService(driverPool, registry, OPTIONS)) {
-            assertThat(service.crawl(new WebCrawlRequest.PageUrl("a"))).isInstanceOf(WebCrawlResult.Success.class);
+            assertThat(service.crawl(new WebCrawler.Request.PageUrl("a"))).isInstanceOf(WebCrawler.Result.Success.class);
         }
     }
 
@@ -123,7 +120,7 @@ class DefaultWebCrawlServiceTest {
             throw new NoClassDefFoundError("missing");
         };
         try (var service = serviceWith(_ -> crawler, 5)) {
-            assertThat(service.crawl(new WebCrawlRequest.PageUrl("a"))).isInstanceOf(WebCrawlResult.Failure.class);
+            assertThat(service.crawl(new WebCrawler.Request.PageUrl("a"))).isInstanceOf(WebCrawler.Result.Failure.class);
             assertThat(driverPool.returned).hasSize(1);
         }
     }
@@ -132,10 +129,10 @@ class DefaultWebCrawlServiceTest {
     void urlMatchingIsCaseInsensitiveAndNullSafe() {
         var registry = WebCrawlerRegistry.defaults();
 
-        assertThat(registry.resolve(new WebCrawlRequest.PageUrl("HTTPS://YOUTUBE.COM/x"))
+        assertThat(registry.resolve(new WebCrawler.Request.PageUrl("HTTPS://YOUTUBE.COM/x"))
                         .name())
                 .isEqualTo("youtube");
-        assertThat(registry.resolve(new WebCrawlRequest.PageUrl(null)).name()).isEqualTo("generic");
+        assertThat(registry.resolve(new WebCrawler.Request.PageUrl(null)).name()).isEqualTo("generic");
     }
 
     @Test
@@ -143,7 +140,7 @@ class DefaultWebCrawlServiceTest {
         try (var service = serviceWith(_ -> request -> success(request.url()), 5)) {
             service.close();
 
-            assertThat(service.crawl(new WebCrawlRequest.PageUrl("a"))).isInstanceOf(WebCrawlResult.Failure.class);
+            assertThat(service.crawl(new WebCrawler.Request.PageUrl("a"))).isInstanceOf(WebCrawler.Result.Failure.class);
         }
     }
 
@@ -172,33 +169,33 @@ class DefaultWebCrawlServiceTest {
     void registryFirstMatchWinsAndFallsBack() {
         var registry = WebCrawlerRegistry.defaults();
 
-        assertThat(registry.resolve(new WebCrawlRequest.PageUrl("https://www.coursera.org/x"))
+        assertThat(registry.resolve(new WebCrawler.Request.PageUrl("https://www.coursera.org/x"))
                         .name())
                 .isEqualTo("coursera");
-        assertThat(registry.resolve(new WebCrawlRequest.PageUrl("https://youtu.be/x"))
+        assertThat(registry.resolve(new WebCrawler.Request.PageUrl("https://youtu.be/x"))
                         .name())
                 .isEqualTo("youtube");
-        assertThat(registry.resolve(new WebCrawlRequest.PageUrl("https://docs.spring.io/x"))
+        assertThat(registry.resolve(new WebCrawler.Request.PageUrl("https://docs.spring.io/x"))
                         .name())
                 .isEqualTo("spring-doc");
-        assertThat(registry.resolve(new WebCrawlRequest.PageUrl("https://example.com"))
+        assertThat(registry.resolve(new WebCrawler.Request.PageUrl("https://example.com"))
                         .name())
                 .isEqualTo("generic");
     }
 
     private DefaultWebCrawlService serviceWith(Function<WebDriver, WebCrawler> factory, int maxConcurrency) {
-        var spec = new WebCrawlerSpec("stub", _ -> true, factory, maxConcurrency);
+        var spec = new WebCrawlerRegistry.Spec("stub", _ -> true, factory, maxConcurrency);
         return new DefaultWebCrawlService(driverPool, new WebCrawlerRegistry(List.of(), spec), OPTIONS);
     }
 
-    private static List<WebCrawlRequest> pages(String... urls) {
+    private static List<WebCrawler.Request> pages(String... urls) {
         return Arrays.stream(urls)
-                .<WebCrawlRequest>map(WebCrawlRequest.PageUrl::new)
+                .<WebCrawler.Request>map(WebCrawler.Request.PageUrl::new)
                 .toList();
     }
 
-    private static WebCrawlResult success(String url) {
-        return new WebCrawlResult.Success(url, "title", "content");
+    private static WebCrawler.Result success(String url) {
+        return new WebCrawler.Result.Success(url, "title", "content");
     }
 
     private static class FakeDriverPool implements WebDriverPool {

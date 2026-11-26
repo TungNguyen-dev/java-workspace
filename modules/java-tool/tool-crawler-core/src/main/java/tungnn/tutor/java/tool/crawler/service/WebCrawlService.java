@@ -1,14 +1,13 @@
 package tungnn.tutor.java.tool.crawler.service;
 
 import java.util.List;
-import tungnn.tutor.java.tool.crawler.core.WebCrawlRequest;
-import tungnn.tutor.java.tool.crawler.core.WebCrawlResult;
+import tungnn.tutor.java.tool.crawler.core.WebCrawler;
 
 public interface WebCrawlService extends AutoCloseable {
 
-    WebCrawlResult crawl(WebCrawlRequest request);
+    WebCrawler.Result crawl(WebCrawler.Request request);
 
-    List<WebCrawlResult> crawlAll(List<? extends WebCrawlRequest> requests);
+    List<WebCrawler.Result> crawlAll(List<? extends WebCrawler.Request> requests);
 
     @Override
     void close();

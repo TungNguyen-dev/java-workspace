@@ -1,5 +1,6 @@
 package tungnn.tutor.java.tool.crawler.service;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,10 +15,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.UnreachableBrowserException;
 import tungnn.tutor.java.core.lib.multithread.ConcurrentUtils;
 import tungnn.tutor.java.selenium.pool.WebDriverPool;
-import tungnn.tutor.java.tool.crawler.core.WebCrawlRequest;
-import tungnn.tutor.java.tool.crawler.core.WebCrawlResult;
+import tungnn.tutor.java.tool.crawler.core.WebCrawler;
 import tungnn.tutor.java.tool.crawler.core.WebCrawlerRegistry;
-import tungnn.tutor.java.tool.crawler.core.WebCrawlerSpec;
 
 public class DefaultWebCrawlService implements WebCrawlService {
 
@@ -25,12 +24,12 @@ public class DefaultWebCrawlService implements WebCrawlService {
 
     private final WebDriverPool driverPool;
     private final WebCrawlerRegistry registry;
-    private final WebCrawlOptions options;
-    private final Map<WebCrawlerSpec, Semaphore> permits = new ConcurrentHashMap<>();
+    private final Options options;
+    private final Map<WebCrawlerRegistry.Spec, Semaphore> permits = new ConcurrentHashMap<>();
     private final AtomicBoolean closed = new AtomicBoolean();
     private final ReentrantReadWriteLock inFlight = new ReentrantReadWriteLock();
 
-    public DefaultWebCrawlService(WebDriverPool driverPool, WebCrawlerRegistry registry, WebCrawlOptions options) {
+    public DefaultWebCrawlService(WebDriverPool driverPool, WebCrawlerRegistry registry, Options options) {
         this.driverPool = Objects.requireNonNull(driverPool, "driverPool must not be null");
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.options = Objects.requireNonNull(options, "options must not be null");
@@ -40,9 +39,9 @@ public class DefaultWebCrawlService implements WebCrawlService {
     }
 
     @Override
-    public WebCrawlResult crawl(WebCrawlRequest request) {
+    public WebCrawler.Result crawl(WebCrawler.Request request) {
         if (request == null || request.url() == null) {
-            return new WebCrawlResult.Failure(
+            return new WebCrawler.Result.Failure(
                     request == null ? null : request.url(), new IllegalArgumentException("Request url is required"));
         }
         inFlight.readLock().lock();
@@ -63,24 +62,24 @@ public class DefaultWebCrawlService implements WebCrawlService {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return new WebCrawlResult.Failure(request.url(), e);
+            return new WebCrawler.Result.Failure(request.url(), e);
         } catch (RuntimeException e) {
-            return new WebCrawlResult.Failure(request.url(), e);
+            return new WebCrawler.Result.Failure(request.url(), e);
         } catch (LinkageError e) {
-            return new WebCrawlResult.Failure(request.url(), new IllegalStateException(e));
+            return new WebCrawler.Result.Failure(request.url(), new IllegalStateException(e));
         } finally {
             inFlight.readLock().unlock();
         }
     }
 
     @Override
-    public List<WebCrawlResult> crawlAll(List<? extends WebCrawlRequest> requests) {
+    public List<WebCrawler.Result> crawlAll(List<? extends WebCrawler.Request> requests) {
         if (requests == null || requests.isEmpty()) {
             return List.of();
         }
-        var safeRequests = new ArrayList<WebCrawlRequest>(requests.size());
+        var safeRequests = new ArrayList<WebCrawler.Request>(requests.size());
         for (var request : requests) {
-            safeRequests.add(request != null ? request : new WebCrawlRequest.PageUrl(null));
+            safeRequests.add(request != null ? request : new WebCrawler.Request.PageUrl(null));
         }
         return ConcurrentUtils.executeConcurrently(safeRequests, this::crawl, driverPool.size());
     }
@@ -93,11 +92,11 @@ public class DefaultWebCrawlService implements WebCrawlService {
         inFlight.writeLock().unlock();
     }
 
-    private static WebCrawlResult closedFailure(WebCrawlRequest request) {
-        return new WebCrawlResult.Failure(request.url(), new IllegalStateException("WebCrawlService is closed"));
+    private static WebCrawler.Result closedFailure(WebCrawler.Request request) {
+        return new WebCrawler.Result.Failure(request.url(), new IllegalStateException("WebCrawlService is closed"));
     }
 
-    private Outcome attemptCrawl(WebCrawlerSpec spec, WebCrawlRequest request) throws InterruptedException {
+    private Outcome attemptCrawl(WebCrawlerRegistry.Spec spec, WebCrawler.Request request) throws InterruptedException {
         var permit = permits.computeIfAbsent(spec, key -> new Semaphore(key.maxConcurrency(), true));
         // The permit is taken before borrowing so queued requests never hold a browser while waiting.
         permit.acquire();
@@ -106,15 +105,15 @@ public class DefaultWebCrawlService implements WebCrawlService {
         try {
             driver = driverPool.borrowDriver();
             var result = spec.factory().apply(driver).crawl(request);
-            if (result instanceof WebCrawlResult.Failure failure) {
+            if (result instanceof WebCrawler.Result.Failure failure) {
                 sessionDead = isSessionDead(failure.exception());
             }
             return new Outcome(result, sessionDead);
         } catch (RuntimeException e) {
             sessionDead = driver != null && isSessionDead(e);
-            return new Outcome(new WebCrawlResult.Failure(request.url(), e), sessionDead);
+            return new Outcome(new WebCrawler.Result.Failure(request.url(), e), sessionDead);
         } catch (LinkageError e) {
-            return new Outcome(new WebCrawlResult.Failure(request.url(), new IllegalStateException(e)), false);
+            return new Outcome(new WebCrawler.Result.Failure(request.url(), new IllegalStateException(e)), false);
         } finally {
             try {
                 if (driver != null) {
@@ -142,5 +141,25 @@ public class DefaultWebCrawlService implements WebCrawlService {
         return false;
     }
 
-    private record Outcome(WebCrawlResult result, boolean sessionDead) {}
+    private record Outcome(WebCrawler.Result result, boolean sessionDead) {}
+
+    public record Options(int maxAttempts, Duration retryBackoff) {
+
+        private static final int DEFAULT_MAX_ATTEMPTS = 2;
+        private static final Duration DEFAULT_RETRY_BACKOFF = Duration.ofSeconds(2);
+
+        public Options {
+            if (maxAttempts <= 0) {
+                throw new IllegalArgumentException("maxAttempts must be positive: " + maxAttempts);
+            }
+            Objects.requireNonNull(retryBackoff, "retryBackoff must not be null");
+            if (retryBackoff.isNegative()) {
+                throw new IllegalArgumentException("retryBackoff must not be negative: " + retryBackoff);
+            }
+        }
+
+        public static Options defaults() {
+            return new Options(DEFAULT_MAX_ATTEMPTS, DEFAULT_RETRY_BACKOFF);
+        }
+    }
 }
