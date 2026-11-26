@@ -18,10 +18,10 @@ import tungnn.tutor.java.spring.tool.doctrans.app.exception.ApiException;
 import tungnn.tutor.java.spring.tool.doctrans.app.model.JobStatus;
 import tungnn.tutor.java.spring.tool.doctrans.app.model.TranslationJob;
 import tungnn.tutor.java.spring.tool.doctrans.app.repository.InMemoryJobRepository;
-import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslationErrorCode;
-import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslationResult;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
-import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationService;
+import tungnn.tutor.java.tool.doctrans.core.document.DocumentTranslationErrorCode;
+import tungnn.tutor.java.tool.doctrans.core.document.DocumentTranslationResult;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.service.DocumentTranslationService;
 
 @Service
 public class TranslationJobService {

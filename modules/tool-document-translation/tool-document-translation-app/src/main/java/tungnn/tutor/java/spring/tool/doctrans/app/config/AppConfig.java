@@ -1,5 +1,6 @@
 package tungnn.tutor.java.spring.tool.doctrans.app.config;
 
+import tungnn.tutor.java.tool.doctrans.core.text.TextTranslationRequest;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.slf4j.Logger;
@@ -9,19 +10,18 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tungnn.tutor.java.ai.util.LlmClientUtils;
-import tungnn.tutor.java.tool.doctrans.core.domain.document.DocumentTranslator;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslationBatchOverride;
-import tungnn.tutor.java.tool.doctrans.core.domain.cache.TranslationCache;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.TextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.ExcelDocumentTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.MarkdownDocumentTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.SlideShowDocumentTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infra.translator.document.WordDocumentTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infra.translator.text.DummyTextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infra.translator.text.LlmTextTranslator;
-import tungnn.tutor.java.tool.doctrans.core.infra.cache.CsvFileTranslationCache;
-import tungnn.tutor.java.tool.doctrans.core.service.DocumentTranslationService;
-import tungnn.tutor.java.tool.doctrans.core.service.DefaultDocumentTranslationService;
+import tungnn.tutor.java.tool.doctrans.core.document.DocumentTranslator;
+import tungnn.tutor.java.tool.doctrans.core.cache.TranslationCache;
+import tungnn.tutor.java.tool.doctrans.core.text.TextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.document.impl.ExcelDocumentTranslator;
+import tungnn.tutor.java.tool.doctrans.core.document.impl.MarkdownDocumentTranslator;
+import tungnn.tutor.java.tool.doctrans.core.document.impl.SlideShowDocumentTranslator;
+import tungnn.tutor.java.tool.doctrans.core.document.impl.WordDocumentTranslator;
+import tungnn.tutor.java.tool.doctrans.core.text.impl.DummyTextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.text.impl.LlmTextTranslator;
+import tungnn.tutor.java.tool.doctrans.core.cache.CsvFileTranslationCache;
+import tungnn.tutor.java.tool.doctrans.service.DocumentTranslationService;
+import tungnn.tutor.java.tool.doctrans.service.DefaultDocumentTranslationService;
 
 @Configuration
 public class AppConfig {
@@ -45,12 +45,12 @@ public class AppConfig {
         return LlmTextTranslator.create(llmClient, settings.maxConcurrency());
     }
 
-    private TextTranslationBatchOverride batchOverride() {
+    private TextTranslationRequest.BatchOverride batchOverride() {
         if (translatorConfig.isDummy()) {
-            return TextTranslationBatchOverride.NONE;
+            return TextTranslationRequest.BatchOverride.NONE;
         }
         var settings = translatorConfig.llmSettings();
-        return new TextTranslationBatchOverride(settings.maxBatchUnits(), settings.maxBatchChars());
+        return new TextTranslationRequest.BatchOverride(settings.maxBatchUnits(), settings.maxBatchChars());
     }
 
     @Bean
