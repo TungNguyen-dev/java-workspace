@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.service.Step;
 
 class MedDocTranslationAppTest {
@@ -30,6 +30,13 @@ class MedDocTranslationAppTest {
         var request = MedDocTranslationApp.parse(new String[] {"book.md", "--no-refine"});
 
         assertThat(request.steps()).containsExactlyInAnyOrder(Step.OCR, Step.TRANSLATE, Step.EXPORT);
+    }
+
+    @Test
+    void shouldParseTheEditStep() {
+        var request = MedDocTranslationApp.parse(new String[] {"book.md", "--steps", "translate,edit"});
+
+        assertThat(request.steps()).containsExactlyInAnyOrder(Step.TRANSLATE, Step.EDIT);
     }
 
     @Test

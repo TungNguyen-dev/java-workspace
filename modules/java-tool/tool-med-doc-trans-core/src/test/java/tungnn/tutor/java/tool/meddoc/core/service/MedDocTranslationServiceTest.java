@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tungnn.tutor.java.ai.client.LlmClient;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.gate.GatePolicy;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateException;
 
@@ -61,8 +61,7 @@ class MedDocTranslationServiceTest {
     void shouldWriteOneNumberedFilePerSelectedStep() throws IOException {
         var source = dir.resolve("chuong1.md");
         Files.writeString(source, "# 请热剂\n\n本方用于气分热盛证。\n");
-        var service = lenient(
-                llm(text -> text.replace("请", "清"), text -> text.replace("清热剂", "Thanh nhiệt tễ")));
+        var service = lenient(llm(text -> text.replace("请", "清"), text -> text.replace("清热剂", "Thanh nhiệt tễ")));
 
         var report = service.run(request(source, LanguageCode.VI, EnumSet.of(Step.OCR, Step.TRANSLATE, Step.EXPORT)));
 
@@ -70,11 +69,11 @@ class MedDocTranslationServiceTest {
         assertThat(runDir.getFileName().toString()).matches("\\d{8}_\\d{6}(_\\d+)?");
         assertThat(report.runDir()).isEqualTo(runDir);
         assertThat(report.outputDocx())
-                .hasFileName("06_chuong1_tieng_Viet.docx")
+                .hasFileName("07_chuong1_tieng_Viet.docx")
                 .exists();
         assertThat(fileNames(runDir))
                 .containsExactlyInAnyOrder(
-                        "01_source.md", "02_ocr.md", "04_translated.md", "06_chuong1_tieng_Viet.docx", "report.md");
+                        "01_source.md", "02_ocr.md", "04_translated.md", "07_chuong1_tieng_Viet.docx", "report.md");
         assertThat(runDir.resolve("02_ocr.md")).content().contains("清热剂");
         assertThat(runDir.resolve("04_translated.md")).content().contains("Thanh nhiệt tễ");
         assertThat(report.ocrFixes()).hasSize(1);
@@ -106,7 +105,70 @@ class MedDocTranslationServiceTest {
                 .contains("### 小柴胡汤")
                 .contains("#### 组成");
         assertThat(runDir.resolve("04_translated.md")).content().contains("#### Thành phần bài thuốc");
-        assertThat(runDir.resolve("05_refined.md")).content().contains("#### Thành phần\n");
+        assertThat(runDir.resolve("05_edited.md")).content().contains("#### Thành phần bài thuốc");
+        assertThat(runDir.resolve("06_refined.md")).content().contains("#### Thành phần\n");
+    }
+
+    @Test
+    void shouldEditTheTranslationWithTheEditPrompt() throws IOException {
+        var source = dir.resolve("chuong12.md");
+        Files.writeString(source, "# 清热剂\n\n本方用于气分热盛证。\n");
+        var llm = mock(LlmClient.class);
+        when(llm.chat(anyString(), anyString())).thenAnswer(i -> {
+            String system = i.getArgument(0);
+            String user = i.getArgument(1);
+            if (system.contains("biên tập viên")) {
+                return user.replace("Thanh nhiệt tễ", "Thanh nhiệt tễ (đã biên tập)");
+            }
+            return user.replace("清热剂", "Thanh nhiệt tễ");
+        });
+        var service = lenient(llm);
+
+        var report = service.run(request(source, LanguageCode.VI, EnumSet.of(Step.TRANSLATE, Step.EDIT)));
+
+        var runDir = singleRunDir();
+        assertThat(fileNames(runDir))
+                .containsExactlyInAnyOrder("01_source.md", "04_translated.md", "05_edited.md", "report.md");
+        assertThat(runDir.resolve("05_edited.md")).content().contains("Thanh nhiệt tễ (đã biên tập)");
+        assertThat(report.finalFile()).hasFileName("05_edited.md");
+        assertThat(report.render()).contains("PASS edit");
+    }
+
+    @Test
+    void shouldSkipTheEditStepForOtherTargetLanguages() throws IOException {
+        var source = dir.resolve("chuong13.md");
+        Files.writeString(source, "# 清热剂\n\n本方用于气分热盛证。\n");
+        var service = lenient(llm(text -> text, text -> text.replace("清热剂", "Heat-clearing")));
+
+        var report = service.run(request(source, LanguageCode.EN, EnumSet.of(Step.TRANSLATE, Step.EDIT)));
+
+        assertThat(fileNames(singleRunDir()))
+                .containsExactlyInAnyOrder("01_source.md", "04_translated.md", "report.md");
+        assertThat(report.skippedRefineSteps()).anyMatch(s -> s.startsWith("edit: only available"));
+    }
+
+    @Test
+    void shouldStopBeforeRefineTargetWhenTheEditFailsTheGate() throws IOException {
+        var source = dir.resolve("chuong14.md");
+        Files.writeString(source, "# 清热剂\n\n本方用于气分热盛证。\n");
+        var llm = mock(LlmClient.class);
+        when(llm.chat(anyString(), anyString())).thenAnswer(i -> {
+            String system = i.getArgument(0);
+            String user = i.getArgument(1);
+            if (system.contains("biên tập viên")) {
+                return user + "\n\n## Thêm tiêu đề";
+            }
+            return user.replace("清热剂", "Thanh nhiệt tễ").replace("本方用于气分热盛证。", "Dùng cho chứng khí phận nhiệt thịnh.");
+        });
+        var service = new MedDocTranslationService(llm);
+
+        assertThatThrownBy(() -> service.run(
+                        request(source, LanguageCode.VI, EnumSet.of(Step.TRANSLATE, Step.EDIT, Step.REFINE_TARGET))))
+                .isInstanceOf(QualityGateException.class)
+                .hasMessageContaining("'edit'");
+
+        assertThat(fileNames(singleRunDir()))
+                .containsExactlyInAnyOrder("01_source.md", "04_translated.md", "05_edited.md", "report.md");
     }
 
     @Test
@@ -133,7 +195,7 @@ class MedDocTranslationServiceTest {
         var report = service.run(request(source, LanguageCode.VI, EnumSet.of(Step.OCR, Step.EXPORT)));
 
         assertThat(fileNames(singleRunDir()))
-                .containsExactlyInAnyOrder("01_source.md", "02_ocr.md", "06_chuong4_tieng_Viet.docx", "report.md");
+                .containsExactlyInAnyOrder("01_source.md", "02_ocr.md", "07_chuong4_tieng_Viet.docx", "report.md");
         assertThat(report.outputDocx()).exists();
     }
 
@@ -145,7 +207,7 @@ class MedDocTranslationServiceTest {
 
         var report = service.run(request(source, LanguageCode.VI, EnumSet.of(Step.REFINE_TARGET)));
 
-        assertThat(fileNames(singleRunDir())).contains("05_refined.md");
+        assertThat(fileNames(singleRunDir())).contains("06_refined.md");
         assertThat(report.skippedRefineSteps()).anyMatch(s -> s.contains("no Chinese source in this run"));
     }
 
@@ -218,13 +280,18 @@ class MedDocTranslationServiceTest {
             throw new IllegalStateException("boom");
         }));
 
-        assertThatThrownBy(() -> service.run(request(source, LanguageCode.VI, EnumSet.of(Step.OCR, Step.TRANSLATE, Step.EXPORT))))
+        assertThatThrownBy(() -> service.run(
+                        request(source, LanguageCode.VI, EnumSet.of(Step.OCR, Step.TRANSLATE, Step.EXPORT))))
                 .isInstanceOf(QualityGateException.class)
                 .hasMessageContaining("'translate'");
 
         var runDir = singleRunDir();
-        assertThat(fileNames(runDir)).containsExactlyInAnyOrder("01_source.md", "02_ocr.md", "04_translated.md", "report.md");
-        assertThat(runDir.resolve("report.md")).content().contains("FAIL translate").contains("PASS ocr");
+        assertThat(fileNames(runDir))
+                .containsExactlyInAnyOrder("01_source.md", "02_ocr.md", "04_translated.md", "report.md");
+        assertThat(runDir.resolve("report.md"))
+                .content()
+                .contains("FAIL translate")
+                .contains("PASS ocr");
     }
 
     @Test

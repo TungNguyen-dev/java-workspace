@@ -4,6 +4,7 @@ import static tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownActions.normal
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
@@ -30,15 +31,18 @@ public final class MedRefinePipeline {
             "主治", "Chủ trị",
             "方解", "Giải nghĩa bài thuốc",
             "运用", "Vận dụng lâm sàng",
-            "附方", "Phụ phương",
-            "文献摘要", "Văn hiến trích yếu",
-            "病案", "Bệnh án");
+            "附方", "Phụ phương");
+    private static final Set<String> REMOVED_SECTIONS = Set.of("文献摘要", "病案");
 
     private MedRefinePipeline() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
     }
 
     public static MarkdownPipeline chineseSource(List<String> skipped) {
+        return chineseSource(skipped, new AtomicInteger());
+    }
+
+    public static MarkdownPipeline chineseSource(List<String> skipped, AtomicInteger removedHan) {
         return new MarkdownPipeline()
                 .step("Remove bold markers", MarkdownActions.stripBold())
                 .step(
@@ -49,7 +53,10 @@ public final class MedRefinePipeline {
                         safe(skipped, "learning objectives", MarkdownActions.removeNumberedAfterHeading(1)))
                 .step(
                         "Turn '第N节 ...' paragraphs into headings and drop the prefix",
-                        required(skipped, "section headings", MarkdownActions.sectionHeading(SECTION_PREFIX, 2, MedRefinePipeline::categoryTitle)))
+                        required(
+                                skipped,
+                                "section headings",
+                                MarkdownActions.sectionHeading(SECTION_PREFIX, 2, MedRefinePipeline::categoryTitle)))
                 .step(
                         "Remove empty paragraphs",
                         MarkdownActions.removeIf(
@@ -61,8 +68,17 @@ public final class MedRefinePipeline {
                         "Turn '【...】' paragraphs into heading + content",
                         required(skipped, "bracket headings", MarkdownActions.bracketHeading(4)))
                 .step(
+                        "Remove the '#### 文献摘要' and '#### 病案' sections",
+                        safe(
+                                skipped,
+                                "literature and case sections",
+                                MarkdownActions.removeSections(4, REMOVED_SECTIONS, removedHan::addAndGet)))
+                .step(
                         "Join paragraphs split across pages",
-                        safe(skipped, "split paragraphs", MarkdownActions.mergeBrokenParagraphs()));
+                        safe(skipped, "split paragraphs", MarkdownActions.mergeBrokenParagraphs()))
+                .step(
+                        "Turn numbered lists into plain paragraphs",
+                        safe(skipped, "numbered lists", MarkdownActions.unnumberLists()));
     }
 
     private static String categoryTitle(String next) {
@@ -75,9 +91,9 @@ public final class MedRefinePipeline {
 
     public static MarkdownPipeline vietnamese(
             LlmClient llmClient, List<String> skipped, MarkdownDocument source, AtomicInteger llmFailures) {
-        var thanhPhanPrompt = ResourceUtils.getResourceAsString("prompts/thanhphan-table.md");
-        var phuPhuongPrompt = ResourceUtils.getResourceAsString("prompts/phuphuong-normalize.md");
-        var cachDungPrompt = ResourceUtils.getResourceAsString("prompts/cachdung-modern.md");
+        var ingredientsPrompt = ResourceUtils.getResourceAsString("prompts/refine-ingredients-table.md");
+        var variantFormulasPrompt = ResourceUtils.getResourceAsString("prompts/refine-variant-formulas.md");
+        var usagePrompt = ResourceUtils.getResourceAsString("prompts/refine-usage-instructions.md");
 
         MarkdownAction labels = source == null
                 ? doc -> {
@@ -116,7 +132,7 @@ public final class MedRefinePipeline {
                                         "Thành phần",
                                         4,
                                         llmClient,
-                                        thanhPhanPrompt,
+                                        ingredientsPrompt,
                                         sectionErrors(skipped, llmFailures, "Thành phần table"))))
                 .step(
                         "Normalize the '#### Phụ phương' section with an LLM",
@@ -127,7 +143,7 @@ public final class MedRefinePipeline {
                                         "Phụ phương",
                                         4,
                                         llmClient,
-                                        phuPhuongPrompt,
+                                        variantFormulasPrompt,
                                         sectionErrors(skipped, llmFailures, "Phụ phương normalize"))))
                 .step(
                         "Rename '#### Phụ phương' to '#### Các bài thuốc biến phương gia giảm'",
@@ -141,7 +157,7 @@ public final class MedRefinePipeline {
                                         "Cách dùng",
                                         4,
                                         llmClient,
-                                        cachDungPrompt,
+                                        usagePrompt,
                                         sectionErrors(skipped, llmFailures, "Cách dùng rewrite"))))
                 .step(
                         "Sub-formula header: keep the name only in the header",

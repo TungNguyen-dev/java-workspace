@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 
 public final class SuspiciousTextUtils {
 

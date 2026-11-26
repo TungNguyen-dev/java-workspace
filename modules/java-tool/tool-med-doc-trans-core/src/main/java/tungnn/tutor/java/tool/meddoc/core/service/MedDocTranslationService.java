@@ -19,7 +19,7 @@ import tungnn.tutor.java.ai.client.LlmClient;
 import tungnn.tutor.java.infra.document.adapter.markdown.MarkdownDocumentUtils;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 import tungnn.tutor.java.infra.document.converter.MarkdownDocxConverterUtils;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.gate.GatePolicy;
 import tungnn.tutor.java.tool.meddoc.core.gate.GateResult;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateException;
@@ -63,6 +63,7 @@ public class MedDocTranslationService {
         LOGGER.info("Run folder: {} (steps: {})", runDir, steps);
 
         var translator = new LlmMarkdownTranslator(llmClient);
+        var editor = LlmMarkdownTranslator.editor(llmClient);
         var skipped = new CopyOnWriteArrayList<String>();
         var suspects = new ArrayList<Suspect>();
         var gates = new ArrayList<GateResult>();
@@ -95,10 +96,11 @@ public class MedDocTranslationService {
             if (request.runs(Step.REFINE_SOURCE)) {
                 LOGGER.info("[refine-source] Structuring the source");
                 var beforeRefine = doc;
-                doc = MedRefinePipeline.chineseSource(skipped).run(doc);
+                var removedHan = new AtomicInteger();
+                doc = MedRefinePipeline.chineseSource(skipped, removedHan).run(doc);
                 chineseSource = doc;
                 current = writeStep(runDir, "03_source_refined.md", doc);
-                check(gates, runDir, QualityGateUtils.refineSource(beforeRefine, doc, gatePolicy));
+                check(gates, runDir, QualityGateUtils.refineSource(beforeRefine, doc, removedHan.get(), gatePolicy));
             }
 
             if (request.runs(Step.TRANSLATE)) {
@@ -121,13 +123,33 @@ public class MedDocTranslationService {
                                 gatePolicy));
             }
 
+            if (request.runs(Step.EDIT)) {
+                if (target == LanguageCode.VI) {
+                    LOGGER.info("[edit] Editing the Vietnamese text into a friendlier style");
+                    var beforeEdit = doc;
+                    doc = editor.edit(doc);
+                    current = writeStep(runDir, "05_edited.md", doc);
+                    if (editor.firstError() != null) {
+                        skipped.add("edit: %d sections kept as translated, first error: %s"
+                                .formatted(editor.failureCount(), editor.firstError()));
+                    }
+                    check(
+                            gates,
+                            runDir,
+                            QualityGateUtils.edit(
+                                    beforeEdit, doc, target, editor.failureCount(), editor.warnings(), gatePolicy));
+                } else {
+                    skipped.add("edit: only available for the target language VI");
+                }
+            }
+
             if (request.runs(Step.REFINE_TARGET)) {
                 if (target == LanguageCode.VI) {
                     LOGGER.info("[refine-target] Refining the Vietnamese text");
                     var beforeRefineTarget = doc;
                     doc = MedRefinePipeline.vietnamese(llmClient, skipped, chineseSource, refineTargetFailures)
                             .run(doc);
-                    current = writeStep(runDir, "05_refined.md", doc);
+                    current = writeStep(runDir, "06_refined.md", doc);
                     check(
                             gates,
                             runDir,
@@ -137,13 +159,13 @@ public class MedDocTranslationService {
                     skipped.add("refine-target: only available for the target language VI");
                 }
             }
-            if (request.runs(Step.TRANSLATE) || request.runs(Step.REFINE_TARGET)) {
+            if (request.runs(Step.TRANSLATE) || request.runs(Step.EDIT) || request.runs(Step.REFINE_TARGET)) {
                 suspects.addAll(tagged(SuspiciousTextUtils.scanTranslation(doc, target), current));
             }
 
             if (request.runs(Step.EXPORT)) {
                 LOGGER.info("[export] Writing the DOCX");
-                docx = runDir.resolve("06_" + base + "_" + LANGUAGE_SUFFIX.get(target) + ".docx");
+                docx = runDir.resolve("07_" + base + "_" + LANGUAGE_SUFFIX.get(target) + ".docx");
                 MarkdownDocxConverterUtils.convertMarkdownToDocx(current, docx);
                 check(gates, runDir, QualityGateUtils.export(docx));
             }

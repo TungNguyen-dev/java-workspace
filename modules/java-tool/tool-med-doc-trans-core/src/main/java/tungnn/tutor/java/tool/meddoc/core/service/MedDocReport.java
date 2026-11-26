@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.gate.GateResult;
 import tungnn.tutor.java.tool.meddoc.core.inspect.Suspect;
 import tungnn.tutor.java.tool.meddoc.core.ocr.OcrFix;

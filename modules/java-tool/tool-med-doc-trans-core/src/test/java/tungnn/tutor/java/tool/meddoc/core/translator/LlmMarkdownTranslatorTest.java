@@ -14,7 +14,7 @@ import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 
 class LlmMarkdownTranslatorTest {
 
@@ -58,11 +58,70 @@ class LlmMarkdownTranslatorTest {
         var llm = mock(LlmClient.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> i.getArgument(1));
         var translator = new LlmMarkdownTranslator(llm, 1, 20);
-        var source = doc(new Heading(3, "方"), new Paragraph("一二三四五六七八九十"), new Paragraph("甲乙丙丁戊己庚辛壬癸"));
+        var source = doc(new Heading(2, "节"), new Paragraph("一二三四五六七八九十"), new Paragraph("甲乙丙丁戊己庚辛壬癸"));
 
         var result = translator.translate(source, LanguageCode.VI);
 
         verify(llm, times(2)).chat(anyString(), anyString());
+        assertThat(result.blocks()).containsExactlyElementsOf(source.blocks());
+    }
+
+    @Test
+    void shouldTranslateAWholePrescriptionInOneCall() {
+        var llm = mock(LlmClient.class);
+        when(llm.chat(anyString(), anyString())).thenAnswer(i -> i.getArgument(1));
+        var translator = new LlmMarkdownTranslator(llm, 1, 20);
+        var source = doc(
+                new Heading(3, "白虎汤"),
+                new Heading(4, "组成"),
+                new Paragraph("石膏一斤知母六两甘草二两"),
+                new Heading(4, "用法"),
+                new Paragraph("上四味以水一斗煮米熟汤成"));
+
+        var result = translator.translate(source, LanguageCode.VI);
+
+        var sent = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(llm, times(1)).chat(anyString(), sent.capture());
+        assertThat(sent.getValue()).contains("白虎汤", "组成", "用法");
+        assertThat(result.blocks()).containsExactlyElementsOf(source.blocks());
+    }
+
+    @Test
+    void shouldSplitAnOversizedPrescriptionAtSubHeadings() {
+        var llm = mock(LlmClient.class);
+        when(llm.chat(anyString(), anyString())).thenAnswer(i -> i.getArgument(1));
+        var translator = new LlmMarkdownTranslator(llm, 1, 4000, 25);
+        var source = doc(
+                new Heading(3, "白虎汤"),
+                new Heading(4, "组成"),
+                new Paragraph("石膏一斤知母六两甘草二两"),
+                new Heading(4, "用法"),
+                new Paragraph("上四味以水一斗煮米熟汤成"),
+                new Heading(4, "功用"),
+                new Paragraph("清热生津"));
+
+        var result = translator.translate(source, LanguageCode.VI);
+
+        var sent = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(llm, times(3)).chat(anyString(), sent.capture());
+        assertThat(sent.getAllValues()).allSatisfy(text -> assertThat(text).matches("(?s)^#{3,4} .*"));
+        assertThat(result.blocks()).containsExactlyElementsOf(source.blocks());
+    }
+
+    @Test
+    void shouldSendAnOversizedSubSectionWhole() {
+        var llm = mock(LlmClient.class);
+        when(llm.chat(anyString(), anyString())).thenAnswer(i -> i.getArgument(1));
+        var translator = new LlmMarkdownTranslator(llm, 1, 4000, 10);
+        var source = doc(
+                new Heading(3, "白虎汤"),
+                new Heading(4, "方解"),
+                new Paragraph("石膏一斤知母六两甘草二两粳米六合"),
+                new Paragraph("上四味以水一斗煮米熟汤成"));
+
+        var result = translator.translate(source, LanguageCode.VI);
+
+        verify(llm, times(1)).chat(anyString(), anyString());
         assertThat(result.blocks()).containsExactlyElementsOf(source.blocks());
     }
 
@@ -109,6 +168,39 @@ class LlmMarkdownTranslatorTest {
 
         assertThat(result.blocks())
                 .containsExactly(new Paragraph("1. Chứng thiếu dương"), new Paragraph("2. Hàn nhiệt"));
+    }
+
+    @Test
+    void shouldEditWithTheEditPromptAndKeepTheOrder() {
+        var llm = mock(LlmClient.class);
+        when(llm.chat(anyString(), anyString()))
+                .thenAnswer(i -> ((String) i.getArgument(1)).replace("cho nên", "vì vậy"));
+        var editor = LlmMarkdownTranslator.editor(llm);
+        var source = doc(new Heading(3, "Bạch hổ thang"), new Paragraph("Nhiệt thịnh cho nên khát nước."));
+
+        var result = editor.edit(source);
+
+        assertThat(result.blocks())
+                .containsExactly(new Heading(3, "Bạch hổ thang"), new Paragraph("Nhiệt thịnh vì vậy khát nước."));
+        assertThat(editor.successCount()).isEqualTo(1);
+        verify(llm)
+                .chat(
+                        org.mockito.ArgumentMatchers.argThat(
+                                p -> p.contains("biên tập viên") && !p.contains("{targetLanguage}")),
+                        anyString());
+    }
+
+    @Test
+    void shouldKeepTheTranslatedSectionWhenTheEditFails() {
+        var llm = mock(LlmClient.class);
+        when(llm.chat(anyString(), anyString())).thenThrow(new IllegalStateException("boom"));
+        var editor = LlmMarkdownTranslator.editor(llm);
+        var source = doc(new Heading(3, "Bạch hổ thang"), new Paragraph("Nhiệt thịnh."));
+
+        var result = editor.edit(source);
+
+        assertThat(result.blocks()).containsExactlyElementsOf(source.blocks());
+        assertThat(editor.failureCount()).isEqualTo(1);
     }
 
     @Test

@@ -12,7 +12,7 @@ import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Hea
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 import tungnn.tutor.java.infra.document.converter.DocxMarkdownConverterUtils;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.inspect.SuspiciousTextUtils;
 import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownActions;
 import tungnn.tutor.java.tool.meddoc.core.service.Step;
@@ -56,20 +56,28 @@ public final class QualityGateUtils {
     }
 
     public static GateResult refineSource(MarkdownDocument before, MarkdownDocument after, GatePolicy policy) {
+        return refineSource(before, after, 0, policy);
+    }
+
+    public static GateResult refineSource(
+            MarkdownDocument before, MarkdownDocument after, int removedHan, GatePolicy policy) {
         var problems = new ArrayList<String>();
         int headings = headingCount(after);
         if (headings == 0) {
             problems.add("no heading of level 1-3 found, the document was not structured");
         }
-        double retention = ratio(hanCount(after), hanCount(before));
+        double retention = ratio(hanCount(after), Math.max(0, hanCount(before) - removedHan));
         if (retention < policy.minRefineSourceHanRetention()) {
             problems.add("Han retention %s is below %s"
                     .formatted(fmt(retention), fmt(policy.minRefineSourceHanRetention())));
         }
-        return new GateResult(
-                Step.REFINE_SOURCE.cliName(),
-                problems,
-                List.of("Han retention: " + fmt(retention), "headings: " + headings));
+        var metrics = new ArrayList<String>();
+        metrics.add("Han retention: " + fmt(retention));
+        metrics.add("headings: " + headings);
+        if (removedHan > 0) {
+            metrics.add("removed Han: " + removedHan);
+        }
+        return new GateResult(Step.REFINE_SOURCE.cliName(), problems, metrics);
     }
 
     public static GateResult translate(
@@ -82,7 +90,8 @@ public final class QualityGateUtils {
             GatePolicy policy) {
         var problems = new ArrayList<String>();
         if (failedSections > policy.maxFailedSections()) {
-            problems.add("%d sections failed to translate (max %d)".formatted(failedSections, policy.maxFailedSections()));
+            problems.add(
+                    "%d sections failed to translate (max %d)".formatted(failedSections, policy.maxFailedSections()));
         }
         var normalized = MarkdownActions.orderedListToParagraphs(true).apply(before);
         double blockRatio = ratio(after.blocks().size(), normalized.blocks().size());
@@ -94,18 +103,45 @@ public final class QualityGateUtils {
         metrics.add("block ratio: " + fmt(blockRatio));
         untranslated(after, target, policy, problems, metrics);
         if (relabelFollows && !headingWarnings.isEmpty()) {
-            problems.add("heading levels changed, section labels cannot be matched: "
-                    + String.join(" | ", headingWarnings));
+            problems.add(
+                    "heading levels changed, section labels cannot be matched: " + String.join(" | ", headingWarnings));
         }
         return new GateResult(Step.TRANSLATE.cliName(), problems, metrics);
     }
 
-    public static GateResult refineTarget(
+    public static GateResult edit(
             MarkdownDocument before,
             MarkdownDocument after,
             LanguageCode target,
-            int llmFailures,
+            int failedSections,
+            List<String> headingWarnings,
             GatePolicy policy) {
+        var problems = new ArrayList<String>();
+        if (failedSections > policy.maxFailedSections()) {
+            problems.add("%d sections failed to edit (max %d)".formatted(failedSections, policy.maxFailedSections()));
+        }
+        double blockRatio = ratio(after.blocks().size(), before.blocks().size());
+        if (blockRatio < policy.minBlockRatio() || blockRatio > policy.maxBlockRatio()) {
+            problems.add("block ratio %s is outside %s-%s"
+                    .formatted(fmt(blockRatio), fmt(policy.minBlockRatio()), fmt(policy.maxBlockRatio())));
+        }
+        int headingsBefore = headingCount(before);
+        int headingsAfter = headingCount(after);
+        if (headingsAfter != headingsBefore) {
+            problems.add("headings of level 1-3 changed from %d to %d".formatted(headingsBefore, headingsAfter));
+        }
+        if (!headingWarnings.isEmpty()) {
+            problems.add(
+                    "heading levels changed, section labels cannot be matched: " + String.join(" | ", headingWarnings));
+        }
+        var metrics = new ArrayList<String>();
+        metrics.add("block ratio: " + fmt(blockRatio));
+        untranslated(after, target, policy, problems, metrics);
+        return new GateResult(Step.EDIT.cliName(), problems, metrics);
+    }
+
+    public static GateResult refineTarget(
+            MarkdownDocument before, MarkdownDocument after, LanguageCode target, int llmFailures, GatePolicy policy) {
         var problems = new ArrayList<String>();
         int headingsBefore = headingCount(before);
         int headingsAfter = headingCount(after);
@@ -113,7 +149,8 @@ public final class QualityGateUtils {
             problems.add("headings of level 1-3 dropped from %d to %d".formatted(headingsBefore, headingsAfter));
         }
         if (llmFailures > policy.maxRefineTargetLlmFailures()) {
-            problems.add("%d LLM refine calls failed (max %d)".formatted(llmFailures, policy.maxRefineTargetLlmFailures()));
+            problems.add(
+                    "%d LLM refine calls failed (max %d)".formatted(llmFailures, policy.maxRefineTargetLlmFailures()));
         }
         var metrics = new ArrayList<String>();
         metrics.add("headings: " + headingsAfter);
@@ -170,7 +207,11 @@ public final class QualityGateUtils {
     }
 
     private static void untranslated(
-            MarkdownDocument after, LanguageCode target, GatePolicy policy, List<String> problems, List<String> metrics) {
+            MarkdownDocument after,
+            LanguageCode target,
+            GatePolicy policy,
+            List<String> problems,
+            List<String> metrics) {
         if (target == LanguageCode.ZH) {
             return;
         }

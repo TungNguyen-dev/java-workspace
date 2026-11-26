@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import tungnn.tutor.java.ai.client.LlmClient;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
+import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.ListItem;
+import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.OrderedList;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 
@@ -22,6 +24,44 @@ class MarkdownActionsTest {
 
     private static MarkdownDocument doc(MarkdownBlock... blocks) {
         return new MarkdownDocument(List.of(blocks));
+    }
+
+    @Test
+    void shouldRemoveNamedSectionsUpToTheNextHeadingOfTheSameOrHigherLevel() {
+        var removed = new java.util.concurrent.atomic.AtomicInteger();
+        var source = doc(
+                new Heading(3, "甲方"),
+                new Heading(4, "组成"),
+                new Paragraph("甲药"),
+                new Heading(4, "病案"),
+                new Paragraph("病例一"),
+                new Heading(5, "细节"),
+                new Paragraph("病例二"),
+                new Heading(3, "乙方"),
+                new Heading(5, "病案"),
+                new Paragraph("保留"));
+
+        var result = MarkdownActions.removeSections(4, java.util.Set.of("病案"), removed::addAndGet)
+                .apply(source);
+
+        assertThat(result.blocks())
+                .containsExactly(
+                        new Heading(3, "甲方"),
+                        new Heading(4, "组成"),
+                        new Paragraph("甲药"),
+                        new Heading(3, "乙方"),
+                        new Heading(5, "病案"),
+                        new Paragraph("保留"));
+        assertThat(removed.get()).isEqualTo(2 + 3 + 2 + 3);
+    }
+
+    @Test
+    void shouldLeaveTheDocumentUnchangedWhenNoSectionMatches() {
+        var source = doc(new Heading(4, "组成"), new Paragraph("甲药"));
+
+        var result = MarkdownActions.removeSections(4, java.util.Set.of("病案")).apply(source);
+
+        assertThat(result.blocks()).containsExactlyElementsOf(source.blocks());
     }
 
     @Test
@@ -196,5 +236,44 @@ class MarkdownActionsTest {
                         new Heading(3, "Ngọc bình phong tán (Cứu nguyên phương, lục từ Y phương loại tụ)"),
                         new Heading(3, "Bát trân thang (Bát trân tán) (Thụy trúc đường)"),
                         new Heading(3, "Sinh mạch tán"));
+    }
+
+    @Test
+    void shouldTurnOrderedListsIntoPlainParagraphs() {
+        var list = new OrderedList(List.of(
+                new ListItem(List.of(new Paragraph("治疗感冒。"))), new ListItem(List.of(new Paragraph("治疗发热。")))));
+
+        var result = MarkdownActions.unnumberLists().apply(doc(new Heading(4, "方解"), list));
+
+        assertThat(result.blocks())
+                .containsExactly(new Heading(4, "方解"), new Paragraph("治疗感冒。"), new Paragraph("治疗发热。"));
+    }
+
+    @Test
+    void shouldStripManualNumbersFromRunsStartingAtOne() {
+        var result = MarkdownActions.unnumberLists()
+                .apply(doc(
+                        new Heading(4, "附方"),
+                        new Paragraph("1．异功散"),
+                        new Paragraph(""),
+                        new Paragraph("2、六君子汤"),
+                        new Paragraph("（3）保元汤"),
+                        new Paragraph("异功散、六君子汤均由四君子汤加味而成。")));
+
+        assertThat(result.blocks())
+                .containsExactly(
+                        new Heading(4, "附方"),
+                        new Paragraph("异功散"),
+                        new Paragraph(""),
+                        new Paragraph("六君子汤"),
+                        new Paragraph("保元汤"),
+                        new Paragraph("异功散、六君子汤均由四君子汤加味而成。"));
+    }
+
+    @Test
+    void shouldKeepNumbersThatDoNotStartARunAtOne() {
+        var document = doc(new Paragraph("3、凡具有和解少阳的方剂。"), new Paragraph("3.5g石膏"));
+
+        assertThat(MarkdownActions.unnumberLists().apply(document).blocks()).isEqualTo(document.blocks());
     }
 }

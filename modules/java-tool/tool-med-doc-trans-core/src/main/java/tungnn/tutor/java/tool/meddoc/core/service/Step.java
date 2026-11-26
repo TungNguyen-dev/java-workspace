@@ -10,6 +10,7 @@ public enum Step {
     OCR("ocr"),
     REFINE_SOURCE("refine-source"),
     TRANSLATE("translate"),
+    EDIT("edit"),
     REFINE_TARGET("refine-target"),
     EXPORT("export");
 

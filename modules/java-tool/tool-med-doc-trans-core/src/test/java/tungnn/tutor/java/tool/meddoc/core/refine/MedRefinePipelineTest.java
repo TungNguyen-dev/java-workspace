@@ -39,8 +39,37 @@ class MedRefinePipelineTest {
                         new Heading(4, "组成"),
                         new Paragraph("柴胡半斤(25g)"),
                         new Heading(4, "主治"),
-                        new Paragraph("1.伤寒少阳证。"));
+                        new Paragraph("伤寒少阳证。"));
         assertThat(skipped).isEmpty();
+    }
+
+    @Test
+    void shouldRemoveTheLiteratureAndCaseSections() {
+        var doc = new MarkdownDocument(List.of(
+                new Paragraph("第三章"),
+                new Paragraph("和解剂"),
+                new Paragraph("第一节\t\t和解少阳"),
+                new Paragraph("小柴胡汤(伤寒论》"),
+                new Paragraph("【组成】柴胡半斤(25g)"),
+                new Paragraph("【文献摘要】"),
+                new Paragraph("1．原书主治《伤寒论》：“往来寒热。”"),
+                new Paragraph("【病案】"),
+                new Paragraph("发热：某男，发热三日。"),
+                new Paragraph("按语：少阳证。"),
+                new Paragraph("大柴胡汤(伤寒论》"),
+                new Paragraph("【组成】柴胡半斤(25g)")));
+        var skipped = new ArrayList<String>();
+        var removedHan = new java.util.concurrent.atomic.AtomicInteger();
+
+        var result = MedRefinePipeline.chineseSource(skipped, removedHan).run(doc);
+
+        assertThat(result.blocks())
+                .noneMatch(b -> b instanceof Heading h
+                        && (h.text().equals("文献摘要") || h.text().equals("病案")));
+        assertThat(result.blocks())
+                .contains(new Heading(3, "大柴胡汤(伤寒论》"), new Heading(4, "组成"))
+                .doesNotContain(new Paragraph("按语：少阳证。"));
+        assertThat(removedHan.get()).isPositive();
     }
 
     @Test
@@ -108,7 +137,34 @@ class MedRefinePipelineTest {
                         new Heading(4, "组成"),
                         new Paragraph("白术 当归"),
                         new Heading(4, "运用"),
-                        new Paragraph("1、本方是常用方。"));
+                        new Paragraph("本方是常用方。"));
         assertThat(skipped).isEmpty();
+    }
+
+    @Test
+    void shouldRemoveNumberingInTheClinicalUseSection() {
+        var doc = new MarkdownDocument(List.of(
+                new Paragraph("第三章"),
+                new Paragraph("和解剂"),
+                new Paragraph("第一节\t\t和解少阳"),
+                new Paragraph("小柴胡汤(伤寒论》"),
+                new Paragraph("【组成】柴胡半斤(25g)"),
+                new Paragraph("【运用】"),
+                new Paragraph("1．治疗感冒。"),
+                new Paragraph("2．治疗发热。"),
+                new Paragraph("【附方】"),
+                new Paragraph("1．异功散（《小儿药证直诀》）即四君子汤加陈皮。"),
+                new Paragraph("2．六君子汤（《医学正传》）陈皮一钱。")));
+
+        var result = MedRefinePipeline.chineseSource(new ArrayList<>(), new java.util.concurrent.atomic.AtomicInteger())
+                .run(doc);
+
+        assertThat(result.blocks())
+                .containsSubsequence(
+                        new Heading(4, "运用"), new Paragraph("治疗感冒。"), new Paragraph("治疗发热。"))
+                .containsSubsequence(
+                        new Heading(4, "附方"),
+                        new Paragraph("异功散（《小儿药证直诀》）即四君子汤加陈皮。"),
+                        new Paragraph("六君子汤（《医学正传》）陈皮一钱。"));
     }
 }

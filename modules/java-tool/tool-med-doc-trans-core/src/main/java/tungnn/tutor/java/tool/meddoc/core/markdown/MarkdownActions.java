@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
@@ -37,6 +39,8 @@ public final class MarkdownActions {
     private static final Pattern NUMBERED_START = Pattern.compile("^(\\d{1,2})\\s*[.．、]\\s*(?=\\D)");
     private static final Pattern LIST_NUMBER = Pattern.compile("^(\\d{1,2})\\s*[.．]\\s*(?=\\D)");
     private static final Pattern ENUMERATION_NUMBER = Pattern.compile("^(\\d{1,2})、\\s*");
+    private static final Pattern LIST_ITEM_NUMBER =
+            Pattern.compile("^\\s*(?:(\\d{1,2})\\s*[.．、]|[(（](\\d{1,2})[)）])\\s*(?=\\D)");
     private static final Pattern CHAPTER_NAME = Pattern.compile("^[^\\d\\s，。,;；.．、][^，。,;；]{0,30}$");
     private static final Pattern SECTION_LINE = Pattern.compile("^第[一二三四五六七八九十百\\d]+[章节節]");
     private static final String HAN_GAP = "(?<=\\p{IsHan})\\s+(?=\\p{IsHan})";
@@ -804,6 +808,83 @@ public final class MarkdownActions {
             }
             return out;
         });
+    }
+
+    public static MarkdownAction removeSections(int level, Set<String> headingTexts) {
+        return removeSections(level, headingTexts, removedHan -> {});
+    }
+
+    public static MarkdownAction removeSections(int level, Set<String> headingTexts, IntConsumer onRemovedHan) {
+        if (level < 1 || level > 6) {
+            throw new IllegalArgumentException("level must be 1..6");
+        }
+        var wanted = headingTexts.stream().map(MarkdownActions::normalizeTitle).collect(Collectors.toSet());
+        return edit(blocks -> {
+            var out = new ArrayList<MarkdownBlock>();
+            int removedHan = 0;
+            int i = 0;
+            while (i < blocks.size()) {
+                var block = blocks.get(i);
+                if (!(block instanceof Heading(int level1, String text))
+                        || level1 != level
+                        || !wanted.contains(normalizeTitle(text))) {
+                    out.add(block);
+                    i++;
+                    continue;
+                }
+                int end = i + 1;
+                while (end < blocks.size() && !(blocks.get(end) instanceof Heading next && next.level() <= level)) {
+                    end++;
+                }
+                for (int k = i; k < end; k++) {
+                    removedHan += (int) textOf(blocks.get(k))
+                            .codePoints()
+                            .filter(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.HAN)
+                            .count();
+                }
+                i = end;
+            }
+            onRemovedHan.accept(removedHan);
+            return out;
+        });
+    }
+
+    public static MarkdownAction unnumberLists() {
+        return doc -> {
+            var out = new ArrayList<>(orderedListToParagraphs(false).apply(doc).blocks());
+            int i = 0;
+            while (i < out.size()) {
+                if (!(out.get(i) instanceof Paragraph(String first)) || listItemNumber(first) != 1) {
+                    i++;
+                    continue;
+                }
+                int expected = 1;
+                int k = i;
+                while (k < out.size() && out.get(k) instanceof Paragraph(String text)) {
+                    if (!text.isBlank()) {
+                        if (listItemNumber(text) != expected) {
+                            break;
+                        }
+                        out.set(
+                                k,
+                                new Paragraph(
+                                        LIST_ITEM_NUMBER.matcher(text).replaceFirst("").strip()));
+                        expected++;
+                    }
+                    k++;
+                }
+                i = k;
+            }
+            return new MarkdownDocument(out);
+        };
+    }
+
+    private static int listItemNumber(String text) {
+        var m = LIST_ITEM_NUMBER.matcher(text);
+        if (!m.find()) {
+            return -1;
+        }
+        return Integer.parseInt(m.group(1) != null ? m.group(1) : m.group(2));
     }
 
     // ---------- helpers ----------

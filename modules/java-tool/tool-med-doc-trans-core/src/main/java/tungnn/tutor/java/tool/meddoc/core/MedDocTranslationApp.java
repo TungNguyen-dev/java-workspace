@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Set;
 import tungnn.tutor.java.ai.config.LlmProvider;
 import tungnn.tutor.java.ai.util.LlmClientUtils;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateException;
 import tungnn.tutor.java.tool.meddoc.core.service.MedDocTranslationRequest;
 import tungnn.tutor.java.tool.meddoc.core.service.MedDocTranslationService;
@@ -66,6 +66,7 @@ public class MedDocTranslationApp {
         }
         if (!refine) {
             steps.remove(Step.REFINE_SOURCE);
+            steps.remove(Step.EDIT);
             steps.remove(Step.REFINE_TARGET);
             if (steps.isEmpty()) {
                 throw new IllegalArgumentException("--no-refine leaves no step to run");

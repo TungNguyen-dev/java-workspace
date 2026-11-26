@@ -21,7 +21,7 @@ import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownRefiner;
 public class OcrCleanup {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OcrCleanup.class);
-    private static final String PROMPT_RESOURCE = "prompts/ocr-fix-zh.md";
+    private static final String PROMPT_RESOURCE = "prompts/ocr-correct-chinese.md";
     private static final int DEFAULT_CONCURRENCY = 5;
 
     private final LlmClient llmClient;

@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
-import tungnn.tutor.java.tool.doctrans.core.domain.text.LanguageCode;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 
 public record MedDocTranslationRequest(Path source, LanguageCode targetLanguage, Path outputDir, Set<Step> steps) {
 
