@@ -61,8 +61,7 @@ mvn -pl modules/java-tool/tool-med-doc-trans-core -am clean package -DskipTests
 
 cp modules/java-tool/tool-med-doc-trans-core/target/tool-med-doc-trans-core-0.0.1-SNAPSHOT-all.jar tools/bin/
 
-tools/run-jar.sh tool-med-doc-trans-core-0.0.1-SNAPSHOT-all "storage/tool-med-doc-trans-core/Chương 7 Bổ ích.docx"
-tools/run-jar.sh tool-med-doc-trans-core-0.0.1-SNAPSHOT-all "storage/tool-med-doc-trans-core/Chương 7 Bổ ích.docx" --steps refine-source
+tools/run-jar.sh tool-med-doc-trans-core-0.0.1-SNAPSHOT-all "<path/file.docx>"
 ```
 
 Use the `-all` jar (the shaded executable one). Run from the repo root so relative paths resolve from there; `tools/run-jar.sh` loads `dev.env` the same way as above, and `caffeinate` keeps the Mac awake during a long run. The result goes to `<out>/<yyyyMMdd_HHmmss>/` (next to the input file without `--out`).
