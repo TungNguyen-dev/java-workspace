@@ -124,6 +124,22 @@
             </dependency>
             <dependency>
                 <groupId>tungnn.tutor.java.infra</groupId>
+                <artifactId>java-mail</artifactId>
+                <version>${java-infra.version}</version>
+                <exclusions>
+                    <!-- Leave the logging implementation to Spring Boot / the main app -->
+                    <exclusion>
+                        <groupId>org.apache.logging.log4j</groupId>
+                        <artifactId>log4j-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.logging.log4j</groupId>
+                        <artifactId>log4j-slf4j2-impl</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>tungnn.tutor.java.infra</groupId>
                 <artifactId>java-selenium</artifactId>
                 <version>${java-infra.version}</version>
                 <exclusions>
@@ -175,6 +191,7 @@
         <module>tool-crawler-core</module>
         <module>tool-document-translation-core</module>
         <module>tool-med-doc-trans-core</module>
+        <module>tool-personal-finance-core</module>
         <module>tool-selenium-browser-setup</module>
     </modules>
 
