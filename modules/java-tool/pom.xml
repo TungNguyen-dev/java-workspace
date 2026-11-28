@@ -3,6 +3,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>tungnn.tutor.java</groupId>
+        <artifactId>java-workspace</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
     <groupId>tungnn.tutor.java.tool</groupId>
     <artifactId>java-tool</artifactId>
     <version>0.0.1-SNAPSHOT</version>
@@ -12,25 +19,11 @@
     <description>Core libraries shared by the tool applications</description>
 
     <properties>
-        <java.version>25</java.version>
-        <maven.compiler.release>${java.version}</maven.compiler.release>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java-infra.version>1.0.0-SNAPSHOT</java-infra.version>
         <java-lib.version>1.0.0-SNAPSHOT</java-lib.version>
         <jackson-2-bom.version>2.21.5</jackson-2-bom.version>
         <jackson-3-bom.version>3.1.5</jackson-3-bom.version>
         <guava.version>33.4.0-jre</guava.version>
-
-        <!-- Testing Dependency Versions -->
-        <junit.jupiter.version>6.1.3</junit.jupiter.version>
-        <mockito.version>5.11.0</mockito.version>
-        <assertj.version>3.27.6</assertj.version>
-
-        <!-- Build Plugin Versions -->
-        <maven.compiler.version>3.13.0</maven.compiler.version>
-        <maven.surefire.version>3.5.2</maven.surefire.version>
-        <fmt-maven-plugin.version>2.27.0.2</fmt-maven-plugin.version>
-        <open-java-format.version>21.0.2</open-java-format.version>
     </properties>
 
     <!-- Align Jackson 2.x and 3.x artifacts pulled in by java-infra (previously managed by Spring Boot) -->
@@ -46,129 +39,41 @@
                 <groupId>tungnn.tutor.java.infra</groupId>
                 <artifactId>java-ai</artifactId>
                 <version>${java-infra.version}</version>
-                <exclusions>
-                    <!-- Leave the logging implementation to Spring Boot / the main app -->
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-slf4j2-impl</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>tungnn.tutor.java.infra</groupId>
                 <artifactId>java-claude-code</artifactId>
                 <version>${java-infra.version}</version>
-                <exclusions>
-                    <!-- Leave the logging implementation to Spring Boot / the main app -->
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-slf4j2-impl</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>tungnn.tutor.java.infra</groupId>
                 <artifactId>java-csv</artifactId>
                 <version>${java-infra.version}</version>
-                <exclusions>
-                    <!-- Leave the logging implementation to Spring Boot / the main app -->
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-slf4j2-impl</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>tungnn.tutor.java.infra</groupId>
                 <artifactId>java-document</artifactId>
                 <version>${java-infra.version}</version>
-                <exclusions>
-                    <!-- Leave the logging implementation to Spring Boot / the main app -->
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-slf4j2-impl</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>tungnn.tutor.java.infra</groupId>
                 <artifactId>java-jackson</artifactId>
                 <version>${java-infra.version}</version>
-                <exclusions>
-                    <!-- Leave the logging implementation to Spring Boot / the main app -->
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-slf4j2-impl</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>tungnn.tutor.java.infra</groupId>
                 <artifactId>java-mail</artifactId>
                 <version>${java-infra.version}</version>
-                <exclusions>
-                    <!-- Leave the logging implementation to Spring Boot / the main app -->
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-slf4j2-impl</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>tungnn.tutor.java.infra</groupId>
                 <artifactId>java-selenium</artifactId>
                 <version>${java-infra.version}</version>
-                <exclusions>
-                    <!-- Leave the logging implementation to Spring Boot / the main app -->
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-slf4j2-impl</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>tungnn.tutor.java</groupId>
                 <artifactId>java-lib</artifactId>
                 <version>${java-lib.version}</version>
-                <exclusions>
-                    <!-- Leave the logging implementation to Spring Boot / the main app -->
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.logging.log4j</groupId>
-                        <artifactId>log4j-slf4j2-impl</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
@@ -194,69 +99,5 @@
         <module>tool-personal-finance-core</module>
         <module>tool-selenium-browser-setup</module>
     </modules>
-
-    <dependencies>
-        <!-- ===== Testing ===== -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>${assertj.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-    </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>dev.openjavaformat</groupId>
-                <artifactId>fmt-maven-plugin</artifactId>
-                <version>${fmt-maven-plugin.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>dev.openjavaformat</groupId>
-                        <artifactId>open-java-format</artifactId>
-                        <version>${open-java-format.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven.compiler.version}</version>
-            </plugin>
-
-            <!-- Unit Test Runner -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven.surefire.version}</version>
-                <configuration>
-                    <argLine>
-                        <!-- Enable experimental support in Byte Buddy for JDK preview versions (e.g., JDK 25) -->
-                        -Dnet.bytebuddy.experimental=true
-                    </argLine>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>

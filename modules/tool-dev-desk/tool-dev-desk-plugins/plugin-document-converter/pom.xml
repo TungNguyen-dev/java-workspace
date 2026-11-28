@@ -14,7 +14,6 @@
     </description>
     <properties>
         <java-document.version>1.0.0-SNAPSHOT</java-document.version>
-        <log4j.version>2.26.1</log4j.version>
     </properties>
     <dependencies>
         <dependency>
@@ -34,26 +33,7 @@
             <version>${java.workspace.infra.version}</version>
             <exclusions>
                 <!-- Exclude the Log4j2 implementation to leave it to Spring Boot / the main app -->
-                <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-core</artifactId>
-                </exclusion>
                 <!-- Exclude the SLF4J -> Log4j2 binding to avoid duplicate/conflicting bindings -->
-                <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-slf4j2-impl</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-to-slf4j</artifactId>
-            <version>${log4j.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
     </dependencies>

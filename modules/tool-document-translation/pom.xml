@@ -19,6 +19,9 @@
 
     <properties>
         <java.version>25</java.version>
+        <log4j2.version>2.26.1</log4j2.version>
+        <slf4j.version>2.0.18</slf4j.version>
+        <java-logging.version>1.0.0-SNAPSHOT</java-logging.version>
         <fmt-maven-plugin.version>2.27.0.2</fmt-maven-plugin.version>
         <open-java-format.version>21.0.2</open-java-format.version>
     </properties>
@@ -31,6 +34,23 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tungnn.tutor.java</groupId>
+            <artifactId>java-logging</artifactId>
+            <version>${java-logging.version}</version>
+            <scope>runtime</scope>
         </dependency>
 
         <dependency>

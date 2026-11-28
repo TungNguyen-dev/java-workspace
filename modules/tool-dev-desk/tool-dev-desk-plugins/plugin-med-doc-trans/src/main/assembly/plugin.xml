@@ -25,7 +25,9 @@
             <scope>runtime</scope>
             <useProjectArtifact>false</useProjectArtifact>
             <excludes>
-                <exclude>org.slf4j:slf4j-api</exclude>
+                <exclude>org.slf4j:*</exclude>
+                <exclude>org.apache.logging.log4j:*</exclude>
+                <exclude>tungnn.tutor.java:java-logging</exclude>
             </excludes>
         </dependencySet>
     </dependencySets>

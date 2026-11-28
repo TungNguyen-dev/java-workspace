@@ -8,16 +8,15 @@
     </Appenders>
 
     <Loggers>
+        <Logger name="tungnn.tutor.java" level="${sys:log.level:-${env:LOG_LEVEL:-INFO}}"/>
 
-        <!-- AWS SDK logging -->
         <Logger name="software.amazon.awssdk" level="INFO"/>
-
-        <!-- Debug when needed -->
-        <Logger name="software.amazon.awssdk.request" level="DEBUG"/>
+        <Logger name="org.apache.pdfbox" level="WARN"/>
+        <Logger name="org.apache.fontbox" level="WARN"/>
+        <Logger name="org.apache.poi" level="WARN"/>
 
         <Root level="INFO">
             <AppenderRef ref="Console"/>
         </Root>
-
     </Loggers>
 </Configuration>
