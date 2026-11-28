@@ -78,6 +78,18 @@ class ClaudeCliUtilsTest {
     }
 
     @Test
+    void shouldKeepTheUsageOfAFailedCall() {
+        var json = "{\"subtype\":\"success\",\"is_error\":false,\"result\":\"cut\",\"stop_reason\":\"max_tokens\","
+                + "\"total_cost_usd\":0.02,\"usage\":{\"input_tokens\":10,\"output_tokens\":300}}";
+
+        assertThatThrownBy(() -> ClaudeCliUtils.parse(json))
+                .isInstanceOfSatisfying(ClaudeCliFailure.class, e -> {
+                    assertThat(e.partialResult().outputTokens()).isEqualTo(300);
+                    assertThat(e.partialResult().costUsd()).isEqualTo(0.02);
+                });
+    }
+
+    @Test
     void shouldFailOnANonZeroExit() throws IOException {
         var options = stub("cat >/dev/null; echo boom >&2; exit 3", Duration.ofSeconds(20));
 

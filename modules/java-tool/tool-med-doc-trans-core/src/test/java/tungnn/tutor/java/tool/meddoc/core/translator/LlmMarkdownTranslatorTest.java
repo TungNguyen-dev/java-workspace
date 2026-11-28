@@ -9,12 +9,12 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import tungnn.tutor.java.tool.meddoc.core.llm.MarkdownChat;
-import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
+import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
+import tungnn.tutor.java.tool.meddoc.core.chat.MarkdownChat;
 
 class LlmMarkdownTranslatorTest {
 

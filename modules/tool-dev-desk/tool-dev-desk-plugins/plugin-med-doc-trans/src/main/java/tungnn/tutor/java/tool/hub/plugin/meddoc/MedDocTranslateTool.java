@@ -20,11 +20,12 @@ import tungnn.tutor.java.tool.hub.api.ToolExtension;
 import tungnn.tutor.java.tool.hub.api.ToolFile;
 import tungnn.tutor.java.tool.hub.api.ToolLayout;
 import tungnn.tutor.java.tool.hub.api.ToolResult;
-import tungnn.tutor.java.tool.meddoc.core.service.MedDocTranslationRequest;
-import tungnn.tutor.java.tool.meddoc.core.llm.StepChat;
-import tungnn.tutor.java.tool.meddoc.core.llm.StepChats;
-import tungnn.tutor.java.tool.meddoc.core.service.MedDocTranslationService;
-import tungnn.tutor.java.tool.meddoc.core.service.Step;
+import tungnn.tutor.java.tool.meddoc.core.Step;
+import tungnn.tutor.java.tool.meddoc.llm.LlmClientMarkdownChat;
+import tungnn.tutor.java.tool.meddoc.llm.StepChat;
+import tungnn.tutor.java.tool.meddoc.llm.StepChats;
+import tungnn.tutor.java.tool.meddoc.service.MedDocTranslationRequest;
+import tungnn.tutor.java.tool.meddoc.service.MedDocTranslationService;
 
 @Extension
 public class MedDocTranslateTool implements ToolExtension {
@@ -171,7 +172,7 @@ public class MedDocTranslateTool implements ToolExtension {
                         || (step == Step.TRANSLATE && steps.contains(Step.EDIT));
                 if (step.usesLlm() && needed) {
                     var client = factory().create(provider, model);
-                    clients.put(step, StepChat.of((system, user) -> client.chat(system, user), claude));
+                    clients.put(step, LlmClientMarkdownChat.stepChat(client, claude));
                 }
             }
             var service = new MedDocTranslationService(StepChats.of(clients::get));

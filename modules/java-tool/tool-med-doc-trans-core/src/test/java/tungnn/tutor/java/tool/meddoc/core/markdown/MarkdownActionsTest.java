@@ -12,13 +12,13 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
-import tungnn.tutor.java.tool.meddoc.core.llm.MarkdownChat;
-import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.ListItem;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.OrderedList;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
+import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
+import tungnn.tutor.java.tool.meddoc.core.chat.MarkdownChat;
 
 class MarkdownActionsTest {
 

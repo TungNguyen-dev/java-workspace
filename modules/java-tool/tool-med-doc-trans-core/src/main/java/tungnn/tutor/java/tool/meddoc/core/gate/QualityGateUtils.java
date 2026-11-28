@@ -7,15 +7,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import tungnn.tutor.java.infra.document.adapter.markdown.MarkdownDocumentUtils;
-import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
+import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 import tungnn.tutor.java.infra.document.converter.DocxMarkdownConverterUtils;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
+import tungnn.tutor.java.tool.meddoc.core.Step;
 import tungnn.tutor.java.tool.meddoc.core.inspect.SuspiciousTextUtils;
 import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownActions;
-import tungnn.tutor.java.tool.meddoc.core.service.Step;
 
 public final class QualityGateUtils {
 

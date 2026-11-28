@@ -47,17 +47,7 @@ public final class ClaudeCliUtils {
         }
         var text = node.path("result").asText("");
         var subtype = node.path("subtype").asText("");
-        if (node.path("is_error").asBoolean(false) || (!subtype.isEmpty() && !"success".equals(subtype))) {
-            throw new ClaudeException("Claude CLI failed (subtype=%s, api_status=%s): %s"
-                    .formatted(subtype, node.path("api_error_status").asText("none"), abbreviate(text)));
-        }
         var stopReason = node.path("stop_reason").asText(null);
-        if ("max_tokens".equals(stopReason)) {
-            throw new ClaudeException("Claude response was truncated at max_tokens");
-        }
-        if (text.isBlank()) {
-            throw new ClaudeException("Claude CLI returned an empty result");
-        }
         var usage = node.path("usage");
         var cost =
                 node.hasNonNull("total_cost_usd") ? node.get("total_cost_usd").asDouble() : null;
@@ -70,6 +60,18 @@ public final class ClaudeCliUtils {
                 usage.path("output_tokens_details").path("thinking_tokens").asLong(0),
                 usage.path("cache_read_input_tokens").asLong(0),
                 usage.path("cache_creation_input_tokens").asLong(0));
+        if (node.path("is_error").asBoolean(false) || (!subtype.isEmpty() && !"success".equals(subtype))) {
+            throw new ClaudeCliFailure(
+                    "Claude CLI failed (subtype=%s, api_status=%s): %s"
+                            .formatted(subtype, node.path("api_error_status").asText("none"), abbreviate(text)),
+                    result);
+        }
+        if ("max_tokens".equals(stopReason)) {
+            throw new ClaudeCliFailure("Claude response was truncated at max_tokens", result);
+        }
+        if (text.isBlank()) {
+            throw new ClaudeCliFailure("Claude CLI returned an empty result", result);
+        }
         LOGGER.debug(
                 "Claude CLI call done [cost={}, in={}, out={}]", cost, result.inputTokens(), result.outputTokens());
         return result;

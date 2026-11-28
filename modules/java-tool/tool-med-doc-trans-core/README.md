@@ -47,7 +47,7 @@ Two things to know when steps are left out:
 
 ### Quality gates
 
-After the load and after every selected step, `gate.QualityGateUtils` checks the output of that stage against the thresholds of `gate.GatePolicy`. When a gate fails, the run stops before the next stage: the files written so far stay in the run folder, `report.md` is written with every gate result, and a `QualityGateException` is thrown.
+After the load and after every selected step, `core.gate.QualityGateUtils` checks the output of that stage against the thresholds of `core.gate.GatePolicy`. When a gate fails, the run stops before the next stage: the files written so far stay in the run folder, `report.md` is written with every gate result, and a `QualityGateException` is thrown.
 
 | Stage | Fails when | Default |
 | --- | --- | --- |
@@ -63,22 +63,22 @@ A refine step that matches nothing is still only a warning in the report. Pass a
 
 ### Load the input
 
-`source.SourceDocumentUtils.toMarkdown` reads `.docx` (through the DOCX → Markdown converter) and `.md`, `.markdown` or `.txt` (read as Markdown). Any other extension fails the run (the report is still written).
+`utils.SourceDocumentUtils.toMarkdown` reads `.docx` (through the DOCX → Markdown converter) and `.md`, `.markdown` or `.txt` (read as Markdown). Any other extension fails the run (the report is still written).
 
 ### ocr
 
-`ocr.OcrCleanup.clean`:
+`core.ocr.OcrCleanup.clean`:
 
 1. Normalizes the text with `MarkdownRefiner.forSource()`.
 2. Turns ordered lists into plain paragraphs, keeping the numbers as `1、...`. A paragraph that starts with `1.` would be parsed back as a list; `1、` stays a paragraph, so the translation sees it as normal text. After the translation the numbers are restored to `1. ...`.
 3. Sends every non-empty heading and paragraph to the LLM with the prompt `prompts/ocr-correct-chinese.md`, up to 5 blocks at a time.
-4. Keeps the corrected blocks and records each changed block as an `ocr.OcrFix` (block index, before, after).
+4. Keeps the corrected blocks and records each changed block as an `core.ocr.OcrFix` (block index, before, after).
 
-Then `inspect.SuspiciousTextUtils.scanSource` flags stray characters left after cleanup, paragraphs that look cut off, and herb composition lines with suspicious doses.
+Then `core.inspect.SuspiciousTextUtils.scanSource` flags stray characters left after cleanup, paragraphs that look cut off, and herb composition lines with suspicious doses.
 
 ### refine-source
 
-`refine.MedRefinePipeline.chineseSource` works on the Chinese document, whose layout is stable and does not depend on the translation:
+`core.refine.MedRefinePipeline.chineseSource` works on the Chinese document, whose layout is stable and does not depend on the translation:
 
 - merges `第N章` and the next paragraph into the chapter title (`#`), only when that paragraph looks like a name (short, no punctuation or leading number);
 - removes the learning objectives under the chapter title: a run of short paragraphs numbered 1, 2, 3, ... Anything else (for example `3.5g ...`) is kept;
@@ -91,7 +91,7 @@ Each step is wrapped by `safe(...)`: if a step throws, it is skipped, the docume
 
 ### translate
 
-`translator.LlmMarkdownTranslator` splits the document into sections and sends each section to `LlmClient.chat` as one long Markdown text:
+`core.translator.LlmMarkdownTranslator` splits the document into sections and sends each section to `LlmClient.chat` as one long Markdown text:
 
 - a section starts at every heading of level 1 to 3 (for example one formula = `###` with its `####` parts). A `###` formula section is sent whole (up to 15000 characters, then split at its `####` sub-headings); any other section longer than 4000 characters is split again between blocks;
 - up to 5 sections are translated at the same time, and the results are put back in order;
@@ -101,11 +101,11 @@ Each step is wrapped by `safe(...)`: if a step throws, it is skipped, the docume
 
 ### edit
 
-`translator.LlmMarkdownTranslator.editor(...)` runs on the translated document (target `VI` only). It reuses the section chunking, the concurrency and the "keep the section on failure" rule of `translate`, with the system prompt `prompts/edit-polish-vietnamese.md`: rewrite stiff, word-by-word sentences into natural modern Vietnamese for students and practitioners, keeping the facts, the Hán-Việt terms, the doses and the Markdown structure. The step must not change the headings, because `refine-target` sets the section labels from the Chinese headings by position; a changed heading level fails the gate. Sections whose call fails are kept as translated and listed in the report.
+`core.translator.LlmMarkdownTranslator.editor(...)` runs on the translated document (target `VI` only). It reuses the section chunking, the concurrency and the "keep the section on failure" rule of `translate`, with the system prompt `prompts/edit-polish-vietnamese.md`: rewrite stiff, word-by-word sentences into natural modern Vietnamese for students and practitioners, keeping the facts, the Hán-Việt terms, the doses and the Markdown structure. The step must not change the headings, because `refine-target` sets the section labels from the Chinese headings by position; a changed heading level fails the gate. Sections whose call fails are kept as translated and listed in the report.
 
 ### refine-target
 
-`refine.MedRefinePipeline.vietnamese` runs on the translated document (target `VI` only). It is a `markdown.MarkdownPipeline` of `markdown.MarkdownAction` steps that:
+`core.refine.MedRefinePipeline.vietnamese` runs on the translated document (target `VI` only). It is a `core.markdown.MarkdownPipeline` of `core.markdown.MarkdownAction` steps that:
 
 - set the section labels from a fixed dictionary, matching the k-th heading of the translation to the k-th heading of the Chinese source (`relabelHeadings`). If the heading counts or levels differ, the step is skipped and the reason is reported;
 - add `## Đại cương`, turn ordered lists into paragraphs and upper-case the formula names;
@@ -122,7 +122,7 @@ Each step is wrapped by `safe(...)`: if a step throws, it is skipped, the docume
 | 运用 | Vận dụng lâm sàng |
 | 附方 | Phụ phương |
 
-After `translate` and `refine-target`, `inspect.SuspiciousTextUtils.scanTranslation` flags Chinese text that is still in the output. It is skipped when the target is `ZH`.
+After `translate` and `refine-target`, `core.inspect.SuspiciousTextUtils.scanTranslation` flags Chinese text that is still in the output. It is skipped when the target is `ZH`.
 
 ### export
 
@@ -141,25 +141,38 @@ Each run creates its own folder `<out>/<yyyyMMdd_HHmmss>/` (a suffix `_1`, `_2`,
 | `05_edited.md` | `edit` | Translation after the style edit |
 | `06_refined.md` | `refine-target` | Translation after the Vietnamese refine |
 | `07_<name>_<suffix>.docx` | `export` | Final DOCX. Suffix: `tieng_Viet` (VI), `tieng_Anh` (EN), `tieng_Nhat` (JA), `tieng_Trung` (ZH) |
-| `report.md` | always | Report: steps, quality gate results, run folder, target language, sections translated and failed, OCR fixes, skipped refine steps, translation warnings and suspicious text (for the target `VI`, this includes any remaining `tễ`, which should read `bài thuốc`). Each suspect names the file its block number refers to. When the run fails, the report is still written with `Output: none` and the error |
+| `report.md` | always | Report: steps, quality gate results, a `## Steps` section with one entry per step (status, output file, block counts, time, gate, details and LLM usage), run folder, target language, sections translated and failed, OCR fixes, skipped refine steps, translation warnings and suspicious text (for the target `VI`, this includes any remaining `tễ`, which should read `bài thuốc`). Each suspect names the file its block number refers to. When the run fails, the report is still written with `Output: none` and the error |
 
 The numbers are fixed per step, so a step that did not run leaves a gap.
 
 ## Packages
 
-Root package: `tungnn.tutor.java.tool.meddoc.core`.
+Root package: `tungnn.tutor.java.tool.meddoc`. The code is split into layers, and a layer only imports the layers below it (checked by `LayerDependencyTest`):
+
+| Layer | May import |
+| --- | --- |
+| `utils` | nothing |
+| `core` | `utils` |
+| `llm` | `core`, `utils` |
+| `service` | `llm`, `core`, `utils` |
+| root (`MedDocTranslationApp`) | everything |
 
 | Package | Purpose |
 | --- | --- |
-| `core` | `MedDocTranslationApp`, the command-line entry point |
-| `service` | `MedDocTranslationService` (the workflow), `MedDocTranslationRequest`, `MedDocReport`, `Step` |
-| `source` | `SourceDocumentUtils`: load a source file as Markdown |
-| `ocr` | `OcrCleanup`, `OcrFix`: LLM-based OCR correction |
-| `inspect` | `SuspiciousTextUtils`, `Suspect`: detect text that needs a manual check |
-| `translator` | `LlmMarkdownTranslator`: translation through `LlmClient`, section by section |
-| `markdown` | `MarkdownAction`, `MarkdownActions`, `MarkdownPipeline`, `MarkdownRefiner`: Markdown editing building blocks |
-| `gate` | `GatePolicy`, `GateResult`, `QualityGateUtils`, `QualityGateException`: the quality gate of each stage |
-| `refine` | `MedRefinePipeline`: the structure recipe for the Chinese text and the refine recipe for Vietnamese |
+| `meddoc` | `MedDocTranslationApp`, the command-line entry point |
+| `service` | The public API: `MedDocTranslationService` (the workflow), `MedDocTranslationRequest` |
+| `service.report` | `MedDocReport`, `StepReport`, `StepStatus`: the content of `report.md` |
+| `llm` | LLM backends and their usage metering: `ChatSpec`, `ChatSpecUtils`, `StepChats`, `ClaudeCliMarkdownChat`, `LlmClientMarkdownChat`, `ChatUsage` |
+| `utils` | `SourceDocumentUtils`: load a source file as Markdown |
+| `core` | The domain: `Step`, and the packages below |
+| `core.chat` | `MarkdownChat`: the port every LLM backend implements |
+| `core.pipeline` | One `StepRunner` per step (`ocr`, `refine-source`, `translate`, `edit`, `refine-target`, `export`) and the shared `PipelineState` |
+| `core.ocr` | `OcrCleanup`, `OcrFix`: LLM-based OCR correction |
+| `core.inspect` | `SuspiciousTextUtils`, `Suspect`: detect text that needs a manual check |
+| `core.translator` | `LlmMarkdownTranslator`: translation through `MarkdownChat`, section by section |
+| `core.markdown` | `MarkdownAction`, `MarkdownActions`, `MarkdownPipeline`, `MarkdownRefiner`: Markdown editing building blocks |
+| `core.gate` | `GatePolicy`, `GateResult`, `QualityGateUtils`, `QualityGateException`: the quality gate of each stage |
+| `core.refine` | `MedRefinePipeline`: the structure recipe for the Chinese text and the refine recipe for Vietnamese |
 
 ## Prompts
 
@@ -200,7 +213,7 @@ set -a; source dev.env; set +a
 
 mvn -q -pl modules/java-tool/tool-med-doc-trans-core compile exec:exec \
   -Dexec.executable=java -Dexec.workingdir="$PWD" \
-  -Dexec.args="-cp %classpath tungnn.tutor.java.tool.meddoc.core.MedDocTranslationApp \"storage/book/Chương 3.docx\" --lang VI --out storage/book/out"
+  -Dexec.args="-cp %classpath tungnn.tutor.java.tool.meddoc.MedDocTranslationApp \"storage/book/Chương 3.docx\" --lang VI --out storage/book/out"
 ```
 
 **Or run the jar.** Build the self-contained jar, from the repo root:
@@ -320,6 +333,6 @@ Claude CLI calls run in an empty working directory with no tools, MCP servers, s
 | `CLAUDE_CLI_TIMEOUT_SECONDS` | `600` | Timeout of one call, the process is killed after it |
 | `DOCTRANS_CLAUDE_CLI_CONCURRENCY` | `2` | Parallel Claude CLI calls; keep it low for subscription rate limits |
 
-Each run lists the calls, cost and tokens (input, cache, output, thinking) of every `claude-cli` step in the `## LLM usage` section of `report.md` and in the log. A real section measured on `sonnet` with `medium` effort costs about a third of `opus` with `high` effort and uses no thinking tokens.
+Each run lists the calls and tokens (input, cache, output, thinking) of every step that uses an LLM, with any backend, in its entry of the `## Steps` section and in the `## LLM usage` section of `report.md` (with a total), and in the log. The cost is only known for `claude-cli`; other backends show `$n/a`, and a provider that returns no usage data shows `tokens not reported by provider`. `in` always includes the cached tokens, `cache` is the part of it that was read from the cache. A call that fails after the model ran (for example a `claude-cli` answer cut at `max_tokens`) is counted as failed with its tokens and cost; a call that throws before any answer, or a backend API error, has no usage data. A step that fails still shows the usage of its calls. A real section measured on `sonnet` with `medium` effort costs about a third of `opus` with `high` effort and uses no thinking tokens.
 
 A failed call (usage limit, timeout, refusal, truncation at `max_tokens`) is a failed section: the original text is kept and the quality gate of that step stops the run.
