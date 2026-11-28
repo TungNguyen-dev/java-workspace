@@ -17,16 +17,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tungnn.tutor.java.infra.document.converter.SourceMarkdownUtils;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.Step;
-import tungnn.tutor.java.tool.meddoc.core.quality.GatePolicy;
-import tungnn.tutor.java.tool.meddoc.core.quality.GateResult;
-import tungnn.tutor.java.tool.meddoc.core.quality.QualityGateException;
 import tungnn.tutor.java.tool.meddoc.core.glossary.ClasspathGlossarySource;
 import tungnn.tutor.java.tool.meddoc.core.glossary.CompositeGlossarySource;
 import tungnn.tutor.java.tool.meddoc.core.glossary.GlossarySource;
 import tungnn.tutor.java.tool.meddoc.core.ocr.OcrCleanup;
-import tungnn.tutor.java.tool.meddoc.core.ocr.OcrFix;
+import tungnn.tutor.java.tool.meddoc.core.quality.GatePolicy;
+import tungnn.tutor.java.tool.meddoc.core.quality.GateResult;
+import tungnn.tutor.java.tool.meddoc.core.quality.QualityGateException;
 import tungnn.tutor.java.tool.meddoc.core.step.CheckDosesStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.step.ExportStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.step.FixOcrStepRunner;
@@ -43,8 +43,6 @@ import tungnn.tutor.java.tool.meddoc.core.step.TranslateStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.translate.LlmMarkdownTranslator;
 import tungnn.tutor.java.tool.meddoc.llm.StepChats;
 import tungnn.tutor.java.tool.meddoc.service.report.MedDocReport;
-import tungnn.tutor.java.tool.meddoc.service.report.StepReport;
-import tungnn.tutor.java.infra.document.converter.SourceMarkdownUtils;
 
 public class MedDocTranslationService {
 

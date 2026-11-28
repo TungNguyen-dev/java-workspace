@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -62,7 +61,8 @@ public record Glossary(List<GlossaryEntry> entries) {
 
     public Glossary overriddenBy(Glossary other) {
         var overridden = other.entries.stream().map(GlossaryEntry::source).collect(Collectors.toSet());
-        var merged = new ArrayList<>(entries.stream().filter(e -> !overridden.contains(e.source())).toList());
+        var merged = new ArrayList<>(
+                entries.stream().filter(e -> !overridden.contains(e.source())).toList());
         merged.addAll(other.entries);
         return new Glossary(merged);
     }

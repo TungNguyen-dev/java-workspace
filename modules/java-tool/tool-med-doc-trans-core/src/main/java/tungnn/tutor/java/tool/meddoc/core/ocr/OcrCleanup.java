@@ -1,8 +1,5 @@
 package tungnn.tutor.java.tool.meddoc.core.ocr;
 
-import tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils;
-import tungnn.tutor.java.tool.meddoc.core.markdown.MedMarkdownActions;
-import tungnn.tutor.java.tool.meddoc.core.markdown.MedMarkdownRefiners;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -10,15 +7,17 @@ import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tungnn.tutor.java.ai.chat.TextChat;
 import tungnn.tutor.java.ai.util.LlmOutputUtils;
 import tungnn.tutor.java.core.lib.io.resource.ResourceUtils;
 import tungnn.tutor.java.core.lib.multithread.ConcurrentUtils;
+import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
-import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
-import tungnn.tutor.java.ai.chat.TextChat;
-import tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownRefiner;
+import tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils;
+import tungnn.tutor.java.tool.meddoc.core.markdown.MedMarkdownActions;
+import tungnn.tutor.java.tool.meddoc.core.markdown.MedMarkdownRefiners;
 
 public class OcrCleanup {
 
@@ -41,7 +40,8 @@ public class OcrCleanup {
     }
 
     public Result clean(MarkdownDocument source) {
-        var normalized = MarkdownTransformUtils.normalize(MedMarkdownRefiners.forSource()).apply(source);
+        var normalized = MarkdownTransformUtils.normalize(MedMarkdownRefiners.forSource())
+                .apply(source);
         var numbered = MarkdownTransformUtils.orderedListToParagraphs(true).apply(normalized);
         var structured = MedMarkdownActions.listNumbersToEnumerationMark().apply(numbered);
         var blocks = structured.blocks();

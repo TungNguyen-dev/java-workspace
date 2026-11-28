@@ -11,10 +11,10 @@ import java.util.Set;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.Step;
-import tungnn.tutor.java.tool.meddoc.core.quality.GatePolicy;
-import tungnn.tutor.java.tool.meddoc.core.glossary.Glossary;
 import tungnn.tutor.java.tool.meddoc.core.check.Suspect;
+import tungnn.tutor.java.tool.meddoc.core.glossary.Glossary;
 import tungnn.tutor.java.tool.meddoc.core.ocr.OcrFix;
+import tungnn.tutor.java.tool.meddoc.core.quality.GatePolicy;
 
 public final class PipelineState {
 
@@ -80,10 +80,6 @@ public final class PipelineState {
         return document;
     }
 
-    public void setDocument(MarkdownDocument document) {
-        this.document = document;
-    }
-
     public MarkdownDocument chineseSource() {
         return chineseSource;
     }
@@ -94,10 +90,6 @@ public final class PipelineState {
 
     public Path current() {
         return current;
-    }
-
-    public void setCurrent(Path current) {
-        this.current = current;
     }
 
     public Path docx() {

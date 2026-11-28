@@ -1,16 +1,16 @@
 package tungnn.tutor.java.tool.meddoc.core.markdown;
 
 import static tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils.edit;
+import static tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils.headingBefore;
 import static tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils.normalizeTitle;
+import static tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils.orderedListToParagraphs;
 import static tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils.textOf;
 import static tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils.transformSection;
-import static tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils.orderedListToParagraphs;
-import static tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils.headingBefore;
 
 import java.text.Normalizer;
-import java.util.Locale;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -20,10 +20,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import tungnn.tutor.java.ai.chat.TextChat;
 import tungnn.tutor.java.ai.util.LlmOutputUtils;
+import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.OrderedList;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
-import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 import tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownAction;
 import tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils;
@@ -32,8 +32,6 @@ public final class MedMarkdownActions {
 
     private static final Locale VI = Locale.forLanguageTag("vi");
     private static final String OPENING_MARKS = "([{（【《「『“‘\"'";
-    private static final Pattern MUC_PREFIX =
-            Pattern.compile("^(?:Mục|Tiết)\\s+(?:thứ\\s+\\p{L}+|\\d+|[IVXLC]+)(?![\\p{L}\\p{N}])\\s*[:.\\-–—]?\\s*");
     private static final Pattern NAME_PREFIX =
             Pattern.compile("^\\s*(?:\\d+\\.\\s*)?([^:：(（\\n]+?)\\s*([(（][^)）]*[)）])?\\s*[:：]\\s*");
     private static final Pattern BRACKET_TITLE = Pattern.compile("(?s)^(?:【([^】]+)】|\\[([^\\]]+)\\](?!\\())\\s*(.*)$");
@@ -51,20 +49,6 @@ public final class MedMarkdownActions {
     private static final int MIN_BROKEN_LENGTH = 20;
 
     private MedMarkdownActions() {}
-
-    public static MarkdownAction titleCaseHeading(int level) {
-        if (level < 1 || level > 6) {
-            throw new IllegalArgumentException("level must be 1..6");
-        }
-        return edit(blocks -> {
-            for (int i = 0; i < blocks.size(); i++) {
-                if (blocks.get(i) instanceof Heading(int level1, String text) && level1 == level) {
-                    blocks.set(i, new Heading(level, titleCase(text)));
-                }
-            }
-            return blocks;
-        });
-    }
 
     public static MarkdownAction headingMainUpperParenTitle(int level) {
         if (level < 1 || level > 6) {
@@ -138,14 +122,6 @@ public final class MedMarkdownActions {
             }
         }
         return out.toString();
-    }
-
-    public static MarkdownAction muc(int level) {
-        return sectionHeading(MUC_PREFIX, level);
-    }
-
-    public static MarkdownAction sectionHeading(Pattern prefix, int level) {
-        return sectionHeading(prefix, level, next -> null);
     }
 
     public static MarkdownAction sectionHeading(Pattern prefix, int level, Function<String, String> titleFromNext) {
@@ -268,10 +244,6 @@ public final class MedMarkdownActions {
         return Character.UnicodeScript.of(codePoint) == Character.UnicodeScript.HAN;
     }
 
-    public static MarkdownAction llmSection(String headingText, int level, TextChat chat, String systemPrompt) {
-        return llmSection(headingText, level, chat, systemPrompt, null);
-    }
-
     public static MarkdownAction llmSection(
             String headingText,
             int level,
@@ -324,14 +296,6 @@ public final class MedMarkdownActions {
             }
             return out;
         });
-    }
-
-    public static MarkdownAction thanhPhan(int level) {
-        return thanhPhan(level, false);
-    }
-
-    public static MarkdownAction thanhPhan(int level, boolean numbered) {
-        return headingBeforeLabel("Thành phần", level, numbered);
     }
 
     public static MarkdownAction headingBeforeLabel(String label, int level) {
@@ -479,7 +443,9 @@ public final class MedMarkdownActions {
         if (level < 1 || level > 6) {
             throw new IllegalArgumentException("level must be 1..6");
         }
-        var wanted = headingTexts.stream().map(MarkdownTransformUtils::normalizeTitle).collect(Collectors.toSet());
+        var wanted = headingTexts.stream()
+                .map(MarkdownTransformUtils::normalizeTitle)
+                .collect(Collectors.toSet());
         return edit(blocks -> {
             var out = new ArrayList<MarkdownBlock>();
             int removedHan = 0;

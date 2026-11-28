@@ -1,8 +1,5 @@
 package tungnn.tutor.java.tool.meddoc.core.format;
 
-import tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils;
-import tungnn.tutor.java.tool.meddoc.core.markdown.MedMarkdownActions;
-import tungnn.tutor.java.tool.meddoc.core.markdown.MedMarkdownRefiners;
 import static tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils.normalize;
 
 import java.util.List;
@@ -13,13 +10,15 @@ import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tungnn.tutor.java.ai.chat.TextChat;
 import tungnn.tutor.java.core.lib.io.resource.ResourceUtils;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
-import tungnn.tutor.java.ai.chat.TextChat;
 import tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownAction;
 import tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownPipeline;
-import tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownRefiner;
+import tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils;
+import tungnn.tutor.java.tool.meddoc.core.markdown.MedMarkdownActions;
+import tungnn.tutor.java.tool.meddoc.core.markdown.MedMarkdownRefiners;
 
 public final class MedFormatPipelines {
 
@@ -60,7 +59,8 @@ public final class MedFormatPipelines {
                         required(
                                 skipped,
                                 "section headings",
-                                MedMarkdownActions.sectionHeading(SECTION_PREFIX, 2, MedFormatPipelines::categoryTitle)))
+                                MedMarkdownActions.sectionHeading(
+                                        SECTION_PREFIX, 2, MedFormatPipelines::categoryTitle)))
                 .step(
                         "Remove empty paragraphs",
                         MarkdownTransformUtils.removeIf(
