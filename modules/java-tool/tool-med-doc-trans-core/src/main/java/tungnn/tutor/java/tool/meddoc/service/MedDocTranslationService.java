@@ -17,23 +17,26 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.Step;
 import tungnn.tutor.java.tool.meddoc.core.gate.GatePolicy;
 import tungnn.tutor.java.tool.meddoc.core.gate.GateResult;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateException;
-import tungnn.tutor.java.tool.meddoc.core.glossary.GlossaryExtractor;
+import tungnn.tutor.java.tool.meddoc.core.glossary.ClasspathGlossarySource;
+import tungnn.tutor.java.tool.meddoc.core.glossary.CompositeGlossarySource;
+import tungnn.tutor.java.tool.meddoc.core.glossary.GlossarySource;
 import tungnn.tutor.java.tool.meddoc.core.ocr.OcrCleanup;
 import tungnn.tutor.java.tool.meddoc.core.ocr.OcrFix;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.CheckDosesStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.ExportStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.GlossaryStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.FixOcrStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.LoadStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.ScanSourceStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.ScanTargetStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.FormatTargetStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.GlossaryStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.LoadStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.PipelineState;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.PolishTargetStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.ScanSourceStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.ScanTargetStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.StepRunner;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.StructureSourceStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.TranslateStepRunner;
@@ -175,6 +178,16 @@ public class MedDocTranslationService {
                 chats.usageTotal());
     }
 
+    private static GlossarySource glossarySourceFor(MedDocTranslationRequest request) {
+        if (request.targetLanguage() != LanguageCode.VI) {
+            return request.glossarySource();
+        }
+        if (request.glossarySource() == null) {
+            return ClasspathGlossarySource.defaults();
+        }
+        return new CompositeGlossarySource(List.of(ClasspathGlossarySource.defaults(), request.glossarySource()));
+    }
+
     private Map<Step, StepRunner> runnersFor(
             MedDocTranslationRequest request, LlmMarkdownTranslator translator, LlmMarkdownTranslator polisher) {
         var runners = new EnumMap<Step, StepRunner>(Step.class);
@@ -191,9 +204,7 @@ public class MedDocTranslationService {
             runners.put(Step.STRUCTURE_SOURCE, new StructureSourceStepRunner());
         }
         if (request.runs(Step.GLOSSARY)) {
-            runners.put(
-                    Step.GLOSSARY,
-                    new GlossaryStepRunner(() -> new GlossaryExtractor(chats.forStep(Step.GLOSSARY).chat())));
+            runners.put(Step.GLOSSARY, new GlossaryStepRunner(glossarySourceFor(request)));
         }
         if (request.runs(Step.TRANSLATE)) {
             runners.put(Step.TRANSLATE, new TranslateStepRunner(translator));

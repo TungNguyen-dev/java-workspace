@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.Step;
+import tungnn.tutor.java.tool.meddoc.core.glossary.FileGlossarySource;
 import tungnn.tutor.java.tool.meddoc.core.chat.MarkdownChat;
 import tungnn.tutor.java.tool.meddoc.core.gate.GatePolicy;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateException;
@@ -440,26 +441,88 @@ class MedDocTranslationServiceTest {
     }
 
     @Test
-    void shouldPutTheGlossaryTermsIntoTheTranslationPrompt() throws IOException {
+    void shouldPutOnlyTheGlossaryTermsOfEachSectionIntoTheTranslationPrompt() throws IOException {
         var source = dir.resolve("glossary.md");
-        Files.writeString(source, "# 章\n\n### 白虎汤\n\n石膏30g\n");
+        Files.writeString(source, "# 章\n\n### 白虎汤\n\n石膏30g\n\n### 其他\n\n知母9g\n");
+        var glossary = dir.resolve("glossary.csv");
+        Files.writeString(
+                glossary, "source,target,context\n石膏,Thạch cao,vị thuốc\n白虎汤,Bạch hổ thang,\n知母,Tri mẫu,\n甘草,Cam thảo,\n");
         var translatePrompts = new java.util.concurrent.CopyOnWriteArrayList<String>();
         var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenAnswer(i -> {
             String system = i.getArgument(0);
-            String user = i.getArgument(1);
-            if (system.contains("lập bảng thuật ngữ")) {
-                return "| 中文 | Bản dịch |\n| --- | --- |\n| 石膏 | Thạch cao |\n| 白虎汤 | Bạch hổ thang |";
-            }
             translatePrompts.add(system);
-            return user.replace("白虎汤", "Bạch hổ thang").replace("石膏", "Thạch cao").replace("章", "Chương");
+            return i.getArgument(1);
+        });
+        var service = lenient(llm);
+        var request = new MedDocTranslationRequest(
+                source,
+                LanguageCode.VI,
+                dir.resolve("out"),
+                EnumSet.of(Step.GLOSSARY, Step.TRANSLATE),
+                new FileGlossarySource(glossary));
+
+        service.run(request);
+
+        assertThat(translatePrompts).anyMatch(p -> p.contains("- 石膏 → Thạch cao (ngữ cảnh: vị thuốc)"));
+        assertThat(translatePrompts).anyMatch(p -> p.contains("- 知母 → Tri mẫu") && !p.contains("- 石膏 →"));
+        assertThat(translatePrompts).noneMatch(p -> p.contains("- 甘草 →"));
+        var run = singleRunDir();
+        assertThat(fileNames(run)).contains("05_glossary.md", "06_translate.md");
+        assertThat(run.resolve("05_glossary.md")).content().contains("石膏").doesNotContain("甘草");
+    }
+
+    @Test
+    void shouldSkipTheGlossaryStepWithoutASource() throws IOException {
+        var source = dir.resolve("nogloss.md");
+        Files.writeString(source, "# 章\n\n石膏30g\n");
+        var service = lenient(llm(text -> text, text -> text));
+
+        service.run(request(source, LanguageCode.EN, EnumSet.of(Step.GLOSSARY, Step.TRANSLATE)));
+
+        assertThat(fileNames(singleRunDir())).doesNotContain("05_glossary.md");
+    }
+
+    @Test
+    void shouldUseTheBuiltInGlossaryForVietnameseWithoutAnyGlossaryFile() throws IOException {
+        var source = dir.resolve("builtin.md");
+        Files.writeString(source, "# 章\n\n石膏30g\n");
+        var prompts = new java.util.concurrent.CopyOnWriteArrayList<String>();
+        var llm = mock(MarkdownChat.class);
+        when(llm.chat(anyString(), anyString())).thenAnswer(i -> {
+            prompts.add(i.getArgument(0));
+            return i.getArgument(1);
+        });
+
+        lenient(llm).run(request(source, LanguageCode.VI, EnumSet.of(Step.GLOSSARY, Step.TRANSLATE)));
+
+        assertThat(prompts).anyMatch(p -> p.contains("- 石膏 → Thạch cao"));
+        assertThat(prompts).anyMatch(p -> p.contains("Không dùng từ \"tễ\""));
+        assertThat(singleRunDir().resolve("05_glossary.md")).content().contains("石膏");
+    }
+
+    @Test
+    void shouldLetTheUserGlossaryOverrideTheBuiltInOneAndSkipTheVietnameseRulesForEnglish() throws IOException {
+        var source = dir.resolve("override.md");
+        Files.writeString(source, "# 章\n\n石膏30g\n");
+        var glossary = dir.resolve("mine.csv");
+        Files.writeString(glossary, "source,target\n石膏,Gypsum riêng\n");
+        var prompts = new java.util.concurrent.CopyOnWriteArrayList<String>();
+        var llm = mock(MarkdownChat.class);
+        when(llm.chat(anyString(), anyString())).thenAnswer(i -> {
+            prompts.add(i.getArgument(0));
+            return i.getArgument(1);
         });
         var service = lenient(llm);
 
-        service.run(request(source, LanguageCode.VI, EnumSet.of(Step.GLOSSARY, Step.TRANSLATE)));
+        service.run(new MedDocTranslationRequest(
+                source, LanguageCode.VI, dir.resolve("out"), EnumSet.of(Step.GLOSSARY, Step.TRANSLATE), new FileGlossarySource(glossary)));
+        var viPrompts = List.copyOf(prompts);
+        prompts.clear();
+        service.run(request(source, LanguageCode.EN, EnumSet.of(Step.TRANSLATE)));
 
-        assertThat(translatePrompts).anyMatch(p -> p.contains("石膏 → Thạch cao"));
-        assertThat(fileNames(singleRunDir())).contains("05_glossary.md", "06_translate.md");
+        assertThat(viPrompts).anyMatch(p -> p.contains("- 石膏 → Gypsum riêng") && !p.contains("Thạch cao"));
+        assertThat(prompts).noneMatch(p -> p.contains("Không dùng từ \"tễ\""));
     }
 
     @Test

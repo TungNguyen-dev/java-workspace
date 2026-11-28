@@ -6,8 +6,14 @@ import java.util.Objects;
 import java.util.Set;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.Step;
+import tungnn.tutor.java.tool.meddoc.core.glossary.GlossarySource;
 
-public record MedDocTranslationRequest(Path source, LanguageCode targetLanguage, Path outputDir, Set<Step> steps) {
+public record MedDocTranslationRequest(
+        Path source, LanguageCode targetLanguage, Path outputDir, Set<Step> steps, GlossarySource glossarySource) {
+
+    public MedDocTranslationRequest(Path source, LanguageCode targetLanguage, Path outputDir, Set<Step> steps) {
+        this(source, targetLanguage, outputDir, steps, null);
+    }
 
     public MedDocTranslationRequest {
         Objects.requireNonNull(source, "source must not be null");
@@ -22,7 +28,7 @@ public record MedDocTranslationRequest(Path source, LanguageCode targetLanguage,
     }
 
     public MedDocTranslationRequest withSteps(Set<Step> newSteps) {
-        return new MedDocTranslationRequest(source, targetLanguage, outputDir, newSteps);
+        return new MedDocTranslationRequest(source, targetLanguage, outputDir, newSteps, glossarySource);
     }
 
     public boolean runs(Step step) {

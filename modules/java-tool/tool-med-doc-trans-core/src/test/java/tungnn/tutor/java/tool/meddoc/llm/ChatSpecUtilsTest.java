@@ -14,7 +14,7 @@ class ChatSpecUtilsTest {
         var specs = ChatSpecUtils.resolve(Map.of(), key -> null);
 
         assertThat(specs.keySet()).containsExactlyInAnyOrder(
-                Step.FIX_OCR, Step.GLOSSARY, Step.TRANSLATE, Step.POLISH_TARGET, Step.FORMAT_TARGET);
+                Step.FIX_OCR, Step.TRANSLATE, Step.POLISH_TARGET, Step.FORMAT_TARGET);
         assertThat(specs.values()).allMatch(spec -> spec.equals(new ChatSpec("deepseek", null)));
     }
 

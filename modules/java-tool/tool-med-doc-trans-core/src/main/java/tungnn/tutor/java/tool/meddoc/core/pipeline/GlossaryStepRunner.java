@@ -1,20 +1,19 @@
 package tungnn.tutor.java.tool.meddoc.core.pipeline;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.Step;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateUtils;
-import tungnn.tutor.java.tool.meddoc.core.glossary.GlossaryExtractor;
+import tungnn.tutor.java.tool.meddoc.core.glossary.GlossarySource;
 
 public final class GlossaryStepRunner implements StepRunner {
 
-    private final Supplier<GlossaryExtractor> extractor;
+    private final GlossarySource source;
 
-    public GlossaryStepRunner(Supplier<GlossaryExtractor> extractor) {
-        this.extractor = extractor;
+    public GlossaryStepRunner(GlossarySource source) {
+        this.source = source;
     }
 
     @Override
@@ -24,7 +23,7 @@ public final class GlossaryStepRunner implements StepRunner {
 
     @Override
     public String description(PipelineState state) {
-        return "Building a glossary of herb and formula names";
+        return source == null ? "Loading the glossary" : "Loading the glossary from " + source.describe();
     }
 
     @Override
@@ -32,25 +31,22 @@ public final class GlossaryStepRunner implements StepRunner {
         if (!state.runs(Step.TRANSLATE)) {
             return Optional.of("the translate step is not selected");
         }
-        return state.target() == LanguageCode.ZH ? Optional.of("the target language is Chinese") : Optional.empty();
+        if (state.target() == LanguageCode.ZH) {
+            return Optional.of("the target language is Chinese");
+        }
+        return source == null ? Optional.of("no glossary source is configured") : Optional.empty();
     }
 
     @Override
     public StepOutcome run(PipelineState state) throws IOException {
-        var result = extractor.get().extract(state.document(), state.target());
-        state.setGlossary(result.glossary());
-        var file = state.writeArtifact(step().outputName("md"), result.glossary().render());
-        var details = new ArrayList<String>();
-        details.add("Terms: " + result.glossary().terms().size() + " of " + result.candidates() + " candidates");
-        if (result.failedBatches() > 0) {
-            var note = result.failedBatches() + " glossary batches failed, the translation uses a partial glossary";
-            details.add(note);
-            state.skipped().add("glossary: " + note);
-        }
+        var loaded = source.load();
+        state.setGlossary(loaded);
+        var inDocument = loaded.restrictTo(state.document().toMarkdown());
+        var file = state.writeArtifact(step().outputName("md"), inDocument.render());
         return new StepOutcome(
-                QualityGateUtils.glossary(result.glossary().terms().size(), result.candidates()),
+                QualityGateUtils.glossary(loaded.size(), inDocument.size()),
                 state.document(),
                 file,
-                details);
+                List.of("Entries: " + inDocument.size() + " of " + loaded.size() + " found in the document"));
     }
 }

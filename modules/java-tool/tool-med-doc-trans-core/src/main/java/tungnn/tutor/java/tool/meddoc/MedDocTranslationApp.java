@@ -10,6 +10,8 @@ import java.util.Set;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.Step;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateException;
+import tungnn.tutor.java.tool.meddoc.core.glossary.FileGlossarySource;
+import tungnn.tutor.java.tool.meddoc.core.glossary.GlossarySource;
 import tungnn.tutor.java.tool.meddoc.llm.ChatSpec;
 import tungnn.tutor.java.tool.meddoc.llm.ChatSpecUtils;
 import tungnn.tutor.java.tool.meddoc.llm.StepChats;
@@ -19,9 +21,9 @@ import tungnn.tutor.java.tool.meddoc.service.MedDocTranslationService;
 public class MedDocTranslationApp {
 
     private static final String USAGE =
-            "Usage: MedDocTranslationApp <input.docx|md|txt> [--lang VI] [--out dir] [--steps %s] [--no-refine]"
+            "Usage: MedDocTranslationApp <input.docx|md|txt> [--lang VI] [--out dir] [--steps %s] [--no-refine] [--glossary file.csv|tsv|md]"
                             .formatted(Step.validNames().replace(", ", ","))
-                    + " [--llm <fix-ocr|glossary|translate|polish-target|format-target|default>=<claude-cli[:model][@effort]|provider[:model]>]...";
+                    + " [--llm <fix-ocr|translate|polish-target|format-target|default>=<claude-cli[:model][@effort]|provider[:model]>]...";
 
     record Args(MedDocTranslationRequest request, Map<String, String> llm) {}
 
@@ -64,6 +66,7 @@ public class MedDocTranslationApp {
         var out = source.toAbsolutePath().getParent();
         Set<Step> steps = Step.all();
         var refine = true;
+        GlossarySource glossary = null;
         var llm = new LinkedHashMap<String, String>();
         for (int i = 1; i < args.length; i++) {
             switch (args[i]) {
@@ -71,6 +74,7 @@ public class MedDocTranslationApp {
                 case "--out" -> out = Path.of(value(args, ++i, "--out"));
                 case "--steps" -> steps = Step.parse(value(args, ++i, "--steps"));
                 case "--no-refine" -> refine = false;
+                case "--glossary" -> glossary = new FileGlossarySource(Path.of(value(args, ++i, "--glossary")));
                 case "--llm" -> addLlm(llm, value(args, ++i, "--llm"));
                 default -> throw new IllegalArgumentException("Unknown option: " + args[i]);
             }
@@ -83,7 +87,7 @@ public class MedDocTranslationApp {
                 throw new IllegalArgumentException("--no-refine leaves no step to run");
             }
         }
-        return new Args(new MedDocTranslationRequest(source, lang, out, steps), llm);
+        return new Args(new MedDocTranslationRequest(source, lang, out, steps, glossary), llm);
     }
 
     private static void addLlm(Map<String, String> llm, String assignment) {

@@ -36,11 +36,7 @@ public enum Step {
     }
 
     public boolean usesLlm() {
-        return this == FIX_OCR
-                || this == GLOSSARY
-                || this == TRANSLATE
-                || this == POLISH_TARGET
-                || this == FORMAT_TARGET;
+        return this == FIX_OCR || this == TRANSLATE || this == POLISH_TARGET || this == FORMAT_TARGET;
     }
 
     public String envName() {

@@ -16,7 +16,7 @@ source (.docx/.md/.markdown/.txt)
    ▼
    │  structure-source: structure the Chinese text ──► 04_structure_source.md
    ▼
-   │  glossary:         herb and formula names     ──► 05_glossary.md
+   │  glossary:         prepared term table        ──► 05_glossary.md
    ▼
    │  translate:        LLM, one section per call  ──► 06_translate.md
    ▼
@@ -41,7 +41,7 @@ source (.docx/.md/.markdown/.txt)
 | --- | --- |
 | `fix-ocr` | OCR cleanup with the LLM, then a scan for suspicious text |
 | `structure-source` | Structures the Chinese text into headings |
-| `glossary` | Collects formula and herb names from the Chinese text and translates them once with the LLM, so the sections translated in parallel use the same names (needs `translate`, not for target `ZH`) |
+| `glossary` | Loads a prepared term table (`--glossary`, no LLM) so the sections translated in parallel use the same names (needs `translate` and a glossary source, not for target `ZH`; skipped otherwise) |
 | `translate` | Translates with the LLM |
 | `polish-target` | Edits the Vietnamese translation into a friendlier style with the LLM (target `VI` only) |
 | `format-target` | Reformats the Vietnamese translation (target `VI` only) |
@@ -102,9 +102,25 @@ Each step is wrapped by `safe(...)`: if a step throws, it is skipped, the docume
 
 ### glossary
 
-`core.glossary.GlossaryExtractor` runs on the Chinese document before `translate` (not for target `ZH`, and only when `translate` is selected). It collects the candidates without an LLM: the names of the `###` headings (formulas) and the herb names written before a dose such as `石膏30g`. It sends them to the LLM in batches of 80 with the prompt `prompts/glossary-tcm-terms.md`, which answers a table `中文 | translation`, and keeps the answers in a `core.glossary.Glossary`.
+`core.glossary.GlossarySource` loads a prepared `Glossary` before `translate` (not for target `ZH`, only when `translate` is selected). There is no LLM call. The implementations are `ClasspathGlossarySource` (the built-in `glossary/glossary.csv`), `FileGlossarySource` (`--glossary <file>`) and `CompositeGlossarySource` (merges several sources, the later one wins per term). A database or vector-search source can implement the same interface later.
 
-`translate` then adds to its system prompt, for each section, only the terms that appear in that section. The sections are translated in parallel, so this keeps the herb and formula names the same everywhere. The glossary is written to `05_glossary.md` for review. If a batch fails, the run goes on with the partial glossary and the report lists it in the skipped list.
+For target `VI` the built-in `src/main/resources/glossary/glossary.csv` is always loaded; a `--glossary` file is merged on top of it, and when a term appears in both, the rows of the user file replace every built-in row of that term. For other targets only the `--glossary` file is used, and without one the step is skipped. The prompts under `prompts/` only hold general rules: the terms (formula, herb and book names, fixed section labels, ancient units, the "bài thuốc" rule) live in the glossary, and the Vietnamese style rules in `prompts/translate-tcm-text.vi.md`, which is added to the translate prompt for target `VI`.
+
+File formats (UTF-8):
+
+- `.csv` / `.tsv`: header `source,target[,context]`, one entry per row.
+- `.md`: a table `| source | translation | context |`; the header and `---` rows are ignored.
+
+`context` is optional and describes where the translation applies. The same source term may appear in several rows with different contexts.
+
+```csv
+source,target,context
+石膏,Thạch cao,
+白虎汤,Bạch hổ thang,tên phương
+生地,Sinh địa,vị thuốc
+```
+
+`translate` then adds to its system prompt, for each section, only the entries whose source term appears in that section (the longest term wins, so `生石膏` does not also match `石膏`). When a term has several rows, all of them are listed with their context and the LLM picks the one that fits. `05_glossary.md` lists the entries found in the document for review.
 
 ### translate
 
@@ -192,7 +208,7 @@ Root package: `tungnn.tutor.java.tool.meddoc`. The code is split into layers, an
 | `core` | The domain: `Step`, and the packages below |
 | `core.chat` | `MarkdownChat`: the port every LLM backend implements |
 | `core.pipeline` | One `StepRunner` per step (`load`, `fix-ocr`, `scan-source`, `structure-source`, `glossary`, `translate`, `polish-target`, `format-target`, `scan-target`, `check-doses`, `export`) and the shared `PipelineState` |
-| `core.glossary` | `Glossary`, `GlossaryExtractor`: the term table used by `translate` |
+| `core.glossary` | `Glossary`, `GlossaryEntry`, `GlossarySource`, `FileGlossarySource`: the prepared term table used by `translate` |
 | `core.ocr` | `OcrCleanup`, `OcrFix`: LLM-based OCR correction |
 | `core.inspect` | `SuspiciousTextUtils`, `Suspect`: detect text that needs a manual check |
 | `core.translator` | `LlmMarkdownTranslator`: translation through `MarkdownChat`, section by section |
@@ -273,7 +289,7 @@ Notes:
 Arguments of `MedDocTranslationApp`:
 
 ```
-MedDocTranslationApp <input.docx|md|txt> [--lang VI] [--out dir] [--steps fix-ocr,structure-source,glossary,translate,polish-target,format-target,check-doses,export] [--no-refine]
+MedDocTranslationApp <input.docx|md|txt> [--lang VI] [--out dir] [--steps fix-ocr,structure-source,glossary,translate,polish-target,format-target,check-doses,export] [--no-refine] [--glossary file.csv|tsv|md]
 ```
 
 | Option | Default | Meaning |
@@ -343,7 +359,7 @@ java -jar tool-med-doc-trans-core-*-all.jar book.docx \
 DOCTRANS_LLM_TRANSLATE=claude-cli:sonnet java -jar ... book.md --steps translate,export
 ```
 
-Per step, the first value found wins: `--llm <step>=<spec>`, then `DOCTRANS_LLM_<STEP>` (`FIX_OCR`, `GLOSSARY`, `TRANSLATE`, `POLISH_TARGET`, `FORMAT_TARGET`), then the default. The default is `--llm default=<spec>`, then `DOCTRANS_LLM_DEFAULT`, then `DOCTRANS_TRANSLATOR_PROVIDER`, then `deepseek`. `structure-source`, `check-doses` and `export` do not use an LLM and cannot be configured.
+Per step, the first value found wins: `--llm <step>=<spec>`, then `DOCTRANS_LLM_<STEP>` (`FIX_OCR`, `TRANSLATE`, `POLISH_TARGET`, `FORMAT_TARGET`), then the default. The default is `--llm default=<spec>`, then `DOCTRANS_LLM_DEFAULT`, then `DOCTRANS_TRANSLATOR_PROVIDER`, then `deepseek`. `structure-source`, `glossary`, `check-doses` and `export` do not use an LLM and cannot be configured.
 
 When the `translate` step uses Claude (`claude-cli` or the `anthropic` provider), the `polish-target` step is always skipped, even when it is selected with `--steps` or configured with `--llm polish-target=...`. This rule has priority over every other setting, applies whatever the steps of the run are, and is written in the skipped list of `report.md`. Running only `--steps polish-target` in that case fails because nothing is left to run.
 

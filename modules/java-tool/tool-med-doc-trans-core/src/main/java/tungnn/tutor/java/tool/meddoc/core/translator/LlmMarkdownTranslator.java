@@ -1,7 +1,10 @@
 package tungnn.tutor.java.tool.meddoc.core.translator;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,6 +35,8 @@ public final class LlmMarkdownTranslator {
     private static final String PROMPT_RESOURCE = "prompts/translate-tcm-text.md";
     private static final String POLISH_PROMPT_RESOURCE = "prompts/polish-vietnamese.md";
     private static final String LANGUAGE_PLACEHOLDER = "{targetLanguage}";
+    private static final String LANGUAGE_RULES_PLACEHOLDER = "{languageRules}";
+    private static final String LANGUAGE_RULES_PREFIX = "prompts/translate-tcm-text.";
     private static final int MAX_SECTION_LEVEL = 3;
     private static final int PRESCRIPTION_LEVEL = 3;
 
@@ -84,8 +89,19 @@ public final class LlmMarkdownTranslator {
     }
 
     public MarkdownDocument translate(MarkdownDocument source, LanguageCode target, Glossary glossary) {
-        var prompt = promptTemplate.replace(LANGUAGE_PLACEHOLDER, target.languageName());
+        var prompt = promptTemplate
+                .replace(LANGUAGE_RULES_PLACEHOLDER, languageRules(target))
+                .replace(LANGUAGE_PLACEHOLDER, target.languageName());
         return process(source, prompt, "Translating", glossary);
+    }
+
+    private static String languageRules(LanguageCode target) {
+        var resource = LANGUAGE_RULES_PREFIX + target.name().toLowerCase(Locale.ROOT) + ".md";
+        try (var in = ResourceUtils.getResourceAsStream(resource)) {
+            return in == null ? "" : ResourceUtils.getResourceAsString(resource);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public MarkdownDocument polish(MarkdownDocument source) {
@@ -128,7 +144,15 @@ public final class LlmMarkdownTranslator {
             return chunk.blocks();
         }
         try {
-            var systemPrompt = glossary == null ? prompt : prompt + glossary.promptSectionFor(text);
+            var glossarySection = glossary == null ? "" : glossary.promptSectionFor(text);
+            if (!glossarySection.isEmpty() && LOGGER.isDebugEnabled()) {
+                LOGGER.debug(
+                        "Section {} ({}): {} glossary entries attached",
+                        chunk.index(),
+                        chunk.title(),
+                        glossary.matching(text).size());
+            }
+            var systemPrompt = prompt + glossarySection;
             var answer = LlmOutputUtils.clean(chat.chat(systemPrompt, text));
             var blocks = answer == null || answer.isBlank()
                     ? List.<MarkdownBlock>of()

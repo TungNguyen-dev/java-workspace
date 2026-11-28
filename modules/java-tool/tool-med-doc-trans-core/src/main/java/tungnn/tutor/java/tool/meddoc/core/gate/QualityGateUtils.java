@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import tungnn.tutor.java.infra.document.adapter.markdown.MarkdownDocumentUtils;
+import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Heading;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
-import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 import tungnn.tutor.java.infra.document.converter.DocxMarkdownConverterUtils;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
@@ -51,12 +51,14 @@ public final class QualityGateUtils {
         return new GateResult(
                 Step.CHECK_DOSES.cliName(),
                 problems,
-                List.of("sections compared: " + result.sections(), "mismatches: " + result.mismatches().size()));
+                List.of(
+                        "sections compared: " + result.sections(),
+                        "mismatches: " + result.mismatches().size()));
     }
 
-    public static GateResult glossary(int terms, int candidates) {
+    public static GateResult glossary(int loaded, int matched) {
         return new GateResult(
-                Step.GLOSSARY.cliName(), List.of(), List.of("terms: " + terms, "candidates: " + candidates));
+                Step.GLOSSARY.cliName(), List.of(), List.of("entries: " + loaded, "found in the document: " + matched));
     }
 
     public static GateResult scan(Step step, int suspects) {
@@ -75,7 +77,9 @@ public final class QualityGateUtils {
             problems.add("Han retention %s is below %s".formatted(fmt(retention), fmt(policy.minFixOcrHanRetention())));
         }
         return new GateResult(
-                Step.FIX_OCR.cliName(), problems, List.of("Han retention: " + fmt(retention), "text blocks: " + textAfter));
+                Step.FIX_OCR.cliName(),
+                problems,
+                List.of("Han retention: " + fmt(retention), "text blocks: " + textAfter));
     }
 
     public static GateResult structureSource(MarkdownDocument before, MarkdownDocument after, GatePolicy policy) {

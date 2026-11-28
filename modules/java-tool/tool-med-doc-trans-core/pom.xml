@@ -35,6 +35,10 @@
         </dependency>
         <dependency>
             <groupId>tungnn.tutor.java.infra</groupId>
+            <artifactId>java-csv</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tungnn.tutor.java.infra</groupId>
             <artifactId>java-claude-code</artifactId>
         </dependency>
         <dependency>

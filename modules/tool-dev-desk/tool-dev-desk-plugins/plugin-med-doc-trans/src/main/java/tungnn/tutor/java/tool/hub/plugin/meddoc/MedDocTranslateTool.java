@@ -24,6 +24,8 @@ import tungnn.tutor.java.tool.meddoc.core.Step;
 import tungnn.tutor.java.tool.meddoc.llm.LlmClientMarkdownChat;
 import tungnn.tutor.java.tool.meddoc.llm.StepChat;
 import tungnn.tutor.java.tool.meddoc.llm.StepChats;
+import tungnn.tutor.java.tool.meddoc.core.glossary.FileGlossarySource;
+import tungnn.tutor.java.tool.meddoc.core.glossary.GlossarySource;
 import tungnn.tutor.java.tool.meddoc.service.MedDocTranslationRequest;
 import tungnn.tutor.java.tool.meddoc.service.MedDocTranslationService;
 
@@ -98,6 +100,7 @@ public class MedDocTranslateTool implements ToolExtension {
     public List<ParamSpec> params() {
         return List.of(
                 new ParamSpec("file", "file", true, "Document (.docx, .md, .txt)"),
+                new ParamSpec("glossary", "file", false, "Glossary (.csv, .tsv, .md: source, target, optional context)"),
                 new ParamSpec("targetLang", LANGUAGE_TYPE, true, "Translate to", LanguageCode.VI.name()),
                 new ParamSpec(
                         "provider",
@@ -164,6 +167,14 @@ public class MedDocTranslateTool implements ToolExtension {
             Files.createDirectories(jobDir);
             Path input = jobDir.resolve(safeFileName(file.filename()));
             Files.write(input, file.content());
+            GlossarySource glossary = null;
+            if (in.get("glossary") instanceof ToolFile glossaryFile
+                    && glossaryFile.filename() != null
+                    && glossaryFile.content().length > 0) {
+                Path glossaryPath = jobDir.resolve("glossary-" + safeFileName(glossaryFile.filename()));
+                Files.write(glossaryPath, glossaryFile.content());
+                glossary = new FileGlossarySource(glossaryPath);
+            }
             var clients = new EnumMap<Step, StepChat>(Step.class);
             boolean claude = "anthropic".equalsIgnoreCase(provider);
             for (Step step : Step.values()) {
@@ -176,7 +187,7 @@ public class MedDocTranslateTool implements ToolExtension {
                 }
             }
             var service = new MedDocTranslationService(StepChats.of(clients::get));
-            var report = service.run(new MedDocTranslationRequest(input, target, data.resolve("runs"), steps));
+            var report = service.run(new MedDocTranslationRequest(input, target, data.resolve("runs"), steps, glossary));
             var output = report.outputDocx() != null ? report.outputDocx() : report.finalFile();
             var contentType = report.outputDocx() != null ? DOCX_TYPE : MARKDOWN_TYPE;
             return new ToolResult(
