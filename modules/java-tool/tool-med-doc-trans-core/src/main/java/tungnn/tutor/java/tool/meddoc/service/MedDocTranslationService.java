@@ -19,32 +19,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.Step;
-import tungnn.tutor.java.tool.meddoc.core.gate.GatePolicy;
-import tungnn.tutor.java.tool.meddoc.core.gate.GateResult;
-import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateException;
+import tungnn.tutor.java.tool.meddoc.core.quality.GatePolicy;
+import tungnn.tutor.java.tool.meddoc.core.quality.GateResult;
+import tungnn.tutor.java.tool.meddoc.core.quality.QualityGateException;
 import tungnn.tutor.java.tool.meddoc.core.glossary.ClasspathGlossarySource;
 import tungnn.tutor.java.tool.meddoc.core.glossary.CompositeGlossarySource;
 import tungnn.tutor.java.tool.meddoc.core.glossary.GlossarySource;
 import tungnn.tutor.java.tool.meddoc.core.ocr.OcrCleanup;
 import tungnn.tutor.java.tool.meddoc.core.ocr.OcrFix;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.CheckDosesStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.ExportStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.FixOcrStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.FormatTargetStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.GlossaryStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.LoadStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.PipelineState;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.PolishTargetStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.ScanSourceStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.ScanTargetStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.StepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.StructureSourceStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.TranslateStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.translator.LlmMarkdownTranslator;
+import tungnn.tutor.java.tool.meddoc.core.step.CheckDosesStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.step.ExportStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.step.FixOcrStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.step.FormatTargetStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.step.GlossaryStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.step.LoadStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.step.PipelineState;
+import tungnn.tutor.java.tool.meddoc.core.step.PolishTargetStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.step.ScanSourceStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.step.ScanTargetStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.step.StepRunner;
+import tungnn.tutor.java.tool.meddoc.core.step.StructureSourceStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.step.TranslateStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.translate.LlmMarkdownTranslator;
 import tungnn.tutor.java.tool.meddoc.llm.StepChats;
 import tungnn.tutor.java.tool.meddoc.service.report.MedDocReport;
 import tungnn.tutor.java.tool.meddoc.service.report.StepReport;
-import tungnn.tutor.java.tool.meddoc.utils.SourceDocumentUtils;
+import tungnn.tutor.java.infra.document.converter.SourceMarkdownUtils;
 
 public class MedDocTranslationService {
 
@@ -115,7 +115,7 @@ public class MedDocTranslationService {
         var request = applyClaudeRule(requested, skipped);
         Files.createDirectories(request.outputDir());
         var runDir = createRunDir(request.outputDir());
-        var base = SourceDocumentUtils.baseName(request.source());
+        var base = SourceMarkdownUtils.baseName(request.source());
         var target = request.targetLanguage();
         var steps = request.steps();
         LOGGER.info("Run folder: {} (steps: {})", runDir, steps);
@@ -203,9 +203,7 @@ public class MedDocTranslationService {
         if (request.runs(Step.STRUCTURE_SOURCE)) {
             runners.put(Step.STRUCTURE_SOURCE, new StructureSourceStepRunner());
         }
-        if (request.runs(Step.GLOSSARY)) {
-            runners.put(Step.GLOSSARY, new GlossaryStepRunner(glossarySourceFor(request)));
-        }
+        runners.put(Step.GLOSSARY, new GlossaryStepRunner(glossarySourceFor(request)));
         if (request.runs(Step.TRANSLATE)) {
             runners.put(Step.TRANSLATE, new TranslateStepRunner(translator));
         }

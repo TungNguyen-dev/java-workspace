@@ -57,6 +57,7 @@ public class LlmTextTranslator extends AbstractTextTranslator {
     static int defaultConcurrency(LlmProvider provider) {
         return switch (provider) {
             case OLLAMA, OLLAMA_OPENAI, LM_STUDIO, VLLM -> 1;
+            case CLAUDE_CLI -> 2;
             case GOOGLE_GENAI, HUGGING_FACE, DEEPSEEK -> 10;
             default -> DEFAULT_MAX_CONCURRENCY;
         };

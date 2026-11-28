@@ -7,7 +7,13 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import tungnn.tutor.java.tool.meddoc.core.Step;
-import tungnn.tutor.java.tool.meddoc.core.chat.MarkdownChat;
+import tungnn.tutor.java.ai.chat.ChatReply;
+import tungnn.tutor.java.ai.chat.LlmClientChat;
+import tungnn.tutor.java.ai.chat.MeteredChat;
+import tungnn.tutor.java.ai.chat.MeteredChatException;
+import tungnn.tutor.java.ai.chat.MeteringChat;
+import tungnn.tutor.java.ai.chat.TextChat;
+import tungnn.tutor.java.ai.config.LlmSpec;
 
 class StepChatsTest {
 
@@ -30,7 +36,7 @@ class StepChatsTest {
     @Test
     void shouldKnowIfAStepUsesClaudeWithoutCreatingItsClient() {
         var created = new AtomicInteger();
-        var specs = Map.of(Step.TRANSLATE, ChatSpec.parse("claude-cli"), Step.POLISH_TARGET, ChatSpec.parse("deepseek"));
+        var specs = Map.of(Step.TRANSLATE, LlmSpec.parse("claude-cli"), Step.POLISH_TARGET, LlmSpec.parse("deepseek"));
         var fromSpecs = StepChats.of(specs, key -> null);
 
         assertThat(fromSpecs.usesClaude(Step.TRANSLATE)).isTrue();
@@ -49,19 +55,19 @@ class StepChatsTest {
     @Test
     void shouldBuildAClaudeCliChatFromASpecWithoutStartingAProcess() {
         var chats = StepChats.of(
-                Map.of(Step.TRANSLATE, ChatSpec.parse("claude-cli:haiku")),
+                Map.of(Step.TRANSLATE, LlmSpec.parse("claude-cli:haiku")),
                 Map.of("DOCTRANS_CLAUDE_CLI_CONCURRENCY", "3")::get);
 
         var chat = chats.forStep(Step.TRANSLATE);
 
-        assertThat(((MeteringMarkdownChat) chat.chat()).delegate()).isInstanceOf(ClaudeCliMarkdownChat.class);
+        assertThat(((MeteringChat) chat.chat()).delegate()).isInstanceOf(LlmClientChat.class);
         assertThat(chat.maxConcurrency()).isEqualTo(3);
         assertThatThrownBy(() -> chats.forStep(Step.FIX_OCR)).hasMessageContaining("No LLM configured");
     }
 
     @Test
     void shouldCountUsagePerStepEvenWhenTheFactoryReturnsOneSharedChat() {
-        MarkdownChat shared = (system, user) -> "ok";
+        TextChat shared = (system, user) -> "ok";
         var chats = StepChats.of(step -> StepChat.of(shared));
 
         chats.forStep(Step.FIX_OCR).chat().chat("s", "u");
@@ -76,7 +82,7 @@ class StepChatsTest {
 
     @Test
     void shouldRecordTokensOfAMeteredChatAndFailures() {
-        class Metered implements MarkdownChat, MeteredChat {
+        class Metered implements TextChat, MeteredChat {
             @Override
             public String chat(String system, String user) {
                 return chatWithUsage(system, user).text();
@@ -103,7 +109,7 @@ class StepChatsTest {
 
     @Test
     void shouldKeepTheTokensOfAFailedMeteredCall() {
-        class Failing implements MarkdownChat, MeteredChat {
+        class Failing implements TextChat, MeteredChat {
             @Override
             public String chat(String system, String user) {
                 return chatWithUsage(system, user).text();

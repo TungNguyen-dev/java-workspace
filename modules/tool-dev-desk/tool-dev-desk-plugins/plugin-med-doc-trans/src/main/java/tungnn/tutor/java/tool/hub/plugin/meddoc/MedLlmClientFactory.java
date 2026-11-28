@@ -10,7 +10,6 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.function.UnaryOperator;
 import tungnn.tutor.java.ai.client.LlmClient;
-import tungnn.tutor.java.ai.config.LlmClientProperties;
 import tungnn.tutor.java.ai.config.LlmProvider;
 import tungnn.tutor.java.ai.util.LlmClientUtils;
 import tungnn.tutor.java.tool.hub.api.ToolException;
@@ -28,7 +27,8 @@ final class MedLlmClientFactory {
             "hugging-face",
             "ollama-openai",
             "ollama",
-            "lm-studio");
+            "lm-studio",
+            "claude-cli");
 
     private static final String CONFIG_FILE = "llm.properties";
     private static final String ENV_DEFAULT_PROVIDER = "DOCTRANS_TRANSLATOR_PROVIDER";
@@ -66,10 +66,7 @@ final class MedLlmClientFactory {
         UnaryOperator<String> lookup = lookup();
         try {
             LlmProvider provider = LlmProvider.from(providerName);
-            String model = blankToNull(modelOverride);
-            UnaryOperator<String> withModel = key ->
-                    model != null && provider.modelEnv().filter(key::equals).isPresent() ? model : lookup.apply(key);
-            return LlmClientUtils.create(LlmClientProperties.fromEnv(provider, withModel));
+            return LlmClientUtils.create(provider, blankToNull(modelOverride), lookup);
         } catch (IllegalArgumentException e) {
             throw new ToolException(
                     "Incomplete LLM configuration: " + e.getMessage()

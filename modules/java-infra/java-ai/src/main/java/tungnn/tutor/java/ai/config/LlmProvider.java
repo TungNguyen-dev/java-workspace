@@ -33,6 +33,14 @@ public enum LlmProvider {
             .apiKeyEnv(null)
             .baseUrlEnv(null)
             .extraEnv(LlmClientProperties.EXTRA_REGION, "AWS_REGION")),
+    CLAUDE_CLI(ProviderSpec.nativeApi("CLAUDE_CLI")
+            .model("sonnet")
+            .apiKeyOptional()
+            .apiKeyEnv(null)
+            .baseUrlEnv(null)
+            .extraEnv(LlmClientProperties.EXTRA_EFFORT, "CLAUDE_CLI_EFFORT")
+            .extraEnv(LlmClientProperties.EXTRA_EXECUTABLE, "CLAUDE_CLI_PATH")
+            .extraEnv(LlmClientProperties.EXTRA_TIMEOUT_SECONDS, "CLAUDE_CLI_TIMEOUT_SECONDS")),
     // ===== OpenAI-compatible endpoints =====
     HUGGING_FACE(ProviderSpec.openAiCompatible("HF")
             .baseUrl("https://router.huggingface.co/v1")
@@ -86,6 +94,14 @@ public enum LlmProvider {
                         .orElseThrow(() -> new IllegalArgumentException(
                                 "Unknown LLM provider '%s'. Supported: %s".formatted(name, Arrays.toString(values()))));
         };
+    }
+
+    public String cliName() {
+        return name().toLowerCase(Locale.ROOT).replace('_', '-');
+    }
+
+    public boolean isClaude() {
+        return this == ANTHROPIC || this == CLAUDE_CLI;
     }
 
     public boolean isOpenAiCompatible() {

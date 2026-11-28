@@ -11,7 +11,7 @@ public enum Step {
     FIX_OCR("fix-ocr", true),
     SCAN_SOURCE("scan-source", false),
     STRUCTURE_SOURCE("structure-source", true),
-    GLOSSARY("glossary", true),
+    GLOSSARY("glossary", false),
     TRANSLATE("translate", true),
     POLISH_TARGET("polish-target", true),
     FORMAT_TARGET("format-target", true),

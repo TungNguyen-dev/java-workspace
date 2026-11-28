@@ -22,6 +22,9 @@ public record LlmClientProperties(
     public static final String EXTRA_PROJECT = "project";
     public static final String EXTRA_LOCATION = "location";
     public static final String EXTRA_REGION = "region";
+    public static final String EXTRA_EFFORT = "effort";
+    public static final String EXTRA_EXECUTABLE = "executable";
+    public static final String EXTRA_TIMEOUT_SECONDS = "timeoutSeconds";
     public static final String NO_API_KEY = "not-needed";
 
     public LlmClientProperties {

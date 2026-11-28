@@ -11,7 +11,10 @@ FinanceSource ──► TransactionExtractor ──► normalize ──► dedup
 
 ```
 java -jar target/tool-personal-finance-core-*-all.jar sync --config storage/finance/finance-config.json [--source id] [--dry-run]
+java -jar target/tool-personal-finance-core-*-all.jar note [--config path] [--date yyyy-MM-dd]
 ```
+
+After every non-dry `sync`, a Markdown note is written per booked day to `<storage>/out/daily/yyyy-MM-dd.md` (income, expense, net, transactions table, expense by category). `note` rebuilds a day's note from the write ledger; both are idempotent.
 
 Environment variables are listed in the "Personal finance" section of `.env.example`.
 
@@ -32,12 +35,27 @@ Environment variables are listed in the "Personal finance" section of `.env.exam
     { "id": "bank-alerts", "folder": "INBOX", "senders": ["alert@example-bank.com"],
       "accountId": "main", "accountName": "Main account" }
   ],
+  "appleMailSources": [
+    { "id": "bank-mail", "mailboxes": ["INBOX"], "senders": ["alert@example-bank.com"],
+      "accountId": "main", "accountName": "Main account" }
+  ],
   "categoryRules": [ { "keyword": "shopee", "category": "Shopping" } ],
   "categories": ["Shopping", "Food", "Transport", "Salary"]
 }
 ```
 
 A layout describes one statement format by 0-based column index: either `amountColumn` (negative = debit) or `debitColumn` + `creditColumn`. File sources without a `layoutId` (PDF, `.eml`) go through the LLM extractor.
+
+### Apple Mail source
+
+`appleMailSources` reads the `.emlx` files that the macOS Mail app keeps under `~/Library/Mail/V<n>` (the highest `V<n>` is used; override with `mailRoot` or `FINANCE_APPLE_MAIL_ROOT`). No IMAP credentials are needed, but:
+
+- the terminal/IDE running the tool needs **Full Disk Access** (System Settings > Privacy & Security);
+- `senders` is mandatory (substring match on the From address), so unrelated personal mail is never read by the LLM;
+- `mailboxes` limits the scan to mailboxes by name (empty = all); the same Message-ID found in several mailboxes is read once;
+- mail bodies go through the LLM extractor, so `FINANCE_LLM_PROVIDER` must be set;
+- the first run (no cursor yet) parses every mail of the configured senders; later runs only look at files modified since the last sync;
+- a mail that Mail has not fully downloaded is a `.partial.emlx`; open it in Mail first if its body or attachments are missing.
 
 ## Safety rules
 

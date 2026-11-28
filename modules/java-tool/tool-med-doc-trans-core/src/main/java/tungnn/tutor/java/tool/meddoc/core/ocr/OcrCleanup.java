@@ -1,5 +1,8 @@
 package tungnn.tutor.java.tool.meddoc.core.ocr;
 
+import tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownTransformUtils;
+import tungnn.tutor.java.tool.meddoc.core.markdown.MedMarkdownActions;
+import tungnn.tutor.java.tool.meddoc.core.markdown.MedMarkdownRefiners;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -14,9 +17,8 @@ import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Hea
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock.Paragraph;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
-import tungnn.tutor.java.tool.meddoc.core.chat.MarkdownChat;
-import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownActions;
-import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownRefiner;
+import tungnn.tutor.java.ai.chat.TextChat;
+import tungnn.tutor.java.infra.document.adapter.markdown.transform.MarkdownRefiner;
 
 public class OcrCleanup {
 
@@ -24,33 +26,33 @@ public class OcrCleanup {
     private static final String PROMPT_RESOURCE = "prompts/ocr-correct-chinese.md";
     private static final int DEFAULT_CONCURRENCY = 5;
 
-    private final MarkdownChat chat;
+    private final TextChat chat;
     private final String systemPrompt;
     private final int maxConcurrency;
 
-    public OcrCleanup(MarkdownChat chat) {
+    public OcrCleanup(TextChat chat) {
         this(chat, DEFAULT_CONCURRENCY);
     }
 
-    public OcrCleanup(MarkdownChat chat, int maxConcurrency) {
+    public OcrCleanup(TextChat chat, int maxConcurrency) {
         this.chat = Objects.requireNonNull(chat, "chat must not be null");
         this.systemPrompt = ResourceUtils.getResourceAsString(PROMPT_RESOURCE);
         this.maxConcurrency = Math.max(1, maxConcurrency);
     }
 
     public Result clean(MarkdownDocument source) {
-        var normalized = MarkdownActions.normalize(MarkdownRefiner.forSource()).apply(source);
-        var numbered = MarkdownActions.orderedListToParagraphs(true).apply(normalized);
-        var structured = MarkdownActions.listNumbersToEnumerationMark().apply(numbered);
+        var normalized = MarkdownTransformUtils.normalize(MedMarkdownRefiners.forSource()).apply(source);
+        var numbered = MarkdownTransformUtils.orderedListToParagraphs(true).apply(normalized);
+        var structured = MedMarkdownActions.listNumbersToEnumerationMark().apply(numbered);
         var blocks = structured.blocks();
 
         var indexes = new ArrayList<Integer>();
         for (int i = 0; i < blocks.size(); i++) {
-            if (!MarkdownActions.textOf(blocks.get(i)).isBlank() && isTextBlock(blocks.get(i))) indexes.add(i);
+            if (!MarkdownTransformUtils.textOf(blocks.get(i)).isBlank() && isTextBlock(blocks.get(i))) indexes.add(i);
         }
         var groups = new LinkedHashMap<String, List<Integer>>();
         for (int i : indexes) {
-            groups.computeIfAbsent(MarkdownActions.textOf(blocks.get(i)), k -> new ArrayList<>())
+            groups.computeIfAbsent(MarkdownTransformUtils.textOf(blocks.get(i)), k -> new ArrayList<>())
                     .add(i);
         }
         LOGGER.info(
@@ -71,7 +73,7 @@ public class OcrCleanup {
                 var after = withText(before, fixed);
                 if (!after.equals(before)) {
                     out.set(i, after);
-                    fixes.add(new OcrFix(i, MarkdownActions.textOf(before), fixed));
+                    fixes.add(new OcrFix(i, MarkdownTransformUtils.textOf(before), fixed));
                 }
             }
         }

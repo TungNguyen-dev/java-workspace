@@ -44,6 +44,11 @@
         </dependencies>
     </dependencyManagement>
     <dependencies>
+        <dependency>
+            <groupId>tungnn.tutor.java.infra</groupId>
+            <artifactId>java-claude-code</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- Spring AI core: ChatClient / ChatModel abstractions -->
         <dependency>
             <groupId>org.springframework.ai</groupId>

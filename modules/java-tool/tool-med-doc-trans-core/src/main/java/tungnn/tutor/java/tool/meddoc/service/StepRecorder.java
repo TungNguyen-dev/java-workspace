@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 import tungnn.tutor.java.tool.meddoc.core.Step;
-import tungnn.tutor.java.tool.meddoc.core.gate.GateResult;
+import tungnn.tutor.java.tool.meddoc.core.quality.GateResult;
 import tungnn.tutor.java.tool.meddoc.llm.StepChats;
 import tungnn.tutor.java.tool.meddoc.service.report.StepReport;
 import tungnn.tutor.java.tool.meddoc.service.report.StepStatus;

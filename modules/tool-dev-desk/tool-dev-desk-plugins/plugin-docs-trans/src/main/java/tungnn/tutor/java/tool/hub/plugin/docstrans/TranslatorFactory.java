@@ -11,7 +11,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.UnaryOperator;
-import tungnn.tutor.java.ai.config.LlmClientProperties;
 import tungnn.tutor.java.ai.config.LlmProvider;
 import tungnn.tutor.java.ai.util.LlmClientUtils;
 import tungnn.tutor.java.tool.doctrans.core.text.TextTranslator;
@@ -34,7 +33,8 @@ final class TranslatorFactory {
             "hugging-face",
             "ollama-openai",
             "ollama",
-            "lm-studio");
+            "lm-studio",
+            "claude-cli");
     static final String CONFIG_FILE = "llm.properties";
 
     private static final String ENV_DEFAULT_PROVIDER = "DOCTRANS_TRANSLATOR_PROVIDER";
@@ -93,11 +93,7 @@ final class TranslatorFactory {
         UnaryOperator<String> lookup = lookup();
         try {
             LlmProvider provider = LlmProvider.from(providerName);
-            String model = blankToNull(modelOverride);
-            UnaryOperator<String> withModel = key ->
-                    model != null && provider.modelEnv().filter(key::equals).isPresent() ? model : lookup.apply(key);
-            LlmClientProperties props = LlmClientProperties.fromEnv(provider, withModel);
-            var client = LlmClientUtils.create(props);
+            var client = LlmClientUtils.create(provider, blankToNull(modelOverride), lookup);
             Integer concurrency = parseInt(lookup.apply(ENV_MAX_CONCURRENCY));
             try {
                 return LlmTextTranslator.create(client, concurrency);

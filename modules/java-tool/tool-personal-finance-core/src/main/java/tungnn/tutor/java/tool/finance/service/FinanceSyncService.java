@@ -125,7 +125,7 @@ public final class FinanceSyncService {
     private void record(WriteOutcome outcome, SyncReport report) {
         if (outcome.status() == WriteOutcome.Status.WRITTEN) {
             state.recordWritten(sink.id(), outcome.transaction());
-            report.recordWritten();
+            report.recordWritten(outcome.transaction().bookedOn());
         } else {
             report.recordFailed(outcome.reason());
         }

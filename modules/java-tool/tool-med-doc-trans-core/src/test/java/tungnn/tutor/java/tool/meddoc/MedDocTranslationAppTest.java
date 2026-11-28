@@ -19,7 +19,9 @@ class MedDocTranslationAppTest {
 
     @Test
     void shouldReadTheSelectedSteps() {
-        var request = MedDocTranslationApp.parse(new String[] {"book.md", "--steps", "fix-ocr,translate", "--lang", "en"}).request();
+        var request = MedDocTranslationApp.parse(
+                        new String[] {"book.md", "--steps", "fix-ocr,translate", "--lang", "en"})
+                .request();
 
         assertThat(request.steps()).containsExactlyInAnyOrder(Step.FIX_OCR, Step.TRANSLATE);
         assertThat(request.targetLanguage()).isEqualTo(LanguageCode.EN);
@@ -27,15 +29,17 @@ class MedDocTranslationAppTest {
 
     @Test
     void shouldDropTheRefineStepsWithNoRefine() {
-        var request = MedDocTranslationApp.parse(new String[] {"book.md", "--no-refine"}).request();
+        var request = MedDocTranslationApp.parse(new String[] {"book.md", "--no-refine"})
+                .request();
 
-        assertThat(request.steps()).containsExactlyInAnyOrder(
-                Step.FIX_OCR, Step.GLOSSARY, Step.TRANSLATE, Step.CHECK_DOSES, Step.EXPORT);
+        assertThat(request.steps())
+                .containsExactlyInAnyOrder(Step.FIX_OCR, Step.TRANSLATE, Step.CHECK_DOSES, Step.EXPORT);
     }
 
     @Test
     void shouldParseThePolishTargetStep() {
-        var request = MedDocTranslationApp.parse(new String[] {"book.md", "--steps", "translate,polish-target"}).request();
+        var request = MedDocTranslationApp.parse(new String[] {"book.md", "--steps", "translate,polish-target"})
+                .request();
 
         assertThat(request.steps()).containsExactlyInAnyOrder(Step.TRANSLATE, Step.POLISH_TARGET);
     }
@@ -48,15 +52,21 @@ class MedDocTranslationAppTest {
                 .hasMessageContaining("needs a value");
         assertThatThrownBy(() -> MedDocTranslationApp.parse(new String[] {"book.md", "--lang", "xx"}))
                 .hasMessageContaining("Unsupported language");
-        assertThatThrownBy(() ->
-                        MedDocTranslationApp.parse(new String[] {"book.md", "--steps", "structure-source", "--no-refine"}))
+        assertThatThrownBy(() -> MedDocTranslationApp.parse(
+                        new String[] {"book.md", "--steps", "structure-source", "--no-refine"}))
                 .hasMessageContaining("no step");
     }
 
     @Test
     void shouldCollectTheLlmOptions() {
         var args = MedDocTranslationApp.parse(new String[] {
-            "book.md", "--llm", "default=deepseek", "--llm", "translate=claude-cli:opus", "--llm", "polish-target=ollama:qwen3:8b"
+            "book.md",
+            "--llm",
+            "default=deepseek",
+            "--llm",
+            "translate=claude-cli:opus",
+            "--llm",
+            "polish-target=ollama:qwen3:8b"
         });
 
         assertThat(args.llm())

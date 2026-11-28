@@ -10,6 +10,7 @@ public record FinanceConfig(
         String sinkId,
         List<FileSourceConfig> fileSources,
         List<MailSourceConfig> mailSources,
+        List<AppleMailSourceConfig> appleMailSources,
         List<StatementLayout> layouts,
         List<CategoryRule> categoryRules,
         List<String> categories) {
@@ -17,6 +18,7 @@ public record FinanceConfig(
     public FinanceConfig {
         fileSources = fileSources == null ? List.of() : fileSources;
         mailSources = mailSources == null ? List.of() : mailSources;
+        appleMailSources = appleMailSources == null ? List.of() : appleMailSources;
         layouts = layouts == null ? List.of() : layouts;
         categoryRules = categoryRules == null ? List.of() : categoryRules;
         categories = categories == null ? List.of() : categories;

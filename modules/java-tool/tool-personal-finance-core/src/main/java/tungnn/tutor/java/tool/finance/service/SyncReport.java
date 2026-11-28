@@ -1,7 +1,10 @@
 package tungnn.tutor.java.tool.finance.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public final class SyncReport {
 
@@ -13,6 +16,7 @@ public final class SyncReport {
     private int written;
     private int failed;
     private final List<String> issues = new ArrayList<>();
+    private final Set<LocalDate> writtenDates = new TreeSet<>();
 
     void documentRead() {
         documentsRead++;
@@ -34,8 +38,9 @@ public final class SyncReport {
         toWrite = count;
     }
 
-    void recordWritten() {
+    void recordWritten(LocalDate bookedOn) {
         written++;
+        writtenDates.add(bookedOn);
     }
 
     void recordFailed(String reason) {
@@ -73,6 +78,10 @@ public final class SyncReport {
 
     public int failed() {
         return failed;
+    }
+
+    public Set<LocalDate> writtenDates() {
+        return Set.copyOf(writtenDates);
     }
 
     public List<String> issues() {

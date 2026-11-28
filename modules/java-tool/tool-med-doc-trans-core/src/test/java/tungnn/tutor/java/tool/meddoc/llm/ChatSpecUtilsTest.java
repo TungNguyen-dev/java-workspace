@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import tungnn.tutor.java.ai.config.LlmProvider;
+import tungnn.tutor.java.ai.config.LlmSpec;
 import tungnn.tutor.java.tool.meddoc.core.Step;
 
 class ChatSpecUtilsTest {
@@ -15,14 +17,14 @@ class ChatSpecUtilsTest {
 
         assertThat(specs.keySet()).containsExactlyInAnyOrder(
                 Step.FIX_OCR, Step.TRANSLATE, Step.POLISH_TARGET, Step.FORMAT_TARGET);
-        assertThat(specs.values()).allMatch(spec -> spec.equals(new ChatSpec("deepseek", null)));
+        assertThat(specs.values()).allMatch(spec -> spec.equals(new LlmSpec(LlmProvider.DEEPSEEK, null)));
     }
 
     @Test
     void shouldKeepTheLegacyProviderVariableAsTheDefault() {
         var specs = ChatSpecUtils.resolve(Map.of(), Map.of("DOCTRANS_TRANSLATOR_PROVIDER", "anthropic")::get);
 
-        assertThat(specs.get(Step.FIX_OCR)).isEqualTo(new ChatSpec("anthropic", null));
+        assertThat(specs.get(Step.FIX_OCR)).isEqualTo(new LlmSpec(LlmProvider.ANTHROPIC, null));
     }
 
     @Test
@@ -34,10 +36,10 @@ class ChatSpecUtilsTest {
 
         var specs = ChatSpecUtils.resolve(Map.of("translate", "claude-cli:opus", "fix-ocr", "deepseek"), env::get);
 
-        assertThat(specs.get(Step.TRANSLATE)).isEqualTo(new ChatSpec("claude-cli", "opus"));
-        assertThat(specs.get(Step.FIX_OCR)).isEqualTo(new ChatSpec("deepseek", null));
-        assertThat(specs.get(Step.FORMAT_TARGET)).isEqualTo(new ChatSpec("openai", null));
-        assertThat(specs.get(Step.POLISH_TARGET)).isEqualTo(new ChatSpec("ollama", "qwen3:8b"));
+        assertThat(specs.get(Step.TRANSLATE)).isEqualTo(new LlmSpec(LlmProvider.CLAUDE_CLI, "opus"));
+        assertThat(specs.get(Step.FIX_OCR)).isEqualTo(new LlmSpec(LlmProvider.DEEPSEEK, null));
+        assertThat(specs.get(Step.FORMAT_TARGET)).isEqualTo(new LlmSpec(LlmProvider.OPENAI, null));
+        assertThat(specs.get(Step.POLISH_TARGET)).isEqualTo(new LlmSpec(LlmProvider.OLLAMA, "qwen3:8b"));
     }
 
     @Test

@@ -6,8 +6,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.Step;
-import tungnn.tutor.java.tool.meddoc.core.gate.GateResult;
-import tungnn.tutor.java.tool.meddoc.core.inspect.Suspect;
+import tungnn.tutor.java.tool.meddoc.core.quality.GateResult;
+import tungnn.tutor.java.tool.meddoc.core.check.Suspect;
 import tungnn.tutor.java.tool.meddoc.core.ocr.OcrFix;
 
 public record MedDocReport(

@@ -9,10 +9,10 @@ import java.util.Map;
 import java.util.Set;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.Step;
-import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateException;
+import tungnn.tutor.java.tool.meddoc.core.quality.QualityGateException;
 import tungnn.tutor.java.tool.meddoc.core.glossary.FileGlossarySource;
 import tungnn.tutor.java.tool.meddoc.core.glossary.GlossarySource;
-import tungnn.tutor.java.tool.meddoc.llm.ChatSpec;
+import tungnn.tutor.java.ai.config.LlmSpec;
 import tungnn.tutor.java.tool.meddoc.llm.ChatSpecUtils;
 import tungnn.tutor.java.tool.meddoc.llm.StepChats;
 import tungnn.tutor.java.tool.meddoc.service.MedDocTranslationRequest;
@@ -29,7 +29,7 @@ public class MedDocTranslationApp {
 
     static void main(String[] args) throws IOException {
         Args parsed;
-        Map<Step, ChatSpec> specs;
+        Map<Step, LlmSpec> specs;
         try {
             parsed = parse(args);
             specs = ChatSpecUtils.resolve(parsed.llm(), System::getenv);

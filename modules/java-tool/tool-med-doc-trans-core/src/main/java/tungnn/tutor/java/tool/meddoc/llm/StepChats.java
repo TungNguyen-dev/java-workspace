@@ -10,6 +10,9 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tungnn.tutor.java.ai.chat.ChatUsage;
+import tungnn.tutor.java.ai.chat.MeteringChat;
+import tungnn.tutor.java.ai.config.LlmSpec;
 import tungnn.tutor.java.tool.meddoc.core.Step;
 
 public final class StepChats {
@@ -30,7 +33,7 @@ public final class StepChats {
         return new StepChats(factory, null);
     }
 
-    public static StepChats of(Map<Step, ChatSpec> specs, UnaryOperator<String> env) {
+    public static StepChats of(Map<Step, LlmSpec> specs, UnaryOperator<String> env) {
         Objects.requireNonNull(specs, "specs must not be null");
         return new StepChats(
                 step -> {
@@ -85,7 +88,7 @@ public final class StepChats {
             }
             var usage = usages.computeIfAbsent(s, key -> new ChatUsage());
             return new StepChat(
-                    new MeteringMarkdownChat(raw.chat(), usage), raw.maxConcurrency(), raw.claude(), raw.label());
+                    new MeteringChat(raw.chat(), usage), raw.maxConcurrency(), raw.claude(), raw.label());
         });
     }
 }

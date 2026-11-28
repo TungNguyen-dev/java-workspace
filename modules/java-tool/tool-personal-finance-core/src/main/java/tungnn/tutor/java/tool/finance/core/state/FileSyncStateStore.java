@@ -62,6 +62,8 @@ public final class FileSyncStateStore implements SyncStateStore {
 
     @Override
     public void recordWritten(String sinkId, Transaction transaction) {
+        // Load before appending, otherwise a cold ledger would read back the line just written and add it again.
+        var ledger = loadLedger(sinkId);
         var line = JsonUtils.toJson(mapper, transaction) + System.lineSeparator();
         try {
             Files.writeString(
@@ -73,7 +75,7 @@ public final class FileSyncStateStore implements SyncStateStore {
         } catch (IOException e) {
             throw new UncheckedIOException("Cannot append to the write ledger of " + sinkId, e);
         }
-        loadLedger(sinkId).add(transaction);
+        ledger.add(transaction);
     }
 
     private List<Transaction> loadLedger(String sinkId) {

@@ -17,10 +17,9 @@ class LayerDependencyTest {
     private static final Pattern IMPORT =
             Pattern.compile("^import (?:static )?tungnn\\.tutor\\.java\\.tool\\.meddoc\\.(\\w+)", Pattern.MULTILINE);
     private static final Map<String, Set<String>> ALLOWED = Map.of(
-            "utils", Set.of("utils"),
-            "core", Set.of("core", "utils"),
-            "llm", Set.of("llm", "core", "utils"),
-            "service", Set.of("service", "llm", "core", "utils"));
+            "core", Set.of("core"),
+            "llm", Set.of("llm", "core"),
+            "service", Set.of("service", "llm", "core"));
 
     @Test
     void shouldOnlyDependOnLowerLayers() throws IOException {

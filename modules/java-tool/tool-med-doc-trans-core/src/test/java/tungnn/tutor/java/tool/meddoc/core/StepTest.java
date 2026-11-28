@@ -22,6 +22,12 @@ class StepTest {
     }
 
     @Test
+    void shouldAlwaysRunTheGlossaryAndNotAllowSelectingIt() {
+        assertThat(Step.all()).doesNotContain(Step.GLOSSARY);
+        assertThatThrownBy(() -> Step.parse("glossary")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void shouldRejectAnUnknownStepAndListTheValidOnes() {
         assertThatThrownBy(() -> Step.parse("fix-ocr,dich"))
                 .isInstanceOf(IllegalArgumentException.class)

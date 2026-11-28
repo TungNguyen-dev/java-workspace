@@ -5,6 +5,7 @@ import tungnn.tutor.java.ai.config.LlmClientProperties;
 import tungnn.tutor.java.ai.config.LlmProvider;
 import tungnn.tutor.java.ai.factory.AnthropicChatModelFactory;
 import tungnn.tutor.java.ai.factory.BedrockConverseChatModelFactory;
+import tungnn.tutor.java.ai.factory.ClaudeCliChatModelFactory;
 import tungnn.tutor.java.ai.factory.ChatModelFactory;
 import tungnn.tutor.java.ai.factory.DeepSeekChatModelFactory;
 import tungnn.tutor.java.ai.factory.GoogleGenAiChatModelFactory;
@@ -20,6 +21,7 @@ public final class ChatModelUtils {
     private static final ChatModelFactory DEEPSEEK = new DeepSeekChatModelFactory();
     private static final ChatModelFactory MISTRAL_AI = new MistralAiChatModelFactory();
     private static final ChatModelFactory BEDROCK_CONVERSE = new BedrockConverseChatModelFactory();
+    private static final ChatModelFactory CLAUDE_CLI = new ClaudeCliChatModelFactory();
 
     private ChatModelUtils() {
         throw new UnsupportedOperationException("cannot instantiate utility class");
@@ -37,6 +39,7 @@ public final class ChatModelUtils {
             case DEEPSEEK -> DEEPSEEK;
             case MISTRAL_AI -> MISTRAL_AI;
             case BEDROCK_CONVERSE -> BEDROCK_CONVERSE;
+            case CLAUDE_CLI -> CLAUDE_CLI;
             case OPENAI,
                     HUGGING_FACE,
                     OLLAMA_OPENAI,

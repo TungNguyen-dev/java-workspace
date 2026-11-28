@@ -21,7 +21,9 @@ import tungnn.tutor.java.tool.hub.api.ToolFile;
 import tungnn.tutor.java.tool.hub.api.ToolLayout;
 import tungnn.tutor.java.tool.hub.api.ToolResult;
 import tungnn.tutor.java.tool.meddoc.core.Step;
-import tungnn.tutor.java.tool.meddoc.llm.LlmClientMarkdownChat;
+import tungnn.tutor.java.ai.chat.LlmClientChat;
+import tungnn.tutor.java.ai.config.LlmProvider;
+import tungnn.tutor.java.tool.meddoc.llm.ChatSpecUtils;
 import tungnn.tutor.java.tool.meddoc.llm.StepChat;
 import tungnn.tutor.java.tool.meddoc.llm.StepChats;
 import tungnn.tutor.java.tool.meddoc.core.glossary.FileGlossarySource;
@@ -176,14 +178,19 @@ public class MedDocTranslateTool implements ToolExtension {
                 glossary = new FileGlossarySource(glossaryPath);
             }
             var clients = new EnumMap<Step, StepChat>(Step.class);
-            boolean claude = "anthropic".equalsIgnoreCase(provider);
+            var llmProvider = LlmProvider.from(provider);
+            boolean claude = llmProvider.isClaude();
             for (Step step : Step.values()) {
                 // The translate chat is needed whenever edit is selected, to apply the "Claude skips edit" rule
                 boolean needed = steps.contains(step)
                         || (step == Step.TRANSLATE && steps.contains(Step.POLISH_TARGET));
                 if (step.usesLlm() && needed) {
                     var client = factory().create(provider, model);
-                    clients.put(step, LlmClientMarkdownChat.stepChat(client, claude));
+                    var chat = new LlmClientChat(client);
+                    var concurrency = llmProvider == LlmProvider.CLAUDE_CLI
+                            ? ChatSpecUtils.claudeCliConcurrency(System::getenv)
+                            : null;
+                    clients.put(step, new StepChat(chat, concurrency, claude, chat.label()));
                 }
             }
             var service = new MedDocTranslationService(StepChats.of(clients::get));

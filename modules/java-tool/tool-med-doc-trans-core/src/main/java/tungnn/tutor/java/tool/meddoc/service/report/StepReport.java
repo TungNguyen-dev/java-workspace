@@ -3,7 +3,7 @@ package tungnn.tutor.java.tool.meddoc.service.report;
 import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
-import tungnn.tutor.java.tool.meddoc.core.gate.GateResult;
+import tungnn.tutor.java.tool.meddoc.core.quality.GateResult;
 
 public record StepReport(
         String name,

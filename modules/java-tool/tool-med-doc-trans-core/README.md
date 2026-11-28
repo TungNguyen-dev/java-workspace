@@ -35,13 +35,12 @@ source (.docx/.md/.markdown/.txt)
 
 ### Choosing the steps
 
-`load`, `scan-source` and `scan-target` always run (a scan is skipped when it does not apply to the run) and cannot be selected. The other eight steps are selectable, and all of them run by default:
+`load`, `scan-source`, `glossary` and `scan-target` always run and cannot be selected (a scan is skipped when it does not apply to the run, and `glossary` is skipped when there is no `translate`, the target is `ZH`, or no glossary source exists). The other seven steps are selectable, and all of them run by default:
 
 | Step | What it does |
 | --- | --- |
 | `fix-ocr` | OCR cleanup with the LLM, then a scan for suspicious text |
 | `structure-source` | Structures the Chinese text into headings |
-| `glossary` | Loads a prepared term table (`--glossary`, no LLM) so the sections translated in parallel use the same names (needs `translate` and a glossary source, not for target `ZH`; skipped otherwise) |
 | `translate` | Translates with the LLM |
 | `polish-target` | Edits the Vietnamese translation into a friendlier style with the LLM (target `VI` only) |
 | `format-target` | Reformats the Vietnamese translation (target `VI` only) |
@@ -52,12 +51,12 @@ A step that is not selected is skipped: it writes no file, and its number is lef
 
 Two things to know when steps are left out:
 
-- `format-target` matches the translated headings to the Chinese headings of `structure-source` in the same run, to set the section labels. Without `structure-source`, that one sub-step is skipped and reported ("no Chinese source in this run"); the other Vietnamese steps still run.
+- The Vietnamese section labels and the deterministic formatting (`## Đại cương`, heading case, normalization) are applied by `translate` itself, by matching the translated headings to the Chinese headings of `structure-source` in the same run. Without `structure-source` the translation is left raw. `format-target` only runs the LLM section formatting.
 - Without `export`, the report says so and points to the last Markdown file written.
 
 ### Quality gates
 
-After the load and after every selected step, `core.gate.QualityGateUtils` checks the output of that stage against the thresholds of `core.gate.GatePolicy`. When a gate fails, the run stops before the next stage: the files written so far stay in the run folder, `report.md` is written with every gate result, and a `QualityGateException` is thrown.
+After the load and after every selected step, `core.quality.QualityGateUtils` checks the output of that stage against the thresholds of `core.quality.GatePolicy`. When a gate fails, the run stops before the next stage: the files written so far stay in the run folder, `report.md` is written with every gate result, and a `QualityGateException` is thrown.
 
 | Stage | Fails when | Default |
 | --- | --- | --- |
@@ -74,22 +73,22 @@ A refine step that matches nothing is still only a warning in the report. Pass a
 
 ### Load the input
 
-`utils.SourceDocumentUtils.toMarkdown` reads `.docx` (through the DOCX → Markdown converter) and `.md`, `.markdown` or `.txt` (read as Markdown). Any other extension fails the run (the report is still written).
+`SourceMarkdownUtils.toMarkdown` (java-document) reads `.docx` (through the DOCX → Markdown converter) and `.md`, `.markdown` or `.txt` (read as Markdown). Any other extension fails the run (the report is still written).
 
 ### fix-ocr
 
 `core.ocr.OcrCleanup.clean`:
 
-1. Normalizes the text with `MarkdownRefiner.forSource()`.
+1. Normalizes the text with `MedMarkdownRefiners.forSource()`.
 2. Turns ordered lists into plain paragraphs, keeping the numbers as `1、...`. A paragraph that starts with `1.` would be parsed back as a list; `1、` stays a paragraph, so the translation sees it as normal text. After the translation the numbers are restored to `1. ...`.
 3. Sends every non-empty heading and paragraph to the LLM with the prompt `prompts/ocr-correct-chinese.md`, up to 5 blocks at a time.
 4. Keeps the corrected blocks and records each changed block as an `core.ocr.OcrFix` (block index, before, after).
 
-Then `core.inspect.SuspiciousTextUtils.scanSource` flags stray characters left after cleanup, paragraphs that look cut off, and herb composition lines with suspicious doses.
+Then `core.check.SuspiciousTextUtils.scanSource` flags stray characters left after cleanup, paragraphs that look cut off, and herb composition lines with suspicious doses.
 
 ### structure-source
 
-`core.refine.MedFormatPipelines.structureSource` works on the Chinese document, whose layout is stable and does not depend on the translation:
+`core.format.MedFormatPipelines.structureSource` works on the Chinese document, whose layout is stable and does not depend on the translation:
 
 - merges `第N章` and the next paragraph into the chapter title (`#`), only when that paragraph looks like a name (short, no punctuation or leading number);
 - removes the learning objectives under the chapter title: a run of short paragraphs numbered 1, 2, 3, ... Anything else (for example `3.5g ...`) is kept;
@@ -102,7 +101,7 @@ Each step is wrapped by `safe(...)`: if a step throws, it is skipped, the docume
 
 ### glossary
 
-`core.glossary.GlossarySource` loads a prepared `Glossary` before `translate` (not for target `ZH`, only when `translate` is selected). There is no LLM call. The implementations are `ClasspathGlossarySource` (the built-in `glossary/glossary.csv`), `FileGlossarySource` (`--glossary <file>`) and `CompositeGlossarySource` (merges several sources, the later one wins per term). A database or vector-search source can implement the same interface later.
+`core.glossary.GlossarySource` loads a prepared `Glossary` before `translate` (not for target `ZH`, only when `translate` is selected). It always runs and cannot be selected. There is no LLM call. The implementations are `ClasspathGlossarySource` (the built-in `glossary/glossary.csv`), `FileGlossarySource` (`--glossary <file>`) and `CompositeGlossarySource` (merges several sources, the later one wins per term). A database or vector-search source can implement the same interface later.
 
 For target `VI` the built-in `src/main/resources/glossary/glossary.csv` is always loaded; a `--glossary` file is merged on top of it, and when a term appears in both, the rows of the user file replace every built-in row of that term. For other targets only the `--glossary` file is used, and without one the step is skipped. The prompts under `prompts/` only hold general rules: the terms (formula, herb and book names, fixed section labels, ancient units, the "bài thuốc" rule) live in the glossary, and the Vietnamese style rules in `prompts/translate-tcm-text.vi.md`, which is added to the translate prompt for target `VI`.
 
@@ -124,7 +123,7 @@ source,target,context
 
 ### translate
 
-`core.translator.LlmMarkdownTranslator` splits the document into sections and sends each section to `LlmClient.chat` as one long Markdown text:
+`core.translate.LlmMarkdownTranslator` splits the document into sections and sends each section to `LlmClient.chat` as one long Markdown text:
 
 - a section starts at every heading of level 1 to 3 (for example one formula = `###` with its `####` parts). A `###` formula section is sent whole (up to 15000 characters, then split at its `####` sub-headings); any other section longer than 4000 characters is split again between blocks;
 - up to 5 sections are translated at the same time, and the results are put back in order;
@@ -134,16 +133,16 @@ source,target,context
 
 ### polish-target
 
-`core.translator.LlmMarkdownTranslator.editor(...)` runs on the translated document (target `VI` only). It reuses the section chunking, the concurrency and the "keep the section on failure" rule of `translate`, with the system prompt `prompts/polish-vietnamese.md`: rewrite stiff, word-by-word sentences into natural modern Vietnamese for students and practitioners, keeping the facts, the Hán-Việt terms, the doses and the Markdown structure. The step must not change the headings, because `format-target` sets the section labels from the Chinese headings by position; a changed heading level fails the gate. Sections whose call fails are kept as translated and listed in the report.
+`core.translate.LlmMarkdownTranslator.editor(...)` runs on the translated document (target `VI` only). It reuses the section chunking, the concurrency and the "keep the section on failure" rule of `translate`, with the system prompt `prompts/polish-vietnamese.md`: rewrite stiff, word-by-word sentences into natural modern Vietnamese for students and practitioners, keeping the facts, the Hán-Việt terms, the doses and the Markdown structure. The step must not change the headings, because `format-target` sets the section labels from the Chinese headings by position; a changed heading level fails the gate. Sections whose call fails are kept as translated and listed in the report.
 
 ### format-target
 
-`core.refine.MedFormatPipelines.formatTarget` runs on the translated document (target `VI` only). It is a `core.markdown.MarkdownPipeline` of `core.markdown.MarkdownAction` steps that:
+`core.format.MedFormatPipelines.formatTarget` runs on the translated document (target `VI` only). It is a `core.markdown.MarkdownPipeline` of `core.markdown.MarkdownAction` steps that:
 
 - set the section labels from a fixed dictionary, matching the k-th heading of the translation to the k-th heading of the Chinese source (`relabelHeadings`). If the heading counts or levels differ, the step is skipped and the reason is reported;
 - add `## Đại cương`, turn ordered lists into paragraphs and upper-case the formula names;
 - use the LLM to turn `Thành phần` into a table, normalize `Phụ phương`, and rewrite `Cách dùng` as modern usage instructions. When one call fails, that formula is kept unchanged and the next one goes on; the failure is reported with the formula name;
-- normalize the text with `MarkdownRefiner.defaultMedical()`.
+- normalize the text with `MedMarkdownRefiners.defaultMedical()`.
 
 | Source label | Vietnamese label |
 | --- | --- |
@@ -155,11 +154,11 @@ source,target,context
 | 运用 | Vận dụng lâm sàng |
 | 附方 | Phụ phương |
 
-After `translate` and `format-target`, `core.inspect.SuspiciousTextUtils.scanTranslation` flags Chinese text that is still in the output. It is skipped when the target is `ZH`.
+After `translate` and `format-target`, `core.check.SuspiciousTextUtils.scanTranslation` flags Chinese text that is still in the output. It is skipped when the target is `ZH`.
 
 ### check-doses
 
-`core.inspect.DoseCheckUtils` compares the translation with the Chinese text that `translate` received, without an LLM. It reads every number that sits next to a dose unit (`克`, `g`, `钱`, `两`, `分`, `枚`, `片`, `斤`, `ml` and their Vietnamese forms such as `chỉ`, `lạng`, `cân`; Chinese numerals and `半` / `nửa` are understood, and ranges give two numbers). The documents are split at the `###` headings and compared section by section as a multiset of numbers; when the two documents do not have the same number of `###` sections, the whole document is compared at once. The units are not converted, so a translation must keep the numbers of the source.
+`core.check.DoseCheckUtils` compares the translation with the Chinese text that `translate` received, without an LLM. It reads every number that sits next to a dose unit (`克`, `g`, `钱`, `两`, `分`, `枚`, `片`, `斤`, `ml` and their Vietnamese forms such as `chỉ`, `lạng`, `cân`; Chinese numerals and `半` / `nửa` are understood, and ranges give two numbers). The documents are split at the `###` headings and compared section by section as a multiset of numbers; when the two documents do not have the same number of `###` sections, the whole document is compared at once. The units are not converted, so a translation must keep the numbers of the source.
 
 The step is skipped when `translate` did not run in the same run, or the target is `ZH`. It writes `10_check_doses.md` with the sections that differ, and the gate fails above `GatePolicy.maxDoseMismatches` (default 0).
 
@@ -192,10 +191,10 @@ Root package: `tungnn.tutor.java.tool.meddoc`. The code is split into layers, an
 
 | Layer | May import |
 | --- | --- |
-| `utils` | nothing |
-| `core` | `utils` |
-| `llm` | `core`, `utils` |
-| `service` | `llm`, `core`, `utils` |
+| `source` | nothing |
+| `core` | `source` |
+| `llm` | `core`, `source` |
+| `service` | `llm`, `core`, `source` |
 | root (`MedDocTranslationApp`) | everything |
 
 | Package | Purpose |
@@ -203,18 +202,16 @@ Root package: `tungnn.tutor.java.tool.meddoc`. The code is split into layers, an
 | `meddoc` | `MedDocTranslationApp`, the command-line entry point |
 | `service` | The public API: `MedDocTranslationService` (the workflow), `MedDocTranslationRequest` |
 | `service.report` | `MedDocReport`, `StepReport`, `StepStatus`: the content of `report.md` |
-| `llm` | LLM backends and their usage metering: `ChatSpec`, `ChatSpecUtils`, `StepChats`, `ClaudeCliMarkdownChat`, `LlmClientMarkdownChat`, `ChatUsage` |
-| `utils` | `SourceDocumentUtils`: load a source file as Markdown |
+| `llm` | Per-step LLM wiring: `ChatSpecUtils` (spec resolution), `StepChats`, `StepChat`. Clients, `LlmSpec`, usage metering and the `claude-cli` provider live in java-ai |
 | `core` | The domain: `Step`, and the packages below |
-| `core.chat` | `MarkdownChat`: the port every LLM backend implements |
-| `core.pipeline` | One `StepRunner` per step (`load`, `fix-ocr`, `scan-source`, `structure-source`, `glossary`, `translate`, `polish-target`, `format-target`, `scan-target`, `check-doses`, `export`) and the shared `PipelineState` |
+| `core.step` | One `StepRunner` per step (`load`, `fix-ocr`, `scan-source`, `structure-source`, `glossary`, `translate`, `polish-target`, `format-target`, `scan-target`, `check-doses`, `export`) and the shared `PipelineState` |
 | `core.glossary` | `Glossary`, `GlossaryEntry`, `GlossarySource`, `FileGlossarySource`: the prepared term table used by `translate` |
 | `core.ocr` | `OcrCleanup`, `OcrFix`: LLM-based OCR correction |
-| `core.inspect` | `SuspiciousTextUtils`, `Suspect`: detect text that needs a manual check |
-| `core.translator` | `LlmMarkdownTranslator`: translation through `MarkdownChat`, section by section |
-| `core.markdown` | `MarkdownAction`, `MarkdownActions`, `MarkdownPipeline`, `MarkdownRefiner`: Markdown editing building blocks |
-| `core.gate` | `GatePolicy`, `GateResult`, `QualityGateUtils`, `QualityGateException`: the quality gate of each stage |
-| `core.refine` | `MedFormatPipelines`: the structure recipe for the Chinese text and the refine recipe for Vietnamese |
+| `core.check` | `SuspiciousTextUtils`, `Suspect`, `DoseCheckUtils`, `DoseMismatch`: detect text and doses that need a manual check |
+| `core.translate` | `LlmMarkdownTranslator`: translation through `TextChat` (java-ai), section by section |
+| `core.markdown` | `MedMarkdownActions`, `MedMarkdownRefiners`: medical/Vietnamese/Chinese Markdown rules. Generic `MarkdownAction`, `MarkdownPipeline`, `MarkdownRefiner`, `MarkdownTransformUtils` live in java-document |
+| `core.quality` | `GatePolicy`, `GateResult`, `QualityGateUtils`, `QualityGateException`: the quality gate of each stage |
+| `core.format` | `MedFormatPipelines`: the structure recipe for the Chinese text and the refine recipe for Vietnamese |
 
 ## Prompts
 
@@ -289,7 +286,7 @@ Notes:
 Arguments of `MedDocTranslationApp`:
 
 ```
-MedDocTranslationApp <input.docx|md|txt> [--lang VI] [--out dir] [--steps fix-ocr,structure-source,glossary,translate,polish-target,format-target,check-doses,export] [--no-refine] [--glossary file.csv|tsv|md]
+MedDocTranslationApp <input.docx|md|txt> [--lang VI] [--out dir] [--steps fix-ocr,structure-source,translate,polish-target,format-target,check-doses,export] [--no-refine] [--glossary file.csv|tsv|md]
 ```
 
 | Option | Default | Meaning |
@@ -344,10 +341,10 @@ See `.env.example` at the repo root for the provider options.
 Add a step in `MedFormatPipelines.vietnamese`:
 
 ```java
-.step("Describe the step", safe(skipped, "short name", MarkdownActions.renameHeading(4, "Old", "New")))
+.step("Describe the step", safe(skipped, "short name", MarkdownTransformUtils.renameHeading(4, "Old", "New")))
 ```
 
-For an LLM-based step, use `MarkdownActions.llmSection(headingText, level, llmClient, prompt, onError)` with a new prompt file in `prompts/`.
+For an LLM-based step, use `MedMarkdownActions.llmSection(headingText, level, llmClient, prompt, onError)` with a new prompt file in `prompts/`.
 
 ## Choosing the LLM per step
 
