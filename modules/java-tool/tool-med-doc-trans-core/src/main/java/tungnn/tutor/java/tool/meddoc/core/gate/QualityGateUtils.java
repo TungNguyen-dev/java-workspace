@@ -14,6 +14,7 @@ import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.M
 import tungnn.tutor.java.infra.document.converter.DocxMarkdownConverterUtils;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.Step;
+import tungnn.tutor.java.tool.meddoc.core.inspect.DoseCheckUtils;
 import tungnn.tutor.java.tool.meddoc.core.inspect.SuspiciousTextUtils;
 import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownActions;
 
@@ -40,7 +41,29 @@ public final class QualityGateUtils {
         return new GateResult(LOAD, problems, List.of("text blocks: " + text, "Han: " + han));
     }
 
-    public static GateResult ocr(MarkdownDocument before, MarkdownDocument after, GatePolicy policy) {
+    public static GateResult checkDoses(DoseCheckUtils.Result result, GatePolicy policy) {
+        var problems = new ArrayList<String>();
+        if (result.mismatches().size() > policy.maxDoseMismatches()) {
+            var first = result.mismatches().getFirst();
+            problems.add("%d sections have doses that differ from the source (max %d), first: %s"
+                    .formatted(result.mismatches().size(), policy.maxDoseMismatches(), first.section()));
+        }
+        return new GateResult(
+                Step.CHECK_DOSES.cliName(),
+                problems,
+                List.of("sections compared: " + result.sections(), "mismatches: " + result.mismatches().size()));
+    }
+
+    public static GateResult glossary(int terms, int candidates) {
+        return new GateResult(
+                Step.GLOSSARY.cliName(), List.of(), List.of("terms: " + terms, "candidates: " + candidates));
+    }
+
+    public static GateResult scan(Step step, int suspects) {
+        return new GateResult(step.cliName(), List.of(), List.of("suspects: " + suspects));
+    }
+
+    public static GateResult fixOcr(MarkdownDocument before, MarkdownDocument after, GatePolicy policy) {
         var problems = new ArrayList<String>();
         int textBefore = textBlocks(before);
         int textAfter = textBlocks(after);
@@ -48,18 +71,18 @@ public final class QualityGateUtils {
             problems.add("text blocks dropped from %d to %d".formatted(textBefore, textAfter));
         }
         double retention = ratio(hanCount(after), hanCount(before));
-        if (retention < policy.minOcrHanRetention()) {
-            problems.add("Han retention %s is below %s".formatted(fmt(retention), fmt(policy.minOcrHanRetention())));
+        if (retention < policy.minFixOcrHanRetention()) {
+            problems.add("Han retention %s is below %s".formatted(fmt(retention), fmt(policy.minFixOcrHanRetention())));
         }
         return new GateResult(
-                Step.OCR.cliName(), problems, List.of("Han retention: " + fmt(retention), "text blocks: " + textAfter));
+                Step.FIX_OCR.cliName(), problems, List.of("Han retention: " + fmt(retention), "text blocks: " + textAfter));
     }
 
-    public static GateResult refineSource(MarkdownDocument before, MarkdownDocument after, GatePolicy policy) {
-        return refineSource(before, after, 0, policy);
+    public static GateResult structureSource(MarkdownDocument before, MarkdownDocument after, GatePolicy policy) {
+        return structureSource(before, after, 0, policy);
     }
 
-    public static GateResult refineSource(
+    public static GateResult structureSource(
             MarkdownDocument before, MarkdownDocument after, int removedHan, GatePolicy policy) {
         var problems = new ArrayList<String>();
         int headings = headingCount(after);
@@ -67,9 +90,9 @@ public final class QualityGateUtils {
             problems.add("no heading of level 1-3 found, the document was not structured");
         }
         double retention = ratio(hanCount(after), Math.max(0, hanCount(before) - removedHan));
-        if (retention < policy.minRefineSourceHanRetention()) {
+        if (retention < policy.minStructureSourceHanRetention()) {
             problems.add("Han retention %s is below %s"
-                    .formatted(fmt(retention), fmt(policy.minRefineSourceHanRetention())));
+                    .formatted(fmt(retention), fmt(policy.minStructureSourceHanRetention())));
         }
         var metrics = new ArrayList<String>();
         metrics.add("Han retention: " + fmt(retention));
@@ -77,7 +100,7 @@ public final class QualityGateUtils {
         if (removedHan > 0) {
             metrics.add("removed Han: " + removedHan);
         }
-        return new GateResult(Step.REFINE_SOURCE.cliName(), problems, metrics);
+        return new GateResult(Step.STRUCTURE_SOURCE.cliName(), problems, metrics);
     }
 
     public static GateResult translate(
@@ -109,7 +132,7 @@ public final class QualityGateUtils {
         return new GateResult(Step.TRANSLATE.cliName(), problems, metrics);
     }
 
-    public static GateResult edit(
+    public static GateResult polishTarget(
             MarkdownDocument before,
             MarkdownDocument after,
             LanguageCode target,
@@ -118,7 +141,7 @@ public final class QualityGateUtils {
             GatePolicy policy) {
         var problems = new ArrayList<String>();
         if (failedSections > policy.maxFailedSections()) {
-            problems.add("%d sections failed to edit (max %d)".formatted(failedSections, policy.maxFailedSections()));
+            problems.add("%d sections failed to polish (max %d)".formatted(failedSections, policy.maxFailedSections()));
         }
         double blockRatio = ratio(after.blocks().size(), before.blocks().size());
         if (blockRatio < policy.minBlockRatio() || blockRatio > policy.maxBlockRatio()) {
@@ -137,10 +160,10 @@ public final class QualityGateUtils {
         var metrics = new ArrayList<String>();
         metrics.add("block ratio: " + fmt(blockRatio));
         untranslated(after, target, policy, problems, metrics);
-        return new GateResult(Step.EDIT.cliName(), problems, metrics);
+        return new GateResult(Step.POLISH_TARGET.cliName(), problems, metrics);
     }
 
-    public static GateResult refineTarget(
+    public static GateResult formatTarget(
             MarkdownDocument before, MarkdownDocument after, LanguageCode target, int llmFailures, GatePolicy policy) {
         var problems = new ArrayList<String>();
         int headingsBefore = headingCount(before);
@@ -148,14 +171,14 @@ public final class QualityGateUtils {
         if (headingsAfter < headingsBefore) {
             problems.add("headings of level 1-3 dropped from %d to %d".formatted(headingsBefore, headingsAfter));
         }
-        if (llmFailures > policy.maxRefineTargetLlmFailures()) {
+        if (llmFailures > policy.maxFormatTargetLlmFailures()) {
             problems.add(
-                    "%d LLM refine calls failed (max %d)".formatted(llmFailures, policy.maxRefineTargetLlmFailures()));
+                    "%d LLM format calls failed (max %d)".formatted(llmFailures, policy.maxFormatTargetLlmFailures()));
         }
         var metrics = new ArrayList<String>();
         metrics.add("headings: " + headingsAfter);
         untranslated(after, target, policy, problems, metrics);
-        return new GateResult(Step.REFINE_TARGET.cliName(), problems, metrics);
+        return new GateResult(Step.FORMAT_TARGET.cliName(), problems, metrics);
     }
 
     public static GateResult export(Path docx) {

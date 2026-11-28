@@ -30,8 +30,8 @@ class QualityGateUtilsTest {
     @Test
     void ocrShouldFailWhenHanCharactersAreLost() {
         var before = doc("# 清热剂\n\n本方用于气分热盛证。");
-        assertThat(QualityGateUtils.ocr(before, before, POLICY).passed()).isTrue();
-        assertThat(QualityGateUtils.ocr(before, doc("# Thanh nhiet\n\nBan dich"), POLICY)
+        assertThat(QualityGateUtils.fixOcr(before, before, POLICY).passed()).isTrue();
+        assertThat(QualityGateUtils.fixOcr(before, doc("# Thanh nhiet\n\nBan dich"), POLICY)
                         .passed())
                 .isFalse();
     }
@@ -39,9 +39,9 @@ class QualityGateUtilsTest {
     @Test
     void refineSourceShouldFailWithoutAnyHeading() {
         var before = doc("本方用于气分热盛证。\n\n清热剂适用于热证。");
-        assertThat(QualityGateUtils.refineSource(before, before, POLICY).passed())
+        assertThat(QualityGateUtils.structureSource(before, before, POLICY).passed())
                 .isFalse();
-        assertThat(QualityGateUtils.refineSource(before, doc("# 清热剂\n\n本方用于气分热盛证。\n\n清热剂适用于热证。"), POLICY)
+        assertThat(QualityGateUtils.structureSource(before, doc("# 清热剂\n\n本方用于气分热盛证。\n\n清热剂适用于热证。"), POLICY)
                         .passed())
                 .isTrue();
     }
@@ -52,11 +52,11 @@ class QualityGateUtilsTest {
         var after = doc("# 清热剂\n\n本方用于气分热盛证。");
         int removed = QualityGateUtils.hanCount(before) - QualityGateUtils.hanCount(after);
 
-        assertThat(QualityGateUtils.refineSource(before, after, POLICY).passed())
+        assertThat(QualityGateUtils.structureSource(before, after, POLICY).passed())
                 .isFalse();
-        assertThat(QualityGateUtils.refineSource(before, after, removed, POLICY).passed())
+        assertThat(QualityGateUtils.structureSource(before, after, removed, POLICY).passed())
                 .isTrue();
-        assertThat(QualityGateUtils.refineSource(before, doc("# 清热剂\n\n本方"), removed, POLICY)
+        assertThat(QualityGateUtils.structureSource(before, doc("# 清热剂\n\n本方"), removed, POLICY)
                         .passed())
                 .isFalse();
     }
@@ -66,17 +66,17 @@ class QualityGateUtilsTest {
         var before = doc("### Bạch hổ thang\n\nNhiệt thịnh cho nên khát nước.\n\nCách dùng thuốc.");
         var same = doc("### Bạch hổ thang\n\nNhiệt thịnh nên khát nước.\n\nCách dùng thuốc.");
 
-        assertThat(QualityGateUtils.edit(before, same, LanguageCode.VI, 0, List.of(), POLICY)
+        assertThat(QualityGateUtils.polishTarget(before, same, LanguageCode.VI, 0, List.of(), POLICY)
                         .passed())
                 .isTrue();
-        assertThat(QualityGateUtils.edit(before, same, LanguageCode.VI, 1, List.of(), POLICY)
+        assertThat(QualityGateUtils.polishTarget(before, same, LanguageCode.VI, 1, List.of(), POLICY)
                         .passed())
                 .isFalse();
-        assertThat(QualityGateUtils.edit(
+        assertThat(QualityGateUtils.polishTarget(
                                 before, doc("### Bạch hổ thang\n\nNhiệt thịnh."), LanguageCode.VI, 0, List.of(), POLICY)
                         .passed())
                 .isFalse();
-        assertThat(QualityGateUtils.edit(
+        assertThat(QualityGateUtils.polishTarget(
                                 before,
                                 doc("### Bạch hổ thang\n\n## Mục\n\nNhiệt thịnh nên khát nước.\n\nCách dùng thuốc."),
                                 LanguageCode.VI,
@@ -85,7 +85,7 @@ class QualityGateUtilsTest {
                                 POLICY)
                         .passed())
                 .isFalse();
-        assertThat(QualityGateUtils.edit(
+        assertThat(QualityGateUtils.polishTarget(
                                 before,
                                 doc("### Bạch hổ thang\n\n白虎汤\n\nCách dùng thuốc."),
                                 LanguageCode.VI,
@@ -94,7 +94,7 @@ class QualityGateUtilsTest {
                                 POLICY)
                         .passed())
                 .isFalse();
-        assertThat(QualityGateUtils.edit(before, same, LanguageCode.VI, 0, List.of("levels changed"), POLICY)
+        assertThat(QualityGateUtils.polishTarget(before, same, LanguageCode.VI, 0, List.of("levels changed"), POLICY)
                         .passed())
                 .isFalse();
     }
@@ -143,13 +143,13 @@ class QualityGateUtilsTest {
     @Test
     void refineTargetShouldFailWhenHeadingsDropOrLlmCallsFailed() {
         var before = doc("# Chương\n\n## Mục\n\nNội dung");
-        assertThat(QualityGateUtils.refineTarget(before, before, LanguageCode.VI, 0, POLICY)
+        assertThat(QualityGateUtils.formatTarget(before, before, LanguageCode.VI, 0, POLICY)
                         .passed())
                 .isTrue();
-        assertThat(QualityGateUtils.refineTarget(before, doc("# Chương\n\nNội dung"), LanguageCode.VI, 0, POLICY)
+        assertThat(QualityGateUtils.formatTarget(before, doc("# Chương\n\nNội dung"), LanguageCode.VI, 0, POLICY)
                         .passed())
                 .isFalse();
-        assertThat(QualityGateUtils.refineTarget(before, before, LanguageCode.VI, 1, POLICY)
+        assertThat(QualityGateUtils.formatTarget(before, before, LanguageCode.VI, 1, POLICY)
                         .passed())
                 .isFalse();
     }

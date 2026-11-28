@@ -21,18 +21,21 @@ import tungnn.tutor.java.tool.meddoc.core.Step;
 import tungnn.tutor.java.tool.meddoc.core.gate.GatePolicy;
 import tungnn.tutor.java.tool.meddoc.core.gate.GateResult;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateException;
-import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateUtils;
-import tungnn.tutor.java.tool.meddoc.core.inspect.Suspect;
-import tungnn.tutor.java.tool.meddoc.core.inspect.SuspiciousTextUtils;
+import tungnn.tutor.java.tool.meddoc.core.glossary.GlossaryExtractor;
 import tungnn.tutor.java.tool.meddoc.core.ocr.OcrCleanup;
 import tungnn.tutor.java.tool.meddoc.core.ocr.OcrFix;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.EditStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.CheckDosesStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.ExportStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.OcrStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.GlossaryStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.FixOcrStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.LoadStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.ScanSourceStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.ScanTargetStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.FormatTargetStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.PipelineState;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.RefineSourceStepRunner;
-import tungnn.tutor.java.tool.meddoc.core.pipeline.RefineTargetStepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.PolishTargetStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.StepRunner;
+import tungnn.tutor.java.tool.meddoc.core.pipeline.StructureSourceStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.pipeline.TranslateStepRunner;
 import tungnn.tutor.java.tool.meddoc.core.translator.LlmMarkdownTranslator;
 import tungnn.tutor.java.tool.meddoc.llm.StepChats;
@@ -72,35 +75,35 @@ public class MedDocTranslationService {
                 : LlmMarkdownTranslator.of(chat.chat(), chat.maxConcurrency());
     }
 
-    private LlmMarkdownTranslator editorFor(MedDocTranslationRequest request) {
-        if (!request.runs(Step.EDIT)) {
+    private LlmMarkdownTranslator polisherFor(MedDocTranslationRequest request) {
+        if (!request.runs(Step.POLISH_TARGET)) {
             return null;
         }
-        var chat = chats.forStep(Step.EDIT);
-        return LlmMarkdownTranslator.editor(
+        var chat = chats.forStep(Step.POLISH_TARGET);
+        return LlmMarkdownTranslator.polisher(
                 chat.chat(),
                 chat.maxConcurrency() == null ? LlmMarkdownTranslator.DEFAULT_CONCURRENCY : chat.maxConcurrency());
     }
 
     private OcrCleanup ocrFor() {
-        var chat = chats.forStep(Step.OCR);
+        var chat = chats.forStep(Step.FIX_OCR);
         return chat.maxConcurrency() == null
                 ? new OcrCleanup(chat.chat())
                 : new OcrCleanup(chat.chat(), chat.maxConcurrency());
     }
 
     private MedDocTranslationRequest applyClaudeRule(MedDocTranslationRequest request, List<String> skipped) {
-        if (!request.runs(Step.EDIT) || !chats.usesClaude(Step.TRANSLATE)) {
+        if (!request.runs(Step.POLISH_TARGET) || !chats.usesClaude(Step.TRANSLATE)) {
             return request;
         }
         var remaining = EnumSet.copyOf(request.steps());
-        remaining.remove(Step.EDIT);
+        remaining.remove(Step.POLISH_TARGET);
         if (remaining.isEmpty()) {
             throw new IllegalArgumentException(
-                    "The edit step is skipped because the translation uses Claude, nothing is left to run");
+                    "The polish-target step is skipped because the translation uses Claude, nothing is left to run");
         }
-        LOGGER.warn("[edit] Skipped: the translation step uses Claude");
-        skipped.add("edit: skipped because the translation uses Claude");
+        LOGGER.warn("[polish-target] Skipped: the translation step uses Claude");
+        skipped.add("polish-target: skipped because the translation uses Claude");
         return request.withSteps(remaining);
     }
 
@@ -115,39 +118,15 @@ public class MedDocTranslationService {
         LOGGER.info("Run folder: {} (steps: {})", runDir, steps);
 
         var recorder = new StepRecorder(chats);
-        if (requested.runs(Step.EDIT) && !request.runs(Step.EDIT)) {
-            recorder.skip(Step.EDIT, "Skipped because the translation uses Claude");
+        if (requested.runs(Step.POLISH_TARGET) && !request.runs(Step.POLISH_TARGET)) {
+            recorder.skip(Step.POLISH_TARGET, "Skipped because the translation uses Claude");
         }
         var translator = translatorFor(request);
-        var runners = runnersFor(request, translator, editorFor(request));
+        var runners = runnersFor(request, translator, polisherFor(request));
         var state = new PipelineState(runDir, base, target, steps, gatePolicy, skipped);
-        var suspects = new ArrayList<Suspect>();
         var gates = new ArrayList<GateResult>();
         try {
-            LOGGER.info("Loading {} as Markdown", request.source().getFileName());
-            recorder.begin(StepRecorder.LOAD, null, null);
-            var doc = SourceDocumentUtils.toMarkdown(request.source());
-            state.write("01_source.md", doc);
-            boolean needsChinese =
-                    request.runs(Step.OCR) || request.runs(Step.REFINE_SOURCE) || request.runs(Step.TRANSLATE);
-            check(
-                    gates,
-                    runDir,
-                    recorder.finish(
-                            QualityGateUtils.load(doc, needsChinese, gatePolicy),
-                            doc,
-                            state.current(),
-                            List.of("Source: " + request.source().getFileName())));
-
             for (var step : Step.values()) {
-                if (step == Step.REFINE_SOURCE && needsChinese) {
-                    suspects.addAll(tagged(SuspiciousTextUtils.scanSource(state.document()), state.current()));
-                }
-                if (step == Step.EXPORT
-                        && (request.runs(Step.TRANSLATE) || request.runs(Step.EDIT) || request.runs(Step.REFINE_TARGET))) {
-                    suspects.addAll(
-                            tagged(SuspiciousTextUtils.scanTranslation(state.document(), target), state.current()));
-                }
                 var runner = runners.get(step);
                 if (runner != null) {
                     runStep(runner, state, recorder, gates);
@@ -156,15 +135,14 @@ public class MedDocTranslationService {
         } catch (IOException | RuntimeException e) {
             recorder.fail(e);
             var failureReport = writeFailureReport(
-                    buildReport(request, state, translator, suspects, gates, recorder, String.valueOf(e.getMessage())),
-                    e);
+                    buildReport(request, state, translator, gates, recorder, String.valueOf(e.getMessage())), e);
             if (e instanceof QualityGateException gateFailure) {
                 throw gateFailure.withReport(failureReport);
             }
             throw e;
         }
 
-        var report = buildReport(request, state, translator, suspects, gates, recorder, null);
+        var report = buildReport(request, state, translator, gates, recorder, null);
         Files.writeString(runDir.resolve("report.md"), report.render(), StandardCharsets.UTF_8);
         return report;
     }
@@ -173,7 +151,6 @@ public class MedDocTranslationService {
             MedDocTranslationRequest request,
             PipelineState state,
             LlmMarkdownTranslator translator,
-            List<Suspect> suspects,
             List<GateResult> gates,
             StepRecorder recorder,
             String failure) {
@@ -191,7 +168,7 @@ public class MedDocTranslationService {
                 translator.firstError(),
                 List.copyOf(state.skipped()),
                 translator.warnings(),
-                suspects,
+                List.copyOf(state.suspects()),
                 List.copyOf(gates),
                 chats.usageLines(),
                 recorder.build(request.steps()),
@@ -199,24 +176,36 @@ public class MedDocTranslationService {
     }
 
     private Map<Step, StepRunner> runnersFor(
-            MedDocTranslationRequest request, LlmMarkdownTranslator translator, LlmMarkdownTranslator editor) {
+            MedDocTranslationRequest request, LlmMarkdownTranslator translator, LlmMarkdownTranslator polisher) {
         var runners = new EnumMap<Step, StepRunner>(Step.class);
-        if (request.runs(Step.OCR)) {
-            runners.put(Step.OCR, new OcrStepRunner(this::ocrFor));
+        runners.put(Step.LOAD, new LoadStepRunner(request.source()));
+        runners.put(Step.SCAN_SOURCE, new ScanSourceStepRunner());
+        runners.put(Step.SCAN_TARGET, new ScanTargetStepRunner());
+        if (request.runs(Step.CHECK_DOSES)) {
+            runners.put(Step.CHECK_DOSES, new CheckDosesStepRunner());
         }
-        if (request.runs(Step.REFINE_SOURCE)) {
-            runners.put(Step.REFINE_SOURCE, new RefineSourceStepRunner());
+        if (request.runs(Step.FIX_OCR)) {
+            runners.put(Step.FIX_OCR, new FixOcrStepRunner(this::ocrFor));
+        }
+        if (request.runs(Step.STRUCTURE_SOURCE)) {
+            runners.put(Step.STRUCTURE_SOURCE, new StructureSourceStepRunner());
+        }
+        if (request.runs(Step.GLOSSARY)) {
+            runners.put(
+                    Step.GLOSSARY,
+                    new GlossaryStepRunner(() -> new GlossaryExtractor(chats.forStep(Step.GLOSSARY).chat())));
         }
         if (request.runs(Step.TRANSLATE)) {
             runners.put(Step.TRANSLATE, new TranslateStepRunner(translator));
         }
-        if (request.runs(Step.EDIT)) {
-            runners.put(Step.EDIT, new EditStepRunner(editor));
+        if (request.runs(Step.POLISH_TARGET)) {
+            runners.put(Step.POLISH_TARGET, new PolishTargetStepRunner(polisher));
         }
-        if (request.runs(Step.REFINE_TARGET)) {
+        if (request.runs(Step.FORMAT_TARGET)) {
             runners.put(
-                    Step.REFINE_TARGET,
-                    new RefineTargetStepRunner(() -> chats.forStep(Step.REFINE_TARGET).chat(), new AtomicInteger()));
+                    Step.FORMAT_TARGET,
+                    new FormatTargetStepRunner(
+                            () -> chats.forStep(Step.FORMAT_TARGET).chat(), new AtomicInteger()));
         }
         if (request.runs(Step.EXPORT)) {
             runners.put(Step.EXPORT, new ExportStepRunner());
@@ -230,7 +219,9 @@ public class MedDocTranslationService {
         var skipReason = runner.skipReason(state);
         if (skipReason.isPresent()) {
             var reason = skipReason.get();
-            state.skipped().add(step.cliName() + ": " + reason);
+            if (step.selectable()) {
+                state.skipped().add(step.cliName() + ": " + reason);
+            }
             recorder.skip(step, Character.toUpperCase(reason.charAt(0)) + reason.substring(1));
             return;
         }
@@ -249,13 +240,6 @@ public class MedDocTranslationService {
         if (!result.passed()) {
             throw new QualityGateException(result, runDir);
         }
-    }
-
-    // Block indexes refer to different documents (the OCR file vs the translated file), so each suspect names its file.
-    private static List<Suspect> tagged(List<Suspect> suspects, Path file) {
-        return suspects.stream()
-                .map(s -> new Suspect(s.blockIndex(), "[" + file.getFileName() + "] " + s.reason(), s.excerpt()))
-                .toList();
     }
 
     private static String writeFailureReport(MedDocReport report, Exception failure) {

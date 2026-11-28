@@ -175,14 +175,14 @@ class LlmMarkdownTranslatorTest {
         var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString()))
                 .thenAnswer(i -> ((String) i.getArgument(1)).replace("cho nên", "vì vậy"));
-        var editor = LlmMarkdownTranslator.editor(llm);
+        var polisher = LlmMarkdownTranslator.polisher(llm);
         var source = doc(new Heading(3, "Bạch hổ thang"), new Paragraph("Nhiệt thịnh cho nên khát nước."));
 
-        var result = editor.edit(source);
+        var result = polisher.polish(source);
 
         assertThat(result.blocks())
                 .containsExactly(new Heading(3, "Bạch hổ thang"), new Paragraph("Nhiệt thịnh vì vậy khát nước."));
-        assertThat(editor.successCount()).isEqualTo(1);
+        assertThat(polisher.successCount()).isEqualTo(1);
         verify(llm)
                 .chat(
                         org.mockito.ArgumentMatchers.argThat(
@@ -194,13 +194,13 @@ class LlmMarkdownTranslatorTest {
     void shouldKeepTheTranslatedSectionWhenTheEditFails() {
         var llm = mock(MarkdownChat.class);
         when(llm.chat(anyString(), anyString())).thenThrow(new IllegalStateException("boom"));
-        var editor = LlmMarkdownTranslator.editor(llm);
+        var polisher = LlmMarkdownTranslator.polisher(llm);
         var source = doc(new Heading(3, "Bạch hổ thang"), new Paragraph("Nhiệt thịnh."));
 
-        var result = editor.edit(source);
+        var result = polisher.polish(source);
 
         assertThat(result.blocks()).containsExactlyElementsOf(source.blocks());
-        assertThat(editor.failureCount()).isEqualTo(1);
+        assertThat(polisher.failureCount()).isEqualTo(1);
     }
 
     @Test

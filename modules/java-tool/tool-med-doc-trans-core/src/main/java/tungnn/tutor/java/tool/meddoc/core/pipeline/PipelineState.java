@@ -1,7 +1,10 @@
 package tungnn.tutor.java.tool.meddoc.core.pipeline;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -9,6 +12,8 @@ import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.M
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.Step;
 import tungnn.tutor.java.tool.meddoc.core.gate.GatePolicy;
+import tungnn.tutor.java.tool.meddoc.core.glossary.Glossary;
+import tungnn.tutor.java.tool.meddoc.core.inspect.Suspect;
 import tungnn.tutor.java.tool.meddoc.core.ocr.OcrFix;
 
 public final class PipelineState {
@@ -24,6 +29,9 @@ public final class PipelineState {
     private Path current;
     private Path docx;
     private List<OcrFix> fixes = List.of();
+    private MarkdownDocument sourceForCheck;
+    private Glossary glossary;
+    private final List<Suspect> suspects = new ArrayList<>();
 
     public PipelineState(
             Path runDir,
@@ -42,6 +50,10 @@ public final class PipelineState {
 
     public boolean runs(Step step) {
         return selected.contains(step);
+    }
+
+    public boolean needsChinese() {
+        return runs(Step.FIX_OCR) || runs(Step.STRUCTURE_SOURCE) || runs(Step.TRANSLATE);
     }
 
     public Path runDir() {
@@ -96,12 +108,38 @@ public final class PipelineState {
         this.docx = docx;
     }
 
+    public Glossary glossary() {
+        return glossary;
+    }
+
+    public void setGlossary(Glossary glossary) {
+        this.glossary = glossary;
+    }
+
+    public MarkdownDocument sourceForCheck() {
+        return sourceForCheck;
+    }
+
+    public void setSourceForCheck(MarkdownDocument sourceForCheck) {
+        this.sourceForCheck = sourceForCheck;
+    }
+
+    public List<Suspect> suspects() {
+        return suspects;
+    }
+
     public List<OcrFix> fixes() {
         return fixes;
     }
 
     public void setFixes(List<OcrFix> fixes) {
         this.fixes = List.copyOf(fixes);
+    }
+
+    public Path writeArtifact(String fileName, String content) throws IOException {
+        var path = runDir.resolve(fileName);
+        Files.writeString(path, content, StandardCharsets.UTF_8);
+        return path;
     }
 
     public Path write(String fileName, MarkdownDocument result) throws IOException {

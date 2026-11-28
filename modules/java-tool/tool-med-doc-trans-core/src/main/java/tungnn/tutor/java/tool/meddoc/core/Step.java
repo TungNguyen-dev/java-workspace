@@ -7,46 +7,72 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public enum Step {
-    OCR("ocr"),
-    REFINE_SOURCE("refine-source"),
-    TRANSLATE("translate"),
-    EDIT("edit"),
-    REFINE_TARGET("refine-target"),
-    EXPORT("export");
+    LOAD("load", false),
+    FIX_OCR("fix-ocr", true),
+    SCAN_SOURCE("scan-source", false),
+    STRUCTURE_SOURCE("structure-source", true),
+    GLOSSARY("glossary", true),
+    TRANSLATE("translate", true),
+    POLISH_TARGET("polish-target", true),
+    FORMAT_TARGET("format-target", true),
+    SCAN_TARGET("scan-target", false),
+    CHECK_DOSES("check-doses", true),
+    EXPORT("export", true);
 
     private final String cliName;
+    private final boolean selectable;
 
-    Step(String cliName) {
+    Step(String cliName, boolean selectable) {
         this.cliName = cliName;
+        this.selectable = selectable;
     }
 
     public String cliName() {
         return cliName;
     }
 
+    public boolean selectable() {
+        return selectable;
+    }
+
     public boolean usesLlm() {
-        return this == OCR || this == TRANSLATE || this == EDIT || this == REFINE_TARGET;
+        return this == FIX_OCR
+                || this == GLOSSARY
+                || this == TRANSLATE
+                || this == POLISH_TARGET
+                || this == FORMAT_TARGET;
     }
 
     public String envName() {
         return name();
     }
 
+    public String filePrefix() {
+        return "%02d_".formatted(ordinal() + 1);
+    }
+
+    public String outputName(String extension) {
+        return filePrefix() + cliName.replace('-', '_') + "." + extension;
+    }
+
     public static Step byCliName(String name) {
         var normalized = name == null ? "" : name.strip().toLowerCase(Locale.ROOT);
         return Arrays.stream(values())
-                .filter(step -> step.cliName.equals(normalized))
+                .filter(step -> step.selectable && step.cliName.equals(normalized))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Unknown step '" + normalized + "'. Valid steps: " + validNames()));
     }
 
     public static Set<Step> all() {
-        return EnumSet.allOf(Step.class);
+        return selectableSteps();
     }
 
     public static String validNames() {
-        return Arrays.stream(values()).map(Step::cliName).collect(Collectors.joining(", "));
+        return Arrays.stream(values())
+                .filter(Step::selectable)
+                .map(Step::cliName)
+                .collect(Collectors.joining(", "));
     }
 
     public static Set<Step> parse(String csv) {
@@ -57,15 +83,21 @@ public enum Step {
                 if (name.isEmpty()) {
                     continue;
                 }
-                steps.add(Arrays.stream(values())
-                        .filter(step -> step.cliName.equals(name))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "Unknown step '" + name + "'. Valid steps: " + validNames())));
+                steps.add(byCliName(name));
             }
         }
         if (steps.isEmpty()) {
             throw new IllegalArgumentException("No steps given. Valid steps: " + validNames());
+        }
+        return steps;
+    }
+
+    private static Set<Step> selectableSteps() {
+        var steps = EnumSet.noneOf(Step.class);
+        for (var step : values()) {
+            if (step.selectable) {
+                steps.add(step);
+            }
         }
         return steps;
     }

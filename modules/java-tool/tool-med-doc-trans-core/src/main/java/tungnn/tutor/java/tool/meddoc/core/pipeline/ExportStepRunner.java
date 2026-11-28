@@ -28,7 +28,8 @@ public final class ExportStepRunner implements StepRunner {
 
     @Override
     public StepOutcome run(PipelineState state) throws IOException {
-        var docx = state.runDir().resolve("07_" + state.baseName() + "_" + LANGUAGE_SUFFIX.get(state.target()) + ".docx");
+        var docx = state.runDir()
+                .resolve(Step.EXPORT.filePrefix() + state.baseName() + "_" + LANGUAGE_SUFFIX.get(state.target()) + ".docx");
         MarkdownDocxConverterUtils.convertMarkdownToDocx(state.current(), docx);
         state.setDocx(docx);
         return new StepOutcome(QualityGateUtils.export(docx), null, docx, List.of());

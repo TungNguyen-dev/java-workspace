@@ -121,9 +121,9 @@ public class MedDocTranslateTool implements ToolExtension {
             var text = value == null ? "" : value.toString();
             Set<Step> steps = text.isBlank() ? Step.all() : Step.parse(text);
             if (!refine) {
-                steps.remove(Step.REFINE_SOURCE);
-                steps.remove(Step.EDIT);
-                steps.remove(Step.REFINE_TARGET);
+                steps.remove(Step.STRUCTURE_SOURCE);
+                steps.remove(Step.POLISH_TARGET);
+                steps.remove(Step.FORMAT_TARGET);
             }
             if (steps.isEmpty()) {
                 throw new IllegalArgumentException("No steps left to run");
@@ -169,7 +169,7 @@ public class MedDocTranslateTool implements ToolExtension {
             for (Step step : Step.values()) {
                 // The translate chat is needed whenever edit is selected, to apply the "Claude skips edit" rule
                 boolean needed = steps.contains(step)
-                        || (step == Step.TRANSLATE && steps.contains(Step.EDIT));
+                        || (step == Step.TRANSLATE && steps.contains(Step.POLISH_TARGET));
                 if (step.usesLlm() && needed) {
                     var client = factory().create(provider, model);
                     clients.put(step, LlmClientMarkdownChat.stepChat(client, claude));

@@ -61,7 +61,7 @@ public record MedDocReport(
             sb.append('\n');
         }
         sb.append("- OCR fixes: ")
-                .append(steps.contains(Step.OCR) ? ocrFixes.size() + " blocks changed" : "step not run")
+                .append(steps.contains(Step.FIX_OCR) ? ocrFixes.size() + " blocks changed" : "step not run")
                 .append('\n');
         if (!skippedRefineSteps.isEmpty()) {
             sb.append("- Refine steps skipped or partly failed: ")

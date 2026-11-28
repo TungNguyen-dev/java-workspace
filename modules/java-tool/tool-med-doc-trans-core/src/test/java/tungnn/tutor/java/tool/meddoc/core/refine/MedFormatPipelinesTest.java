@@ -13,7 +13,7 @@ import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownActions;
 
-class MedRefinePipelineTest {
+class MedFormatPipelinesTest {
 
     @Test
     void shouldStructureChineseSource() {
@@ -29,7 +29,7 @@ class MedRefinePipelineTest {
                 new Paragraph("1.伤寒少阳证。")));
         var skipped = new ArrayList<String>();
 
-        var result = MedRefinePipeline.chineseSource(skipped).run(doc);
+        var result = MedFormatPipelines.structureSource(skipped).run(doc);
 
         assertThat(result.blocks())
                 .containsExactly(
@@ -61,7 +61,7 @@ class MedRefinePipelineTest {
         var skipped = new ArrayList<String>();
         var removedHan = new java.util.concurrent.atomic.AtomicInteger();
 
-        var result = MedRefinePipeline.chineseSource(skipped, removedHan).run(doc);
+        var result = MedFormatPipelines.structureSource(skipped, removedHan).run(doc);
 
         assertThat(result.blocks())
                 .noneMatch(b -> b instanceof Heading h
@@ -76,7 +76,7 @@ class MedRefinePipelineTest {
     void shouldReportStepsThatMatchedNothing() {
         var skipped = new ArrayList<String>();
 
-        var result = MedRefinePipeline.chineseSource(skipped).run(new MarkdownDocument(List.of(new Paragraph("随便一段"))));
+        var result = MedFormatPipelines.structureSource(skipped).run(new MarkdownDocument(List.of(new Paragraph("随便一段"))));
 
         assertThat(result.blocks()).containsExactly(new Paragraph("随便一段"));
         assertThat(skipped).hasSize(4).allMatch(s -> s.endsWith("no matching block found"));
@@ -125,7 +125,7 @@ class MedRefinePipelineTest {
                 new Paragraph("1、本方是常用方。")));
         var skipped = new ArrayList<String>();
 
-        var result = MedRefinePipeline.chineseSource(skipped).run(doc);
+        var result = MedFormatPipelines.structureSource(skipped).run(doc);
 
         assertThat(result.blocks())
                 .containsExactly(
@@ -156,7 +156,7 @@ class MedRefinePipelineTest {
                 new Paragraph("1．异功散（《小儿药证直诀》）即四君子汤加陈皮。"),
                 new Paragraph("2．六君子汤（《医学正传》）陈皮一钱。")));
 
-        var result = MedRefinePipeline.chineseSource(new ArrayList<>(), new java.util.concurrent.atomic.AtomicInteger())
+        var result = MedFormatPipelines.structureSource(new ArrayList<>(), new java.util.concurrent.atomic.AtomicInteger())
                 .run(doc);
 
         assertThat(result.blocks())

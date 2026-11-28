@@ -7,22 +7,22 @@ import tungnn.tutor.java.tool.meddoc.core.Step;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateUtils;
 import tungnn.tutor.java.tool.meddoc.core.translator.LlmMarkdownTranslator;
 
-public final class EditStepRunner implements StepRunner {
+public final class PolishTargetStepRunner implements StepRunner {
 
-    private final LlmMarkdownTranslator editor;
+    private final LlmMarkdownTranslator polisher;
 
-    public EditStepRunner(LlmMarkdownTranslator editor) {
-        this.editor = editor;
+    public PolishTargetStepRunner(LlmMarkdownTranslator polisher) {
+        this.polisher = polisher;
     }
 
     @Override
     public Step step() {
-        return Step.EDIT;
+        return Step.POLISH_TARGET;
     }
 
     @Override
     public String description(PipelineState state) {
-        return "Editing the Vietnamese text into a friendlier style";
+        return "Polishing the Vietnamese text into a friendlier style";
     }
 
     @Override
@@ -33,13 +33,13 @@ public final class EditStepRunner implements StepRunner {
     @Override
     public StepOutcome run(PipelineState state) throws IOException {
         var before = state.document();
-        var edited = editor.edit(before);
-        var file = state.write("05_edited.md", edited);
+        var polished = polisher.polish(before);
+        var file = state.write(step().outputName("md"), polished);
         return new StepOutcome(
-                QualityGateUtils.edit(
-                        before, edited, state.target(), editor.failureCount(), editor.warnings(), state.gatePolicy()),
-                edited,
+                QualityGateUtils.polishTarget(
+                        before, polished, state.target(), polisher.failureCount(), polisher.warnings(), state.gatePolicy()),
+                polished,
                 file,
-                StepDetailsUtils.sections(editor));
+                StepDetailsUtils.sections(polisher));
     }
 }

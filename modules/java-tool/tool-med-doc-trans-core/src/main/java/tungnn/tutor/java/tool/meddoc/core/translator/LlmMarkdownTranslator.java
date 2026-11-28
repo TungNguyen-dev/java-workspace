@@ -19,6 +19,7 @@ import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownBlock;
 import tungnn.tutor.java.infra.document.adapter.markdown.model.MarkdownElement.MarkdownDocument;
 import tungnn.tutor.java.tool.doctrans.core.text.LanguageCode;
 import tungnn.tutor.java.tool.meddoc.core.chat.MarkdownChat;
+import tungnn.tutor.java.tool.meddoc.core.glossary.Glossary;
 import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownActions;
 
 public final class LlmMarkdownTranslator {
@@ -29,7 +30,7 @@ public final class LlmMarkdownTranslator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LlmMarkdownTranslator.class);
     private static final String PROMPT_RESOURCE = "prompts/translate-tcm-text.md";
-    private static final String EDIT_PROMPT_RESOURCE = "prompts/edit-polish-vietnamese.md";
+    private static final String POLISH_PROMPT_RESOURCE = "prompts/polish-vietnamese.md";
     private static final String LANGUAGE_PLACEHOLDER = "{targetLanguage}";
     private static final int MAX_SECTION_LEVEL = 3;
     private static final int PRESCRIPTION_LEVEL = 3;
@@ -69,28 +70,33 @@ public final class LlmMarkdownTranslator {
         this.maxPrescriptionChars = Math.max(1, maxPrescriptionChars);
     }
 
-    public static LlmMarkdownTranslator editor(MarkdownChat chat) {
-        return editor(chat, DEFAULT_CONCURRENCY);
+    public static LlmMarkdownTranslator polisher(MarkdownChat chat) {
+        return polisher(chat, DEFAULT_CONCURRENCY);
     }
 
-    public static LlmMarkdownTranslator editor(MarkdownChat chat, int maxConcurrency) {
+    public static LlmMarkdownTranslator polisher(MarkdownChat chat, int maxConcurrency) {
         return new LlmMarkdownTranslator(
-                chat, EDIT_PROMPT_RESOURCE, maxConcurrency, DEFAULT_MAX_CHUNK_CHARS, DEFAULT_MAX_PRESCRIPTION_CHARS);
+                chat, POLISH_PROMPT_RESOURCE, maxConcurrency, DEFAULT_MAX_CHUNK_CHARS, DEFAULT_MAX_PRESCRIPTION_CHARS);
     }
 
     public MarkdownDocument translate(MarkdownDocument source, LanguageCode target) {
-        return process(source, promptTemplate.replace(LANGUAGE_PLACEHOLDER, target.languageName()), "Translating");
+        return translate(source, target, null);
     }
 
-    public MarkdownDocument edit(MarkdownDocument source) {
-        return process(source, promptTemplate, "Editing");
+    public MarkdownDocument translate(MarkdownDocument source, LanguageCode target, Glossary glossary) {
+        var prompt = promptTemplate.replace(LANGUAGE_PLACEHOLDER, target.languageName());
+        return process(source, prompt, "Translating", glossary);
     }
 
-    private MarkdownDocument process(MarkdownDocument source, String prompt, String action) {
+    public MarkdownDocument polish(MarkdownDocument source) {
+        return process(source, promptTemplate, "Polishing", null);
+    }
+
+    private MarkdownDocument process(MarkdownDocument source, String prompt, String action, Glossary glossary) {
         var chunks = chunk(source.blocks());
         LOGGER.info("{} {} blocks in {} sections", action, source.blocks().size(), chunks.size());
 
-        var translated = ConcurrentUtils.executeConcurrently(chunks, c -> translateChunk(c, prompt), maxConcurrency);
+        var translated = ConcurrentUtils.executeConcurrently(chunks, c -> translateChunk(c, prompt, glossary), maxConcurrency);
 
         var blocks = new ArrayList<MarkdownBlock>();
         translated.forEach(blocks::addAll);
@@ -116,13 +122,14 @@ public final class LlmMarkdownTranslator {
         return List.copyOf(warnings);
     }
 
-    private List<MarkdownBlock> translateChunk(Chunk chunk, String prompt) {
+    private List<MarkdownBlock> translateChunk(Chunk chunk, String prompt, Glossary glossary) {
         var text = chunk.blocks().stream().map(MarkdownBlock::toMarkdown).collect(Collectors.joining("\n"));
         if (text.isBlank()) {
             return chunk.blocks();
         }
         try {
-            var answer = LlmOutputUtils.clean(chat.chat(prompt, text));
+            var systemPrompt = glossary == null ? prompt : prompt + glossary.promptSectionFor(text);
+            var answer = LlmOutputUtils.clean(chat.chat(systemPrompt, text));
             var blocks = answer == null || answer.isBlank()
                     ? List.<MarkdownBlock>of()
                     : MarkdownDocumentUtils.parse(answer).blocks();

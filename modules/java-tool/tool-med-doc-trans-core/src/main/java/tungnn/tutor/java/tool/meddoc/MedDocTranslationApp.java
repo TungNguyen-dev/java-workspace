@@ -21,7 +21,7 @@ public class MedDocTranslationApp {
     private static final String USAGE =
             "Usage: MedDocTranslationApp <input.docx|md|txt> [--lang VI] [--out dir] [--steps %s] [--no-refine]"
                             .formatted(Step.validNames().replace(", ", ","))
-                    + " [--llm <ocr|translate|edit|refine-target|default>=<claude-cli[:model][@effort]|provider[:model]>]...";
+                    + " [--llm <fix-ocr|glossary|translate|polish-target|format-target|default>=<claude-cli[:model][@effort]|provider[:model]>]...";
 
     record Args(MedDocTranslationRequest request, Map<String, String> llm) {}
 
@@ -76,9 +76,9 @@ public class MedDocTranslationApp {
             }
         }
         if (!refine) {
-            steps.remove(Step.REFINE_SOURCE);
-            steps.remove(Step.EDIT);
-            steps.remove(Step.REFINE_TARGET);
+            steps.remove(Step.STRUCTURE_SOURCE);
+            steps.remove(Step.POLISH_TARGET);
+            steps.remove(Step.FORMAT_TARGET);
             if (steps.isEmpty()) {
                 throw new IllegalArgumentException("--no-refine leaves no step to run");
             }

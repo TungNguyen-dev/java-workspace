@@ -23,26 +23,26 @@ class StepChatsTest {
         var translate = chats.forStep(Step.TRANSLATE);
         assertThat(chats.forStep(Step.TRANSLATE)).isSameAs(translate);
         assertThat(created).hasValue(1);
-        assertThat(chats.forStep(Step.OCR)).isNotSameAs(translate);
+        assertThat(chats.forStep(Step.FIX_OCR)).isNotSameAs(translate);
         assertThat(created).hasValue(2);
     }
 
     @Test
     void shouldKnowIfAStepUsesClaudeWithoutCreatingItsClient() {
         var created = new AtomicInteger();
-        var specs = Map.of(Step.TRANSLATE, ChatSpec.parse("claude-cli"), Step.EDIT, ChatSpec.parse("deepseek"));
+        var specs = Map.of(Step.TRANSLATE, ChatSpec.parse("claude-cli"), Step.POLISH_TARGET, ChatSpec.parse("deepseek"));
         var fromSpecs = StepChats.of(specs, key -> null);
 
         assertThat(fromSpecs.usesClaude(Step.TRANSLATE)).isTrue();
-        assertThat(fromSpecs.usesClaude(Step.EDIT)).isFalse();
-        assertThat(fromSpecs.usesClaude(Step.OCR)).isFalse();
+        assertThat(fromSpecs.usesClaude(Step.POLISH_TARGET)).isFalse();
+        assertThat(fromSpecs.usesClaude(Step.FIX_OCR)).isFalse();
 
         var fromFactory = StepChats.of(step -> {
             created.incrementAndGet();
             return step == Step.TRANSLATE ? StepChat.of((system, user) -> user, true) : null;
         });
         assertThat(fromFactory.usesClaude(Step.TRANSLATE)).isTrue();
-        assertThat(fromFactory.usesClaude(Step.EDIT)).isFalse();
+        assertThat(fromFactory.usesClaude(Step.POLISH_TARGET)).isFalse();
         assertThat(created).hasValue(2);
     }
 
@@ -56,7 +56,7 @@ class StepChatsTest {
 
         assertThat(((MeteringMarkdownChat) chat.chat()).delegate()).isInstanceOf(ClaudeCliMarkdownChat.class);
         assertThat(chat.maxConcurrency()).isEqualTo(3);
-        assertThatThrownBy(() -> chats.forStep(Step.OCR)).hasMessageContaining("No LLM configured");
+        assertThatThrownBy(() -> chats.forStep(Step.FIX_OCR)).hasMessageContaining("No LLM configured");
     }
 
     @Test
@@ -64,13 +64,13 @@ class StepChatsTest {
         MarkdownChat shared = (system, user) -> "ok";
         var chats = StepChats.of(step -> StepChat.of(shared));
 
-        chats.forStep(Step.OCR).chat().chat("s", "u");
+        chats.forStep(Step.FIX_OCR).chat().chat("s", "u");
         chats.forStep(Step.TRANSLATE).chat().chat("s", "u");
         chats.forStep(Step.TRANSLATE).chat().chat("s", "u");
 
-        assertThat(chats.usageLine(Step.OCR)).contains("1 calls").contains("tokens not reported by provider");
+        assertThat(chats.usageLine(Step.FIX_OCR)).contains("1 calls").contains("tokens not reported by provider");
         assertThat(chats.usageLine(Step.TRANSLATE)).contains("2 calls");
-        assertThat(chats.usageLine(Step.EDIT)).isNull();
+        assertThat(chats.usageLine(Step.POLISH_TARGET)).isNull();
         assertThat(chats.usageTotal()).contains("3 calls");
     }
 
@@ -91,13 +91,13 @@ class StepChatsTest {
             }
         }
         var chats = StepChats.of(step -> new StepChat(new Metered(), null, false, "deepseek:deepseek-chat"));
-        var chat = chats.forStep(Step.EDIT).chat();
+        var chat = chats.forStep(Step.POLISH_TARGET).chat();
 
         chat.chat("s", "u");
         assertThatThrownBy(() -> chat.chat("s", "boom")).isInstanceOf(IllegalStateException.class);
 
-        assertThat(chats.usageLine(Step.EDIT))
-                .isEqualTo("edit (deepseek:deepseek-chat): 2 calls, 1 failed, $n/a, in 1.5k (cache 0),"
+        assertThat(chats.usageLine(Step.POLISH_TARGET))
+                .isEqualTo("polish-target (deepseek:deepseek-chat): 2 calls, 1 failed, $n/a, in 1.5k (cache 0),"
                         + " out 500, thinking 0");
     }
 

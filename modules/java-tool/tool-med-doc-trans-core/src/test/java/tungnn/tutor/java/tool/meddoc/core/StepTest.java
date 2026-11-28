@@ -9,24 +9,24 @@ class StepTest {
 
     @Test
     void shouldParseNamesIgnoringCaseAndSpaces() {
-        assertThat(Step.parse(" OCR, translate ,Export"))
-                .containsExactlyInAnyOrder(Step.OCR, Step.TRANSLATE, Step.EXPORT);
+        assertThat(Step.parse(" FIX-OCR, translate ,Export"))
+                .containsExactlyInAnyOrder(Step.FIX_OCR, Step.TRANSLATE, Step.EXPORT);
     }
 
     @Test
-    void shouldRunEditBetweenTranslateAndRefineTarget() {
-        assertThat(Step.parse("edit")).containsExactly(Step.EDIT);
-        assertThat(Step.all()).containsExactly(Step.values());
-        assertThat(Step.EDIT.ordinal()).isEqualTo(Step.TRANSLATE.ordinal() + 1);
-        assertThat(Step.REFINE_TARGET.ordinal()).isEqualTo(Step.EDIT.ordinal() + 1);
+    void shouldRunPolishTargetBetweenTranslateAndFormatTarget() {
+        assertThat(Step.parse("polish-target")).containsExactly(Step.POLISH_TARGET);
+        assertThat(Step.all()).doesNotContain(Step.LOAD, Step.SCAN_SOURCE, Step.SCAN_TARGET);
+        assertThat(Step.POLISH_TARGET.ordinal()).isEqualTo(Step.TRANSLATE.ordinal() + 1);
+        assertThat(Step.FORMAT_TARGET.ordinal()).isEqualTo(Step.POLISH_TARGET.ordinal() + 1);
     }
 
     @Test
     void shouldRejectAnUnknownStepAndListTheValidOnes() {
-        assertThatThrownBy(() -> Step.parse("ocr,dich"))
+        assertThatThrownBy(() -> Step.parse("fix-ocr,dich"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("'dich'")
-                .hasMessageContaining("refine-source");
+                .hasMessageContaining("structure-source");
     }
 
     @Test

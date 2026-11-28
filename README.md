@@ -70,8 +70,8 @@ Use the `-all` jar (the shaded executable one). Run from the repo root so relati
 | --- | --- | --- |
 | `--lang` | `VI` | Target language code (`VI`, `EN`, `JA`, `ZH`, ...) |
 | `--out` | folder of the input file | Directory that holds the run folders |
-| `--steps` | all steps | Comma separated: `ocr,refine-source,translate,edit,refine-target,export` |
-| `--no-refine` | refine on | Removes `refine-source`, `edit` and `refine-target` |
+| `--steps` | all steps | Comma separated: `fix-ocr,structure-source,glossary,translate,polish-target,format-target,check-doses,export` |
+| `--no-refine` | refine on | Removes `structure-source`, `polish-target` and `format-target` |
 
 | Variable | Default | Meaning |
 | --- | --- | --- |

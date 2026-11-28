@@ -71,6 +71,12 @@ public final class SuspiciousTextUtils {
         return suspects;
     }
 
+    public static List<Suspect> tagged(List<Suspect> suspects, java.nio.file.Path file) {
+        return suspects.stream()
+                .map(s -> new Suspect(s.blockIndex(), "[" + file.getFileName() + "] " + s.reason(), s.excerpt()))
+                .toList();
+    }
+
     private static boolean isComposition(String text) {
         return text.contains("组成") || DOSE_UNIT.matcher(text).results().count() >= 3;
     }

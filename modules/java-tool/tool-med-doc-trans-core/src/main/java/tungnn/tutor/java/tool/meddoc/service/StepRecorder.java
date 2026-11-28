@@ -18,8 +18,6 @@ import tungnn.tutor.java.tool.meddoc.service.report.StepStatus;
 
 final class StepRecorder {
 
-    static final String LOAD = "load";
-
     private static final Logger LOGGER = LoggerFactory.getLogger(StepRecorder.class);
 
     private final StepChats chats;
@@ -64,15 +62,12 @@ final class StepRecorder {
 
     List<StepReport> build(Set<Step> selected) {
         var result = new ArrayList<StepReport>();
-        if (reports.containsKey(LOAD)) {
-            result.add(reports.get(LOAD));
-        }
         for (var s : Step.values()) {
             var report = reports.get(s.cliName());
             if (report == null) {
                 report = StepReport.without(
                         s.cliName(),
-                        selected.contains(s) ? StepStatus.NOT_RUN : StepStatus.NOT_SELECTED,
+                        selected.contains(s) || !s.selectable() ? StepStatus.NOT_RUN : StepStatus.NOT_SELECTED,
                         s.usesLlm(),
                         null);
             }

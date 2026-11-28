@@ -19,9 +19,9 @@ import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownActions;
 import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownPipeline;
 import tungnn.tutor.java.tool.meddoc.core.markdown.MarkdownRefiner;
 
-public final class MedRefinePipeline {
+public final class MedFormatPipelines {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MedRefinePipeline.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MedFormatPipelines.class);
     private static final Pattern SECTION_PREFIX = Pattern.compile("^第[一二三四五六七八九十百\\d]+[节節]\\s*");
     private static final Pattern CATEGORY_LEAD = Pattern.compile("^(\\p{IsHan}{1,8})剂[，,]");
     private static final Map<String, String> VI_LABELS = Map.of(
@@ -34,15 +34,15 @@ public final class MedRefinePipeline {
             "附方", "Phụ phương");
     private static final Set<String> REMOVED_SECTIONS = Set.of("文献摘要", "病案");
 
-    private MedRefinePipeline() {
+    private MedFormatPipelines() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
     }
 
-    public static MarkdownPipeline chineseSource(List<String> skipped) {
-        return chineseSource(skipped, new AtomicInteger());
+    public static MarkdownPipeline structureSource(List<String> skipped) {
+        return structureSource(skipped, new AtomicInteger());
     }
 
-    public static MarkdownPipeline chineseSource(List<String> skipped, AtomicInteger removedHan) {
+    public static MarkdownPipeline structureSource(List<String> skipped, AtomicInteger removedHan) {
         return new MarkdownPipeline()
                 .step("Remove bold markers", MarkdownActions.stripBold())
                 .step(
@@ -56,7 +56,7 @@ public final class MedRefinePipeline {
                         required(
                                 skipped,
                                 "section headings",
-                                MarkdownActions.sectionHeading(SECTION_PREFIX, 2, MedRefinePipeline::categoryTitle)))
+                                MarkdownActions.sectionHeading(SECTION_PREFIX, 2, MedFormatPipelines::categoryTitle)))
                 .step(
                         "Remove empty paragraphs",
                         MarkdownActions.removeIf(
@@ -89,11 +89,11 @@ public final class MedRefinePipeline {
         return m.find() ? m.group(1) : null;
     }
 
-    public static MarkdownPipeline vietnamese(
+    public static MarkdownPipeline formatTarget(
             MarkdownChat chat, List<String> skipped, MarkdownDocument source, AtomicInteger llmFailures) {
-        var ingredientsPrompt = ResourceUtils.getResourceAsString("prompts/refine-ingredients-table.md");
-        var variantFormulasPrompt = ResourceUtils.getResourceAsString("prompts/refine-variant-formulas.md");
-        var usagePrompt = ResourceUtils.getResourceAsString("prompts/refine-usage-instructions.md");
+        var ingredientsPrompt = ResourceUtils.getResourceAsString("prompts/format-ingredients-table.md");
+        var variantFormulasPrompt = ResourceUtils.getResourceAsString("prompts/format-variant-formulas.md");
+        var usagePrompt = ResourceUtils.getResourceAsString("prompts/format-usage-instructions.md");
 
         MarkdownAction labels = source == null
                 ? doc -> {

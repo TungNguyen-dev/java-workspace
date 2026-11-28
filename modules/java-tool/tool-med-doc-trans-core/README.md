@@ -2,47 +2,57 @@
 
 Translates Traditional Chinese Medicine documents, such as textbooks scanned from print and OCR'd, from Chinese into a target language (Vietnamese by default). It writes a DOCX and a report that lists what was fixed, what was skipped and what still looks suspicious.
 
-Every LLM step (`ocr`, `translate`, `edit`, `refine-target`) gets its own chat backend, an `LlmClient` (`java-ai`) or the Claude Code CLI (see [Choosing the LLM per step](#choosing-the-llm-per-step)); DOCX ↔ Markdown conversion comes from `java-document`. The module only uses `tool-document-translation-core` for `LanguageCode`: the translation is not done by its `TextTranslator`, and there is no translation cache for now.
+Every LLM step (`fix-ocr`, `translate`, `polish-target`, `format-target`) gets its own chat backend, an `LlmClient` (`java-ai`) or the Claude Code CLI (see [Choosing the LLM per step](#choosing-the-llm-per-step)); DOCX ↔ Markdown conversion comes from `java-document`. The module only uses `tool-document-translation-core` for `LanguageCode`: the translation is not done by its `TextTranslator`, and there is no translation cache for now.
 
 ## Workflow
 
 ```
 source (.docx/.md/.markdown/.txt)
-   │  load as Markdown (always)                  ──► 01_source.md
+   │  load (always)                                ──► 01_load.md
    ▼
-   │  ocr:            OCR cleanup + scan source  ──► 02_ocr.md
+   │  fix-ocr:          OCR cleanup                ──► 02_fix_ocr.md
    ▼
-   │  refine-source:  structure the Chinese text ──► 03_source_refined.md
+   │  scan-source:      suspicious text (always)   ──► (report only)
    ▼
-   │  translate:      LLM, one section per call  ──► 04_translated.md
+   │  structure-source: structure the Chinese text ──► 04_structure_source.md
    ▼
-   │  edit:           friendlier style (VI)      ──► 05_edited.md
+   │  glossary:         herb and formula names     ──► 05_glossary.md
    ▼
-   │  refine-target:  Vietnamese refine (VI)     ──► 06_refined.md
+   │  translate:        LLM, one section per call  ──► 06_translate.md
    ▼
-   │  export:         DOCX                       ──► 07_<name>_<language>.docx
+   │  polish-target:    friendlier style (VI)      ──► 07_polish_target.md
+   ▼
+   │  format-target:    Vietnamese format (VI)     ──► 08_format_target.md
+   ▼
+   │  scan-target:      suspicious text (always)   ──► (report only)
+   ▼
+   │  check-doses:      doses vs. the source       ──► 10_check_doses.md
+   ▼
+   │  export:           DOCX                       ──► 11_<name>_<language>.docx
 ```
 
 `service.MedDocTranslationService.run` runs the selected steps in order. Every run writes into its own folder, and every step writes a new numbered file, so a step never overwrites the result of an earlier one (see [Output files](#output-files)). `report.md` is always written.
 
 ### Choosing the steps
 
-Loading the input is always done. The other six steps are selectable, and all of them run by default:
+`load`, `scan-source` and `scan-target` always run (a scan is skipped when it does not apply to the run) and cannot be selected. The other eight steps are selectable, and all of them run by default:
 
 | Step | What it does |
 | --- | --- |
-| `ocr` | OCR cleanup with the LLM, then a scan for suspicious text |
-| `refine-source` | Structures the Chinese text into headings |
+| `fix-ocr` | OCR cleanup with the LLM, then a scan for suspicious text |
+| `structure-source` | Structures the Chinese text into headings |
+| `glossary` | Collects formula and herb names from the Chinese text and translates them once with the LLM, so the sections translated in parallel use the same names (needs `translate`, not for target `ZH`) |
 | `translate` | Translates with the LLM |
-| `edit` | Edits the Vietnamese translation into a friendlier style with the LLM (target `VI` only) |
-| `refine-target` | Reformats the Vietnamese translation (target `VI` only) |
+| `polish-target` | Edits the Vietnamese translation into a friendlier style with the LLM (target `VI` only) |
+| `format-target` | Reformats the Vietnamese translation (target `VI` only) |
+| `check-doses` | Compares the doses and quantities of the translation with the source, section by section, without an LLM (needs `translate` in the same run, not for target `ZH`) |
 | `export` | Converts the last Markdown file to DOCX |
 
-A step that is not selected is skipped: it writes no file, and its number is left as a gap. Each step works on the output of the last step that ran, or on the loaded input when none ran. So you can start in the middle, for example give an already translated `.md` and run only `refine-target,export`.
+A step that is not selected is skipped: it writes no file, and its number is left as a gap. Each step works on the output of the last step that ran, or on the loaded input when none ran. So you can start in the middle, for example give an already translated `.md` and run only `format-target,export`.
 
 Two things to know when steps are left out:
 
-- `refine-target` matches the translated headings to the Chinese headings of `refine-source` in the same run, to set the section labels. Without `refine-source`, that one sub-step is skipped and reported ("no Chinese source in this run"); the other Vietnamese steps still run.
+- `format-target` matches the translated headings to the Chinese headings of `structure-source` in the same run, to set the section labels. Without `structure-source`, that one sub-step is skipped and reported ("no Chinese source in this run"); the other Vietnamese steps still run.
 - Without `export`, the report says so and points to the last Markdown file written.
 
 ### Quality gates
@@ -51,12 +61,13 @@ After the load and after every selected step, `core.gate.QualityGateUtils` check
 
 | Stage | Fails when | Default |
 | --- | --- | --- |
-| load | no text, or no Chinese text while `ocr`, `refine-source` or `translate` will run | at least 1 Han character |
-| `ocr` | text blocks are lost, or the share of Han characters kept drops (the LLM translated or cut the text) | kept ≥ 0.95 |
-| `refine-source` | no heading of level 1-3, or too many Han characters are lost | kept ≥ 0.80 (removed `文献摘要` and `病案` sections are not counted as lost) |
-| `translate` | failed sections, block count outside the range, too many blocks still in Chinese (target other than `ZH`), or changed heading levels when `refine-source` and `refine-target` (VI) both run | 0 failed, ratio 0.8-1.25, ≤ 5% in Chinese |
-| `edit` | failed sections, block count outside the range, a changed number or level of headings, Chinese coming back | 0 failed, ratio 0.8-1.25 |
-| `refine-target` | fewer headings of level 1-3, failed LLM calls, too many blocks still in Chinese | 0 failed calls |
+| load | no text, or no Chinese text while `fix-ocr`, `structure-source` or `translate` will run | at least 1 Han character |
+| `fix-ocr` | text blocks are lost, or the share of Han characters kept drops (the LLM translated or cut the text) | kept ≥ 0.95 |
+| `structure-source` | no heading of level 1-3, or too many Han characters are lost | kept ≥ 0.80 (removed `文献摘要` and `病案` sections are not counted as lost) |
+| `translate` | failed sections, block count outside the range, too many blocks still in Chinese (target other than `ZH`), or changed heading levels when `structure-source` and `format-target` (VI) both run | 0 failed, ratio 0.8-1.25, ≤ 5% in Chinese |
+| `polish-target` | failed sections, block count outside the range, a changed number or level of headings, Chinese coming back | 0 failed, ratio 0.8-1.25 |
+| `format-target` | fewer headings of level 1-3, failed LLM calls, too many blocks still in Chinese | 0 failed calls |
+| `check-doses` | a section has doses that differ from the source (a missing, added or changed number next to a dose unit) | 0 sections |
 | `export` | the DOCX is missing, empty or has no text when read back | none |
 
 A refine step that matches nothing is still only a warning in the report. Pass a custom policy through the Java API: `new MedDocTranslationService(llmClient, new GatePolicy(...))`. From the command line a failed gate prints the report, then the reason, and exits with code 1.
@@ -65,7 +76,7 @@ A refine step that matches nothing is still only a warning in the report. Pass a
 
 `utils.SourceDocumentUtils.toMarkdown` reads `.docx` (through the DOCX → Markdown converter) and `.md`, `.markdown` or `.txt` (read as Markdown). Any other extension fails the run (the report is still written).
 
-### ocr
+### fix-ocr
 
 `core.ocr.OcrCleanup.clean`:
 
@@ -76,18 +87,24 @@ A refine step that matches nothing is still only a warning in the report. Pass a
 
 Then `core.inspect.SuspiciousTextUtils.scanSource` flags stray characters left after cleanup, paragraphs that look cut off, and herb composition lines with suspicious doses.
 
-### refine-source
+### structure-source
 
-`core.refine.MedRefinePipeline.chineseSource` works on the Chinese document, whose layout is stable and does not depend on the translation:
+`core.refine.MedFormatPipelines.structureSource` works on the Chinese document, whose layout is stable and does not depend on the translation:
 
 - merges `第N章` and the next paragraph into the chapter title (`#`), only when that paragraph looks like a name (short, no punctuation or leading number);
 - removes the learning objectives under the chapter title: a run of short paragraphs numbered 1, 2, 3, ... Anything else (for example `3.5g ...`) is kept;
 - turns `第N节 ...` paragraphs into `##` headings;
 - turns the paragraph before `【组成】` into a `###` formula heading;
 - turns every `【...】` paragraph into a `####` heading plus its content;
-- removes the `#### 文献摘要` and `#### 病案` sections (up to the next heading of level 4 or higher). Their Han characters are left out of the retention base of the `refine-source` gate and shown as `removed Han` in its metrics.
+- removes the `#### 文献摘要` and `#### 病案` sections (up to the next heading of level 4 or higher). Their Han characters are left out of the retention base of the `structure-source` gate and shown as `removed Han` in its metrics.
 
 Each step is wrapped by `safe(...)`: if a step throws, it is skipped, the document is left unchanged, and the step and the reason are listed in the report. The structure steps are also reported when they match nothing, so a layout the pipeline does not recognise is not silent.
+
+### glossary
+
+`core.glossary.GlossaryExtractor` runs on the Chinese document before `translate` (not for target `ZH`, and only when `translate` is selected). It collects the candidates without an LLM: the names of the `###` headings (formulas) and the herb names written before a dose such as `石膏30g`. It sends them to the LLM in batches of 80 with the prompt `prompts/glossary-tcm-terms.md`, which answers a table `中文 | translation`, and keeps the answers in a `core.glossary.Glossary`.
+
+`translate` then adds to its system prompt, for each section, only the terms that appear in that section. The sections are translated in parallel, so this keeps the herb and formula names the same everywhere. The glossary is written to `05_glossary.md` for review. If a batch fails, the run goes on with the partial glossary and the report lists it in the skipped list.
 
 ### translate
 
@@ -96,16 +113,16 @@ Each step is wrapped by `safe(...)`: if a step throws, it is skipped, the docume
 - a section starts at every heading of level 1 to 3 (for example one formula = `###` with its `####` parts). A `###` formula section is sent whole (up to 15000 characters, then split at its `####` sub-headings); any other section longer than 4000 characters is split again between blocks;
 - up to 5 sections are translated at the same time, and the results are put back in order;
 - the system prompt is `prompts/translate-tcm-text.md`, with the target language filled in. It asks the model to keep the Markdown structure, the numbering and the dose units;
-- if a call fails or answers nothing, that section is kept in the original language, and the report counts it and shows the first error. If the answer changes the heading levels, the section is kept but the report gets a warning, because the section labels of `refine-target` rely on the same headings;
+- if a call fails or answers nothing, that section is kept in the original language, and the report counts it and shows the first error. If the answer changes the heading levels, the section is kept but the report gets a warning, because the section labels of `format-target` rely on the same headings;
 - list numbers are normalised to plain `1. text` paragraphs.
 
-### edit
+### polish-target
 
-`core.translator.LlmMarkdownTranslator.editor(...)` runs on the translated document (target `VI` only). It reuses the section chunking, the concurrency and the "keep the section on failure" rule of `translate`, with the system prompt `prompts/edit-polish-vietnamese.md`: rewrite stiff, word-by-word sentences into natural modern Vietnamese for students and practitioners, keeping the facts, the Hán-Việt terms, the doses and the Markdown structure. The step must not change the headings, because `refine-target` sets the section labels from the Chinese headings by position; a changed heading level fails the gate. Sections whose call fails are kept as translated and listed in the report.
+`core.translator.LlmMarkdownTranslator.editor(...)` runs on the translated document (target `VI` only). It reuses the section chunking, the concurrency and the "keep the section on failure" rule of `translate`, with the system prompt `prompts/polish-vietnamese.md`: rewrite stiff, word-by-word sentences into natural modern Vietnamese for students and practitioners, keeping the facts, the Hán-Việt terms, the doses and the Markdown structure. The step must not change the headings, because `format-target` sets the section labels from the Chinese headings by position; a changed heading level fails the gate. Sections whose call fails are kept as translated and listed in the report.
 
-### refine-target
+### format-target
 
-`core.refine.MedRefinePipeline.vietnamese` runs on the translated document (target `VI` only). It is a `core.markdown.MarkdownPipeline` of `core.markdown.MarkdownAction` steps that:
+`core.refine.MedFormatPipelines.formatTarget` runs on the translated document (target `VI` only). It is a `core.markdown.MarkdownPipeline` of `core.markdown.MarkdownAction` steps that:
 
 - set the section labels from a fixed dictionary, matching the k-th heading of the translation to the k-th heading of the Chinese source (`relabelHeadings`). If the heading counts or levels differ, the step is skipped and the reason is reported;
 - add `## Đại cương`, turn ordered lists into paragraphs and upper-case the formula names;
@@ -122,7 +139,13 @@ Each step is wrapped by `safe(...)`: if a step throws, it is skipped, the docume
 | 运用 | Vận dụng lâm sàng |
 | 附方 | Phụ phương |
 
-After `translate` and `refine-target`, `core.inspect.SuspiciousTextUtils.scanTranslation` flags Chinese text that is still in the output. It is skipped when the target is `ZH`.
+After `translate` and `format-target`, `core.inspect.SuspiciousTextUtils.scanTranslation` flags Chinese text that is still in the output. It is skipped when the target is `ZH`.
+
+### check-doses
+
+`core.inspect.DoseCheckUtils` compares the translation with the Chinese text that `translate` received, without an LLM. It reads every number that sits next to a dose unit (`克`, `g`, `钱`, `两`, `分`, `枚`, `片`, `斤`, `ml` and their Vietnamese forms such as `chỉ`, `lạng`, `cân`; Chinese numerals and `半` / `nửa` are understood, and ranges give two numbers). The documents are split at the `###` headings and compared section by section as a multiset of numbers; when the two documents do not have the same number of `###` sections, the whole document is compared at once. The units are not converted, so a translation must keep the numbers of the source.
+
+The step is skipped when `translate` did not run in the same run, or the target is `ZH`. It writes `10_check_doses.md` with the sections that differ, and the gate fails above `GatePolicy.maxDoseMismatches` (default 0).
 
 ### export
 
@@ -134,13 +157,15 @@ Each run creates its own folder `<out>/<yyyyMMdd_HHmmss>/` (a suffix `_1`, `_2`,
 
 | File | Written by | Content |
 | --- | --- | --- |
-| `01_source.md` | load | Source converted to Markdown |
-| `02_ocr.md` | `ocr` | Source after OCR cleanup, still in Chinese |
-| `03_source_refined.md` | `refine-source` | Chinese source after the structure refine. This is the file that gets translated |
-| `04_translated.md` | `translate` | Translation |
-| `05_edited.md` | `edit` | Translation after the style edit |
-| `06_refined.md` | `refine-target` | Translation after the Vietnamese refine |
-| `07_<name>_<suffix>.docx` | `export` | Final DOCX. Suffix: `tieng_Viet` (VI), `tieng_Anh` (EN), `tieng_Nhat` (JA), `tieng_Trung` (ZH) |
+| `01_load.md` | load | Source converted to Markdown |
+| `02_fix_ocr.md` | `fix-ocr` | Source after OCR cleanup, still in Chinese |
+| `04_structure_source.md` | `structure-source` | Chinese source after the structure refine. This is the file that gets translated |
+| `05_glossary.md` | `glossary` | Glossary of the names used for the translation (not the document: later steps ignore it) |
+| `06_translate.md` | `translate` | Translation |
+| `07_polish_target.md` | `polish-target` | Translation after the style edit |
+| `08_format_target.md` | `format-target` | Translation after the Vietnamese refine |
+| `10_check_doses.md` | `check-doses` | Table of the sections whose doses differ (not the document) |
+| `11_<name>_<suffix>.docx` | `export` | Final DOCX. Suffix: `tieng_Viet` (VI), `tieng_Anh` (EN), `tieng_Nhat` (JA), `tieng_Trung` (ZH) |
 | `report.md` | always | Report: steps, quality gate results, a `## Steps` section with one entry per step (status, output file, block counts, time, gate, details and LLM usage), run folder, target language, sections translated and failed, OCR fixes, skipped refine steps, translation warnings and suspicious text (for the target `VI`, this includes any remaining `tễ`, which should read `bài thuốc`). Each suspect names the file its block number refers to. When the run fails, the report is still written with `Output: none` and the error |
 
 The numbers are fixed per step, so a step that did not run leaves a gap.
@@ -166,13 +191,14 @@ Root package: `tungnn.tutor.java.tool.meddoc`. The code is split into layers, an
 | `utils` | `SourceDocumentUtils`: load a source file as Markdown |
 | `core` | The domain: `Step`, and the packages below |
 | `core.chat` | `MarkdownChat`: the port every LLM backend implements |
-| `core.pipeline` | One `StepRunner` per step (`ocr`, `refine-source`, `translate`, `edit`, `refine-target`, `export`) and the shared `PipelineState` |
+| `core.pipeline` | One `StepRunner` per step (`load`, `fix-ocr`, `scan-source`, `structure-source`, `glossary`, `translate`, `polish-target`, `format-target`, `scan-target`, `check-doses`, `export`) and the shared `PipelineState` |
+| `core.glossary` | `Glossary`, `GlossaryExtractor`: the term table used by `translate` |
 | `core.ocr` | `OcrCleanup`, `OcrFix`: LLM-based OCR correction |
 | `core.inspect` | `SuspiciousTextUtils`, `Suspect`: detect text that needs a manual check |
 | `core.translator` | `LlmMarkdownTranslator`: translation through `MarkdownChat`, section by section |
 | `core.markdown` | `MarkdownAction`, `MarkdownActions`, `MarkdownPipeline`, `MarkdownRefiner`: Markdown editing building blocks |
 | `core.gate` | `GatePolicy`, `GateResult`, `QualityGateUtils`, `QualityGateException`: the quality gate of each stage |
-| `core.refine` | `MedRefinePipeline`: the structure recipe for the Chinese text and the refine recipe for Vietnamese |
+| `core.refine` | `MedFormatPipelines`: the structure recipe for the Chinese text and the refine recipe for Vietnamese |
 
 ## Prompts
 
@@ -180,12 +206,12 @@ Stored in `src/main/resources/prompts/`.
 
 | File | Used by |
 | --- | --- |
-| `ocr-correct-chinese.md` | `OcrCleanup` (`ocr`) |
+| `ocr-correct-chinese.md` | `OcrCleanup` (`fix-ocr`) |
 | `translate-tcm-text.md` | `LlmMarkdownTranslator` (`translate`) |
-| `edit-polish-vietnamese.md` | System prompt of the `edit` step |
-| `refine-ingredients-table.md` | `Thành phần` section of `MedRefinePipeline` (`refine-target`) |
-| `refine-variant-formulas.md` | `Phụ phương` section of `MedRefinePipeline` (`refine-target`) |
-| `refine-usage-instructions.md` | `Cách dùng` section of `MedRefinePipeline` (`refine-target`) |
+| `polish-vietnamese.md` | System prompt of the `polish-target` step |
+| `format-ingredients-table.md` | `Thành phần` section of `MedFormatPipelines` (`format-target`) |
+| `format-variant-formulas.md` | `Phụ phương` section of `MedFormatPipelines` (`format-target`) |
+| `format-usage-instructions.md` | `Cách dùng` section of `MedFormatPipelines` (`format-target`) |
 
 ## Usage
 
@@ -247,7 +273,7 @@ Notes:
 Arguments of `MedDocTranslationApp`:
 
 ```
-MedDocTranslationApp <input.docx|md|txt> [--lang VI] [--out dir] [--steps ocr,refine-source,translate,edit,refine-target,export] [--no-refine]
+MedDocTranslationApp <input.docx|md|txt> [--lang VI] [--out dir] [--steps fix-ocr,structure-source,glossary,translate,polish-target,format-target,check-doses,export] [--no-refine]
 ```
 
 | Option | Default | Meaning |
@@ -255,7 +281,7 @@ MedDocTranslationApp <input.docx|md|txt> [--lang VI] [--out dir] [--steps ocr,re
 | `--lang` | `VI` | Target language code (`VI`, `EN`, `JA`, `ZH`, ...) |
 | `--out` | folder of the input file | Directory that holds the run folders |
 | `--steps` | all steps | Comma separated steps to run |
-| `--no-refine` | refine on | Removes `refine-source`, `edit` and `refine-target` from the steps |
+| `--no-refine` | refine on | Removes `structure-source`, `polish-target` and `format-target` from the steps |
 
 Argument examples (put them after `MedDocTranslationApp` in `-Dexec.args`, or after the jar path):
 
@@ -263,11 +289,11 @@ Argument examples (put them after `MedDocTranslationApp` in `-Dexec.args`, or af
 # everything
 "Chương 3.docx"
 
-# only clean the OCR and look at 02_ocr.md
-"Chương 3.docx" --steps ocr
+# only clean the OCR and look at 02_fix_ocr.md
+"Chương 3.docx" --steps fix-ocr
 
 # translate an already cleaned file, no DOCX
-02_ocr.md --steps refine-source,translate,refine-target
+02_fix_ocr.md --steps structure-source,translate,format-target
 
 # translate to English, without the refine steps
 "Chương 3.docx" --lang EN --no-refine
@@ -299,7 +325,7 @@ See `.env.example` at the repo root for the provider options.
 
 ## Extending the refine pipeline
 
-Add a step in `MedRefinePipeline.vietnamese`:
+Add a step in `MedFormatPipelines.vietnamese`:
 
 ```java
 .step("Describe the step", safe(skipped, "short name", MarkdownActions.renameHeading(4, "Old", "New")))
@@ -313,13 +339,13 @@ Each LLM step has its own client, and you choose the backend and the model of ea
 
 ```
 java -jar tool-med-doc-trans-core-*-all.jar book.docx \
-    --llm default=deepseek --llm translate=claude-cli:sonnet@medium --llm edit=gemini
+    --llm default=deepseek --llm translate=claude-cli:sonnet@medium --llm polish-target=gemini
 DOCTRANS_LLM_TRANSLATE=claude-cli:sonnet java -jar ... book.md --steps translate,export
 ```
 
-Per step, the first value found wins: `--llm <step>=<spec>`, then `DOCTRANS_LLM_<STEP>` (`OCR`, `TRANSLATE`, `EDIT`, `REFINE_TARGET`), then the default. The default is `--llm default=<spec>`, then `DOCTRANS_LLM_DEFAULT`, then `DOCTRANS_TRANSLATOR_PROVIDER`, then `deepseek`. `refine-source` and `export` do not use an LLM and cannot be configured.
+Per step, the first value found wins: `--llm <step>=<spec>`, then `DOCTRANS_LLM_<STEP>` (`FIX_OCR`, `GLOSSARY`, `TRANSLATE`, `POLISH_TARGET`, `FORMAT_TARGET`), then the default. The default is `--llm default=<spec>`, then `DOCTRANS_LLM_DEFAULT`, then `DOCTRANS_TRANSLATOR_PROVIDER`, then `deepseek`. `structure-source`, `check-doses` and `export` do not use an LLM and cannot be configured.
 
-When the `translate` step uses Claude (`claude-cli` or the `anthropic` provider), the `edit` step is always skipped, even when it is selected with `--steps` or configured with `--llm edit=...`. This rule has priority over every other setting, applies whatever the steps of the run are, and is written in the skipped list of `report.md`. Running only `--steps edit` in that case fails because nothing is left to run.
+When the `translate` step uses Claude (`claude-cli` or the `anthropic` provider), the `polish-target` step is always skipped, even when it is selected with `--steps` or configured with `--llm polish-target=...`. This rule has priority over every other setting, applies whatever the steps of the run are, and is written in the skipped list of `report.md`. Running only `--steps polish-target` in that case fails because nothing is left to run.
 
 A client is created only when its step runs, so a missing API key only matters for the steps that need it. With `--steps translate,export --llm translate=claude-cli`, no API key is needed at all.
 

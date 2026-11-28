@@ -26,7 +26,7 @@ class PromptResourcesTest {
 
     @Test
     void shouldNotCallTheBookPhuongTeHocAnywhere() {
-        for (var name : List.of("translate-tcm-text.md", "edit-polish-vietnamese.md", "ocr-correct-chinese.md")) {
+        for (var name : List.of("translate-tcm-text.md", "polish-vietnamese.md", "ocr-correct-chinese.md")) {
             assertThat(prompt(name)).as(name).doesNotContain("Phương tễ học").contains("Phương thuốc học");
         }
     }

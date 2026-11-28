@@ -27,9 +27,10 @@ public final class TranslateStepRunner implements StepRunner {
     @Override
     public StepOutcome run(PipelineState state) throws IOException {
         var before = state.document();
-        var translated = translator.translate(before, state.target());
-        var file = state.write("04_translated.md", translated);
-        var relabelFollows = state.runs(Step.REFINE_TARGET)
+        state.setSourceForCheck(before);
+        var translated = translator.translate(before, state.target(), state.glossary());
+        var file = state.write(step().outputName("md"), translated);
+        var relabelFollows = state.runs(Step.FORMAT_TARGET)
                 && state.target() == LanguageCode.VI
                 && state.chineseSource() != null;
         return new StepOutcome(

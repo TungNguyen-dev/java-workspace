@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import tungnn.tutor.java.tool.meddoc.core.Step;
 import tungnn.tutor.java.tool.meddoc.core.gate.QualityGateUtils;
-import tungnn.tutor.java.tool.meddoc.core.refine.MedRefinePipeline;
+import tungnn.tutor.java.tool.meddoc.core.refine.MedFormatPipelines;
 
-public final class RefineSourceStepRunner implements StepRunner {
+public final class StructureSourceStepRunner implements StepRunner {
 
     @Override
     public Step step() {
-        return Step.REFINE_SOURCE;
+        return Step.STRUCTURE_SOURCE;
     }
 
     @Override
@@ -24,14 +24,14 @@ public final class RefineSourceStepRunner implements StepRunner {
         var before = state.document();
         var removedHan = new AtomicInteger();
         var skippedFrom = state.skipped().size();
-        var refined = MedRefinePipeline.chineseSource(state.skipped(), removedHan).run(before);
+        var refined = MedFormatPipelines.structureSource(state.skipped(), removedHan).run(before);
         state.setChineseSource(refined);
-        var file = state.write("03_source_refined.md", refined);
+        var file = state.write(step().outputName("md"), refined);
         var details = new ArrayList<String>();
         details.add("Han characters removed: " + removedHan.get());
         StepDetailsUtils.skippedSince(state.skipped(), skippedFrom, details);
         return new StepOutcome(
-                QualityGateUtils.refineSource(before, refined, removedHan.get(), state.gatePolicy()),
+                QualityGateUtils.structureSource(before, refined, removedHan.get(), state.gatePolicy()),
                 refined,
                 file,
                 details);
